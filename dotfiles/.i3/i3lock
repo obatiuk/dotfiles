@@ -1,9 +1,4 @@
-#!/bin/bash
-
-# Dependencies:
-# imagemagick
-# i3lock
-# scrot
+#!/usr/bin/env bash
 
 IMAGE=/tmp/i3lock.png
 
