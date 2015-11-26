@@ -22,4 +22,5 @@ sudo dnf -y install \
     google-droid-serif-fonts \
     google-droid-sans-mono-fonts \
     xbacklight \
+    xautolock \
     pavucontrol
