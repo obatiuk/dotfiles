@@ -7,12 +7,15 @@ sudo dnf -y copr enable region51/compton
 # Packages
 
 sudo dnf -y install \
+    i3 \
+    i3status \
+    i3lock \
     network-manager-applet \
+    terminology \
     pnmixer \
     compton \
     feh \
     ImageMagick \
-    i3lock \
     scrot \
     fontawesome-fonts \
     google-droid-sans-fonts \
