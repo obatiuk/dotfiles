@@ -58,6 +58,7 @@ ask "Install required dependencies? (Distro: ${DISTRO})?" Y && bash ./dependenci
 # Profile
 
 ln -sfn ${DOTFILES_DIR}/.face.icon ${TARGET_DIR}/.face.icon
+ln -sfn ${DOTFILES_DIR}/.profile ${TARGET_DIR}/.profile
 
 # i3 Configuration
 
