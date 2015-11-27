@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 
-IMAGE=/tmp/i3lock.png
+image=$(mktemp --suffix .png)
+trap "/bin/rm -f $image" INT TERM EXIT
 
-scrot $IMAGE
-convert $IMAGE -blur 0x8 -paint 10 $IMAGE
-i3lock -i $IMAGE
-rm $IMAGE
+scrot $image
+i3lock -c 000000
+convert $image -blur 0x8 -paint 10  $image
+kill $(pgrep i3lock)
+i3lock -i $image
