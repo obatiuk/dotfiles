@@ -5,9 +5,9 @@
 #
 
 
-DOTFILES_DIR=$(pwd)/dotfiles
-TARGET_DIR=${HOME}
-DISTRO=$(lsb_release -si)
+dotfiles_dir=$(pwd)/dotfiles
+target_dir=${HOME}
+distro=$(lsb_release -si)
 
 #
 # Functions
@@ -49,31 +49,31 @@ ask() {
 # Setup
 #
 
-ask "Install required dependencies? (Distro: ${DISTRO})?" Y && bash ./dependencies-${DISTRO}.sh
+ask "Install required dependencies? (Distro: ${distro})?" Y && bash ./dependencies-${distro}.sh
 
 # Target folders
 
-[ -d ${TARGET_DIR}/.config ] || mkdir -p ${TARGET_DIR}/.config
+[ -d ${target_dir}/.config ] || mkdir -p ${target_dir}/.config
 
 # Profile
 
-ln -sfn ${DOTFILES_DIR}/.face.icon ${TARGET_DIR}/.face.icon
-ln -sfn ${DOTFILES_DIR}/.profile ${TARGET_DIR}/.profile
+ln -sfn ${dotfiles_dir}/.face.icon ${target_dir}/.face.icon
+ln -sfn ${dotfiles_dir}/.profile ${target_dir}/.profile
 
 # i3 Configuration
 
-ln -sfn ${DOTFILES_DIR}/.i3 ${TARGET_DIR}/.i3
-ln -sfn ${DOTFILES_DIR}/.config/i3status.conf ${TARGET_DIR}/.config/i3status.conf
+ln -sfn ${dotfiles_dir}/.i3 ${target_dir}/.i3
+ln -sfn ${dotfiles_dir}/.config/i3status.conf ${target_dir}/.config/i3status.conf
 
 # Wallpaper
 
-ln -sfn ${DOTFILES_DIR}/.config/wallpaper ${TARGET_DIR}/.config/wallpaper
+ln -sfn ${dotfiles_dir}/.config/wallpaper ${target_dir}/.config/wallpaper
 
 # GTK
 
-ln -sfn ${DOTFILES_DIR}/.gtkrc-2.0 ${TARGET_DIR}/.gtkrc-2.0
-ln -sfn ${DOTFILES_DIR}/.gtkrc-2.0-kde4 ${TARGET_DIR}/.gtkrc-2.0-kde4
+ln -sfn ${dotfiles_dir}/.gtkrc-2.0 ${target_dir}/.gtkrc-2.0
+ln -sfn ${dotfiles_dir}/.gtkrc-2.0-kde4 ${target_dir}/.gtkrc-2.0-kde4
 
 # Compton
 
-ln -sfn ${DOTFILES_DIR}/.config/compton.conf ${TARGET_DIR}/.config/compton.conf
+ln -sfn ${dotfiles_dir}/.config/compton.conf ${target_dir}/.config/compton.conf
