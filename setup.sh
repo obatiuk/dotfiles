@@ -78,5 +78,11 @@ ln -sfn ${dotfiles_dir}/.gtkrc-2.0-kde4 ${target_dir}/.gtkrc-2.0-kde4
 
 ln -sfn ${dotfiles_dir}/.config/compton.conf ${target_dir}/.config/compton.conf
 
-# Enabling Xfce4 power manager icon
+# Power management
+## Enabling Xfce4 power manager icon
 xfconf-query -c xfce4-power-manager -p /xfce4-power-manager/show-tray-icon -n -t int -s 1
+## Lid action configuration
+xfconf-query -c xfce4-power-manager -p /xfce4-power-manager/logind-handle-lid-switch -n -t bool -s true
+xfconf-query -c xfce4-power-manager -p /xfce4-power-manager/lid-action-on-battery -n -t uint -s 1
+xfconf-query -c xfce4-power-manager -p /xfce4-power-manager/lid-action-on-ac -n -t uint -s 1
+
