@@ -23,4 +23,6 @@ sudo dnf -y install \
     google-droid-sans-mono-fonts \
     xbacklight \
     xautolock \
-    pavucontrol
+    pavucontrol \
+    xfce4-notifyd \
+    xfce4-power-manager
