@@ -78,5 +78,5 @@ ln -sfn ${dotfiles_dir}/.gtkrc-2.0-kde4 ${target_dir}/.gtkrc-2.0-kde4
 
 ln -sfn ${dotfiles_dir}/.config/compton.conf ${target_dir}/.config/compton.conf
 
-# Xfce4 power manager icon
-xfconf-query -c xfce4-power-manager -p /xfce4-power-manager/show-tray-icon -s 1
+# Enabling Xfce4 power manager icon
+xfconf-query -c xfce4-power-manager -p /xfce4-power-manager/show-tray-icon -n -t int -s 1
