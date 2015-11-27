@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-image=$(mktemp --suffix .png)
+image=$(mktemp --suffix=.png)
 trap "/bin/rm -f $image" INT TERM EXIT
 
 scrot $image
