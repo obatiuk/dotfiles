@@ -32,4 +32,8 @@ EOF
 sudo dnf install \
     google-chrome-stable \
     google-talkplugin \
-    firefox
+    firefox \
+    google-droid-sans-fonts \
+    google-droid-serif-fonts \
+    google-droid-sans-mono-fonts
+
