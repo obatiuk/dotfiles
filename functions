@@ -58,7 +58,7 @@ ask() {
 #
 # * Check if ".profile" file exists, creates it if doesn't
 # * Check that special command string to include custom 
-#   ".profile-local*" files exists, adds it if doesn't
+#   ".profile-*" files exists, adds it if doesn't
 #
 checkProfile() {
     if [ ! -f ${target_dir}/.profile ]; then
@@ -78,9 +78,9 @@ checkProfile() {
 }
 
 #
-# * Check if ".profile" file exists, creates it if doesn't
+# * Check if ".bash_profile" file exists, creates it if doesn't
 # * Check that special command string to include custom 
-#   ".profile-local*" files exists, adds it if doesn't
+#   ".bash_profile-*" files exists, adds it if doesn't
 #
 checkBashProfile() {
     if [ ! -f ${target_dir}/.bash_profile ]; then
