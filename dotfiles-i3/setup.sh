@@ -5,7 +5,7 @@
 #
 
 
-dotfiles_dir=$(pwd)/dotfiles
+dotfiles_dir=$(pwd)
 target_dir=${HOME}
 distro=$(lsb_release -si)
 
