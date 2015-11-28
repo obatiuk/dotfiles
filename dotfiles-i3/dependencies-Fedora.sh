@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+. ../functions
+
 # Enabling region51/compton copr repository for compton
 
 sudo dnf -y copr enable region51/compton
