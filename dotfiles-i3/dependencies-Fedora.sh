@@ -27,4 +27,6 @@ sudo dnf -y install \
     xautolock \
     pavucontrol \
     xfce4-notifyd \
-    xfce4-power-manager
+    xfce4-power-manager \
+    gnome-keyring \
+    seahorse
