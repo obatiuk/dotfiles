@@ -20,5 +20,8 @@ if ask "Do you want to install font configuration?"; then
 
     ln -sfn ${dotfiles_dir}/.bash_profile-fonts ${target_dir}/.bash_profile-fonts
 
+    # Enabling infinality fonts configuration
+    sudo bash /etc/fonts/infinality/infctl.sh setstyle infinality
+
 fi
 
