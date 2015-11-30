@@ -35,5 +35,6 @@ sudo dnf install \
     firefox \
     google-droid-sans-fonts \
     google-droid-serif-fonts \
-    google-droid-sans-mono-fonts
+    google-droid-sans-mono-fonts \
+    git
 
