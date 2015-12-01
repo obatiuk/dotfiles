@@ -12,6 +12,7 @@ sudo dnf -y install \
     i3 \
     i3status \
     i3lock \
+    rofi \
     network-manager-applet \
     terminology \
     pnmixer \
