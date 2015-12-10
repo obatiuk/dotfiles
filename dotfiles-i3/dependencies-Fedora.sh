@@ -5,6 +5,7 @@
 # Enabling region51/compton copr repository for compton
 
 sudo dnf -y copr enable region51/compton
+sudo dnf -y copr enable region51/rofi
 
 # Packages
 

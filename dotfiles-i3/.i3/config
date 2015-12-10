@@ -192,13 +192,15 @@ assign [class="Skype"] $WM1
 
 # Chrome
 for_window [title="Task Manager"] floating enable
+for_window [title="(?)ure Pomodoro"] floating enable
+assign [title="(?)ure Pomodoro"] $WM1
 
 # Remmina
-for_window [class="remmina"] $WM3
+assign [class="remmina"] $WM3
 
 # Autostart
 
-exec --no-startup-id xautolock -detectsleep -time  10 -locker $locker
+exec --no-startup-id xautolock -detectsleep -time 10 -locker $locker
 exec --no-startup-id nm-applet
 exec --no-startup-id pnmixer
 exec --no-startup-id compton --config ${HOME}/.config/compton.conf
