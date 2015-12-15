@@ -36,5 +36,5 @@ sudo dnf install \
     google-droid-sans-fonts \
     google-droid-serif-fonts \
     google-droid-sans-mono-fonts \
-    git
-
+    git \
+    filelight
