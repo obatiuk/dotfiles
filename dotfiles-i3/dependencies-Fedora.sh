@@ -30,5 +30,6 @@ sudo dnf -y install \
     pavucontrol \
     xfce4-notifyd \
     xfce4-power-manager \
+    xfce4-screenshooter \
     gnome-keyring \
-    seahorse
+    seahorse \

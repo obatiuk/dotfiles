@@ -43,6 +43,9 @@ bindsym $mod+r exec --no-startup-id rofi -show run -font "Droid Sans Mono 9"
 bindsym $mod+s exec --no-startup-id rofi -show ssh -font "Droid Sans Mono 9" -terminal terminology
 bindsym Control+Escape exec --no-startup-id i3-dmenu-desktop --dmenu='rofi -dmenu -p "app:" -font "Droid Sans Mono 9"'
 
+# Screenshot
+bindsym Print exec xfce4-screenshooter
+
 # alternatively, you can use the cursor keys:
 bindsym $mod+Left focus left
 bindsym $mod+Down focus down
