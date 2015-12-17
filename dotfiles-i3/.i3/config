@@ -186,8 +186,8 @@ for_window [class="ksysguard"] floating enable
 
 # VPN 
 
-for_window [title="Network Connect"] floating enable
-for_window [title="Network Connect"] $WM1
+for_window [class="^NC$"] floating enable
+assign [class="^NC$"] $WM1
 
 # Skype
 for_window [class="Skype"] floating enable
