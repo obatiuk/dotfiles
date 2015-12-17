@@ -12,13 +12,17 @@ dotfiles_dir=$(pwd)
 # Setup
 #
 
-ask "Install required dependencies? (Distro: ${distro})?" Y && bash ./dependencies-${distro}.sh
+if ask "Do you want to install base configuration?"; then
 
-# Profile
+    ask "Install required dependencies? (Distro: ${distro})?" Y && bash ./dependencies-${distro}.sh
 
-ln -sfn ${dotfiles_dir}/.face.icon ${target_dir}/.face.icon
+    # Profile
 
-# GTK
+    ln -svfn ${dotfiles_dir}/.face.icon ${target_dir}/.face.icon
 
-ln -sfn ${dotfiles_dir}/.gtkrc-2.0 ${target_dir}/.gtkrc-2.0
-ln -sfn ${dotfiles_dir}/.gtkrc-2.0-kde4 ${target_dir}/.gtkrc-2.0-kde4
+    # GTK
+
+    ln -svfn ${dotfiles_dir}/.gtkrc-2.0 ${target_dir}/.gtkrc-2.0
+    ln -svfn ${dotfiles_dir}/.gtkrc-2.0-kde4 ${target_dir}/.gtkrc-2.0-kde4
+
+fi
