@@ -27,6 +27,11 @@ gpgkey=https://dl-ssl.google.com/linux/linux_signing_key.pub
 EOF
 '
 
+# Installing rpmfusion-free/nonfree repositories
+
+sudo dnf install http://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$release.noarch.rpm
+sudo dnf install http://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$release.noarch.rpm
+
 # Packages
 
 sudo dnf install \
@@ -37,4 +42,9 @@ sudo dnf install \
     google-droid-serif-fonts \
     google-droid-sans-mono-fonts \
     git \
-    filelight
+    filelight \
+    unrar
+
+# Cleanup
+
+sudo dnf clean packages
