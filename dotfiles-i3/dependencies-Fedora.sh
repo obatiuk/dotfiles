@@ -33,3 +33,7 @@ sudo dnf -y install \
     xfce4-screenshooter \
     gnome-keyring \
     seahorse \
+
+# Cleanup
+
+sudo dnf clean packages

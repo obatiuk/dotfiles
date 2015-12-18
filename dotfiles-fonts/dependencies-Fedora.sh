@@ -10,3 +10,7 @@ sudo dnf config-manager --add-repo=http://download.opensuse.org/repositories/hom
 
 sudo dnf -y install \
    freetype-infinality-ultimate
+
+# Cleanup
+
+sudo dnf clean packages
