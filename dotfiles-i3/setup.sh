@@ -24,6 +24,7 @@ if ask "Do you want to install i3 configuration?"; then
 
     ln -svfn ${dotfiles_dir}/.i3 ${target_dir}/.i3
     ln -svfn ${dotfiles_dir}/.config/i3status.conf ${target_dir}/.config/i3status.conf
+    ln -svfn ${dotfiles_dir}/.config/compton.conf ${target_dir}/.config/compton.conf
 
     # Wallpaper
 
