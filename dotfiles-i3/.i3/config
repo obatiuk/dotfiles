@@ -35,9 +35,6 @@ bindsym $mod+t exec terminology
 # kill focused window (yeah, yeah, I know :)
 bindsym $alt+F4 kill
 
-# start dmenu (a program launcher)
-#bindsym $mod+r exec dmenu_run
-
 # Run
 bindsym $mod+r exec --no-startup-id rofi -show run -font "Droid Sans Mono 9"
 bindsym $mod+s exec --no-startup-id rofi -show ssh -font "Droid Sans Mono 9" -terminal terminology
@@ -64,12 +61,9 @@ bindsym $mod+Shift+Down move down
 bindsym $mod+Shift+Up move up
 bindsym $mod+Shift+Right move right
 
-# split in horizontal orientation
-bindsym $mod+h split h
-
-# split in vertical orientation
-bindsym $mod+v split v
-bindsym $mod+Shift+v split v toggle
+# split in vertical/horizontal orientation
+bindsym $mod+Shift+h split h
+bindsym $mod+Shift+v split v
 
 # enter fullscreen mode for the focused container
 bindsym $mod+f fullscreen toggle
@@ -173,6 +167,8 @@ bindsym XF86AudioMute exec --no-startup-id pactl set-sink-mute @DEFAULT_SINK@ to
 bindsym XF86MonBrightnessUp exec xbacklight -inc 20 # increase screen brightness
 bindsym XF86MonBrightnessDown exec xbacklight -dec 20 # decrease screen brightness
 
+bindsym $mod+h exec --no-startup-id dolphin ${HOME}
+
 # Window settings
 
 for_window [window_role="pop-up"] floating enable
@@ -195,8 +191,10 @@ assign [class="Skype"] $WM1
 
 # Chrome
 for_window [title="Task Manager"] floating enable
-for_window [title="(?)ure Pomodoro"] floating enable
-assign [title="(?)ure Pomodoro"] $WM1
+
+# Pure pomodoro chrome plugin
+for_window [class="google-chrome" instance="crx_hfilbmblidibnmifcabmolhlaekpfhak"] floating enable
+assign [class="google-chrome" instance="crx_hfilbmblidibnmifcabmolhlaekpfhak"] $WM1
 
 # Remmina
 assign [class="remmina"] $WM3
@@ -209,5 +207,11 @@ exec --no-startup-id pnmixer
 exec --no-startup-id compton --config ${HOME}/.config/compton.conf
 exec --no-startup-id xfce4-power-manager
 #exec --no-startup-id gnome-keyring-daemon --start --components=pkcs11,gpg,secrets
+exec --no-startup-id /usr/libexec/xfce-polkit
 
 exec_always --no-startup-id feh --bg-fill ${HOME}/.config/wallpaper/f21.png
+
+# gaps
+# for_window [class="^.*"] border pixel 0
+# gaps inner 5
+# gaps outer 0
