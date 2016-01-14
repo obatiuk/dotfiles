@@ -33,6 +33,7 @@ sudo dnf -y install \
     xfce4-screenshooter \
     gnome-keyring \
     seahorse \
+    xfce-polkit
 
 # Cleanup
 
