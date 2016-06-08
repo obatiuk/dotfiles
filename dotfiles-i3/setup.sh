@@ -20,6 +20,7 @@ if ask "Do you want to install i3 configuration?"; then
 
     [ -d ${target_dir}/.config ] || mkdir -vp ${target_dir}/.config
     [ -d ${target_dir}/.Xresources.d ] || mkdir -vp ${target_dir}/.Xresources.d
+    [ -d ${target_dir}/.profile.d ] || mkdir -vp ${target_dir}/.profile.d
 
     # i3 Configuration
 
@@ -30,6 +31,11 @@ if ask "Do you want to install i3 configuration?"; then
     # Wallpaper
 
     ln -svfn ${dotfiles_dir}/.config/wallpaper ${target_dir}/.config/wallpaper
+
+    # X settings
+
+    ln -svfn ${dotfiles_dir}/.profile.d/.profile-i3 ${target_dir}/.profile.d/.profile-i3
+    ln -svfn ${dotfiles_dir}/.Xresources.d/.Xresources-rofi ${target_dir}/.Xresources.d/.Xresources-rofi
 
     # Power management
 
@@ -42,11 +48,6 @@ if ask "Do you want to install i3 configuration?"; then
         xfconf-query -v -c xfce4-power-manager -p /xfce4-power-manager/lid-action-on-ac -n -t uint -s 1
         xfconf-query -v -c xfce4-power-manager -p /xfce4-power-manager/lock-screen-suspend-hibernate -n -t bool -s true
     fi
-
-    # X settings
-
-    ln -svfn ${dotfiles_dir}/.profile-i3 ${target_dir}/.profile-i3
-    ln -svfn ${dotfiles_dir}/.Xresources.d/rofi ${target_dir}/.Xresources.d/rofi
 
     # Check all required resources
 

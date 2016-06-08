@@ -31,7 +31,7 @@ if ask "Do you want to install base configuration?"; then
 
     # X settings
 
-    ln -svfn ${dotfiles_dir}/.Xresources.d/fonts ${target_dir}/.Xresources.d/fonts
+    ln -svfn ${dotfiles_dir}/.Xresources.d/.Xresources-fonts ${target_dir}/.Xresources.d/.Xresources-fonts
 
     # Check all required resources
 
