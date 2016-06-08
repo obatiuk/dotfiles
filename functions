@@ -118,7 +118,7 @@ checkXresources() {
 
     fi
 
-    # Check that all customn files are included
+    # Check that all custom files are included
     for file in ${target_dir}/.Xresources.d/* ; do
 	if ! grep -q "${file}" "${target_dir}/.Xresources" ; then
 	    echo "#include \"${file}\"" >> ${target_dir}/.Xresources
