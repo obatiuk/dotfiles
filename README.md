@@ -10,4 +10,4 @@
 * Add SDDM installation to base set
 * ~~Add gnome-keyring-daemon and seahorse to i3 set~~
 * Add "updates are available" indicator to status bar
-* ~~Create separate folders for custom configuration file parts following ".d" convention
+* ~~Create separate folders for custom configuration file parts following ".d" convention~~
