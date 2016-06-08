@@ -19,6 +19,7 @@ if ask "Do you want to install i3 configuration?"; then
     # Target folders
 
     [ -d ${target_dir}/.config ] || mkdir -vp ${target_dir}/.config
+    [ -d ${target_dir}/.Xresources.d ] || mkdir -vp ${target_dir}/.Xresources.d
 
     # i3 Configuration
 
@@ -45,6 +46,11 @@ if ask "Do you want to install i3 configuration?"; then
     # X settings
 
     ln -svfn ${dotfiles_dir}/.profile-i3 ${target_dir}/.profile-i3
+    ln -svfn ${dotfiles_dir}/.Xresources.d/rofi ${target_dir}/.Xresources.d/rofi
+
+    # Check all required resources
+
+    checkAllResources
 
     echo "i3 configuration files were successfully installed"
 else

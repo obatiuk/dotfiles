@@ -5,7 +5,7 @@
 # Enabling region51/compton copr repository for compton
 
 sudo dnf -y copr enable region51/compton
-sudo dnf -y copr enable region51/rofi
+sudo dnf -y copr enable yaroslav/rofi
 
 # Packages
 
@@ -33,7 +33,8 @@ sudo dnf -y install \
     xfce4-screenshooter \
     gnome-keyring \
     seahorse \
-    xfce-polkit
+    xfce-polkit \
+    xorg-x11-xinit-session
 
 # Cleanup
 
