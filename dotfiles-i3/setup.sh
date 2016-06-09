@@ -49,6 +49,20 @@ if ask "Do you want to install i3 configuration?"; then
         xfconf-query -v -c xfce4-power-manager -p /xfce4-power-manager/lock-screen-suspend-hibernate -n -t bool -s true
     fi
 
+    if ask "Apply default keyboard configuration?"; then
+	xfconf-query -v -c keyboard-layout -p /Default/XkbDisable -n -t bool -s false
+	xfconf-query -v -c keyboard-layout -p /Default/XkbLayout -n -t string -s "us,ru"
+	xfconf-query -v -c keyboard-layout -p /Default/XkbOptions/Group -n -t string -s "grp:alt_caps_toggle"
+	xfconf-query -v -c keyboard-layout -p /Default/XkbVariant -n -t string -s "os_winkeys"
+    fi
+    
+    if ask "Appply default apperance configuration?"; then
+	xfconf-query -v -c xsettings -p /Gtk/ButtonImages -n -t bool -s true
+	xfconf-query -v -c xsettings -p /Gtk/FontName -n -t string -s "Droid Sans 9"
+	xfconf-query -v -c xsettings -p /Net/IconThemeName -n -t string -s "Fedora"
+	xfconf-query -v -c xsettings -p /Net/ThemeName -n -t string -s "oxygen-gtk"
+    fi
+
     # Check all required resources
 
     checkAllResources

@@ -28,13 +28,15 @@ sudo dnf -y install \
     xbacklight \
     xautolock \
     pavucontrol \
+    gnome-keyring \
+    seahorse \
+    xorg-x11-xinit-session \
     xfce4-notifyd \
     xfce4-power-manager \
     xfce4-screenshooter \
-    gnome-keyring \
-    seahorse \
     xfce-polkit \
-    xorg-x11-xinit-session
+    xfce4-volumed \
+    xfce4-settings
 
 # Cleanup
 
