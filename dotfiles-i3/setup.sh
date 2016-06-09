@@ -58,7 +58,7 @@ if ask "Do you want to install i3 configuration?"; then
     
     if ask "Appply default apperance configuration?"; then
 	xfconf-query -v -c xsettings -p /Gtk/ButtonImages -n -t bool -s true
-	xfconf-query -v -c xsettings -p /Gtk/FontName -n -t string -s "Droid Sans 9"
+	xfconf-query -v -c xsettings -p /Gtk/FontName -n -t string -s "Sans 10"
 	xfconf-query -v -c xsettings -p /Net/IconThemeName -n -t string -s "Fedora"
 	xfconf-query -v -c xsettings -p /Net/ThemeName -n -t string -s "oxygen-gtk"
     fi
