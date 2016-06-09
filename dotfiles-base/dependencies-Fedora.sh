@@ -43,7 +43,10 @@ sudo dnf install \
     google-droid-sans-mono-fonts \
     git \
     filelight \
-    unrar
+    unrar \
+    fedora-icon-theme \
+    adwaita-cursor-theme \
+    oxygen-gtk2
 
 # Cleanup
 

@@ -36,7 +36,10 @@ sudo dnf -y install \
     xfce4-screenshooter \
     xfce-polkit \
     xfce4-volumed \
-    xfce4-settings
+    xfce4-settings \
+    fedora-icon-theme \
+    gtk-xfce-engine \
+    oxygen-gtk2
 
 # Cleanup
 
