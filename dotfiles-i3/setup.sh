@@ -56,7 +56,7 @@ if ask "Do you want to install i3 configuration?"; then
 	xfconf-query -v -c keyboard-layout -p /Default/XkbVariant -n -t string -s "os_winkeys"
     fi
     
-    if ask "Appply default apperance configuration?"; then
+    if ask "Appply default appearance configuration?"; then
 	xfconf-query -v -c xsettings -p /Gtk/ButtonImages -n -t bool -s true
 	xfconf-query -v -c xsettings -p /Gtk/FontName -n -t string -s "Sans 10"
 	xfconf-query -v -c xsettings -p /Net/IconThemeName -n -t string -s "Fedora"
