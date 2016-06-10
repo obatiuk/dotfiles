@@ -35,7 +35,6 @@ sudo dnf -y install \
     xfce4-power-manager \
     xfce4-screenshooter \
     xfce-polkit \
-    xfce4-volumed \
     xfce4-settings \
     fedora-icon-theme \
     gtk-xfce-engine \
