@@ -9,7 +9,7 @@ sudo dnf -y copr enable yaroslav/i3desktop
 # Packages
 
 sudo dnf -y install \
-    i3 \
+    i3-gaps \
     i3status \
     i3lock \
     rofi \

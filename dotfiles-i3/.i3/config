@@ -210,9 +210,10 @@ exec --no-startup-id nm-applet &
 exec --no-startup-id pnmixer &
 exec --no-startup-id compton --config ${HOME}/.config/compton.conf &
 
-exec_always --no-startup-id feh --bg-fill ${HOME}/.config/wallpaper/f21.png
+exec_always --no-startup-id feh --bg-fill ${HOME}/.config/wallpaper/default.png
 
 # gaps
-# for_window [class="^.*"] border pixel 0
-# gaps inner 5
-# gaps outer 0
+for_window [class="^.*"] border pixel 0
+gaps inner 5
+gaps outer 0
+smart_gaps on
