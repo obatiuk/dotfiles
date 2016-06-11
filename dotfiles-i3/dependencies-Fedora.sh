@@ -8,7 +8,7 @@ sudo dnf -y copr enable yaroslav/i3desktop
 
 # Packages
 
-sudo dnf -y install \
+sudo dnf -y --allowerasing install \
     i3-gaps \
     i3status \
     i3lock \
