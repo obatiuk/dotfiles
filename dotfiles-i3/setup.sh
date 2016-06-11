@@ -21,6 +21,7 @@ if ask "Do you want to install i3 configuration?"; then
     [ -d ${target_dir}/.config ] || mkdir -vp ${target_dir}/.config
     [ -d ${target_dir}/.Xresources.d ] || mkdir -vp ${target_dir}/.Xresources.d
     [ -d ${target_dir}/.profile.d ] || mkdir -vp ${target_dir}/.profile.d
+    [ -d ${target_dir}/.themes ] || mkdir -vp ${target_dir}/.themes
 
     # i3 Configuration
 
@@ -36,6 +37,10 @@ if ask "Do you want to install i3 configuration?"; then
 
     ln -svfn ${dotfiles_dir}/.profile.d/.profile-i3 ${target_dir}/.profile.d/.profile-i3
     ln -svfn ${dotfiles_dir}/.Xresources.d/.Xresources-rofi ${target_dir}/.Xresources.d/.Xresources-rofi
+
+    # Themes
+    
+    ln -svfn ${dotfiles_dir}/.themes/smoke ${target_dir}/.themes/smoke
 
     # Power management
 
@@ -55,12 +60,15 @@ if ask "Do you want to install i3 configuration?"; then
 	xfconf-query -v -c keyboard-layout -p /Default/XkbOptions/Group -n -t string -s "grp:alt_caps_toggle"
 	xfconf-query -v -c keyboard-layout -p /Default/XkbVariant -n -t string -s "os_winkeys"
     fi
-    
+
     if ask "Appply default appearance configuration?"; then
 	xfconf-query -v -c xsettings -p /Gtk/ButtonImages -n -t bool -s true
 	xfconf-query -v -c xsettings -p /Gtk/FontName -n -t string -s "Sans 9"
 	xfconf-query -v -c xsettings -p /Net/IconThemeName -n -t string -s "Fedora"
 	xfconf-query -v -c xsettings -p /Net/ThemeName -n -t string -s "oxygen-gtk"
+
+	xfconf-query -v -c xfce4-notifyd -p /theme -n -t string -s "smoke"
+	xfconf-query -v -c xfce4-notifyd -p /notify-location -n -t unit 2
     fi
 
     # Check all required resources

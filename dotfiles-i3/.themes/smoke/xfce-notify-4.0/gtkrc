@@ -1,0 +1,32 @@
+style "smoke-window"
+{
+    bg[NORMAL] = "#2d2d2d"
+    XfceNotifyWindow::border-color = "#586e75"
+    XfceNotifyWindow::border-color-hover = "#586e75"
+    XfceNotifyWindow::border-radius = 0
+    XfceNotifyWindow::border-width-hover = 3.0
+}
+widget_class "*XfceNotifyWindow*" style "smoke-window"
+
+style "smoke-button"
+{
+    bg[NORMAL] = "#586e75"
+    bg[PRELIGHT] = "#586e75"
+    fg[NORMAL] = "#ffffff"
+    fg[PRELIGHT] = "#ffffff"
+    GtkWidget::link-color = "#ffffff"
+}
+widget_class "XfceNotifyWindow.*.<GtkButton>*" style "smoke-button"
+
+style "smoke-text"
+{
+    fg[NORMAL] = "#f9f9f9"
+    GtkWidget::link-color = "#a7a7a7"
+}
+widget_class "XfceNotifyWindow.*.<GtkLabel>" style "smoke-text"
+
+style "smoke-summary"
+{
+    font_name = "Bold"
+}
+widget "XfceNotifyWindow.*.summary" style "smoke-summary"
