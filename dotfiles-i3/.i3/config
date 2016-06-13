@@ -8,6 +8,7 @@ set $locker ${HOME}/.i3/i3lock
 set $WM1 1: main
 set $WM2 2
 set $WM3 3
+set $WM8 8
 
 # Fonts
 
@@ -94,7 +95,7 @@ bindsym $mod+4 workspace 4
 bindsym $mod+5 workspace 5
 bindsym $mod+6 workspace 6
 bindsym $mod+7 workspace 7
-bindsym $mod+8 workspace 8
+bindsym $mod+8 workspace $WM8
 bindsym $mod+9 workspace 9
 bindsym $mod+0 workspace 10
 
@@ -106,7 +107,7 @@ bindsym $mod+Shift+4 move container to workspace 4
 bindsym $mod+Shift+5 move container to workspace 5
 bindsym $mod+Shift+6 move container to workspace 6
 bindsym $mod+Shift+7 move container to workspace 7
-bindsym $mod+Shift+8 move container to workspace 8
+bindsym $mod+Shift+8 move container to workspace $WM8
 bindsym $mod+Shift+9 move container to workspace 9
 bindsym $mod+Shift+0 move container to workspace 10
 
@@ -180,7 +181,7 @@ for_window [window_role="Preferences"] floating enable
 for_window [class="Pavucontrol"] floating enable
 for_window [class="ksysguard"] floating enable
 
-# VPN 
+# VPN
 
 for_window [class="^NC$"] floating enable
 assign [class="^NC$"] $WM1
@@ -198,6 +199,11 @@ assign [class="google-chrome" instance="crx_hfilbmblidibnmifcabmolhlaekpfhak"] $
 
 # Remmina
 assign [class="remmina"] $WM3
+
+# VM
+
+assign [class="VirtualBox"] $WM8
+
 
 # Autostart
 
