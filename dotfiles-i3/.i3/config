@@ -8,7 +8,11 @@ set $locker ${HOME}/.i3/i3lock
 set $WM1 1: main
 set $WM2 2
 set $WM3 3
-set $WM8 8
+set $WM8 
+
+# Workspace
+
+workspace $WM8 output HDMI3
 
 # Fonts
 
@@ -22,7 +26,7 @@ client.unfocused #2d2d2d #2d2d2d #c7c7c7 #002b36
 client.urgent #dc322f #dc322f #f9f9f9 #dc322f
 
 # Use Mouse+$mod to drag floating windows to their wanted position
-floating_modifier Mod1
+floating_modifier $mod
 
 # Bindings
 
