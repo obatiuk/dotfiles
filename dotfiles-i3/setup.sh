@@ -54,12 +54,16 @@ if ask "Do you want to install i3 configuration?"; then
         xfconf-query -v -c xfce4-power-manager -p /xfce4-power-manager/lock-screen-suspend-hibernate -n -t bool -s true
     fi
 
+    # Keyboard configuration
+
     if ask "Apply default keyboard configuration?"; then
 	xfconf-query -v -c keyboard-layout -p /Default/XkbDisable -n -t bool -s false
 	xfconf-query -v -c keyboard-layout -p /Default/XkbLayout -n -t string -s "us,ru"
 	xfconf-query -v -c keyboard-layout -p /Default/XkbOptions/Group -n -t string -s "grp:alt_caps_toggle"
 	xfconf-query -v -c keyboard-layout -p /Default/XkbVariant -n -t string -s "os_winkeys"
     fi
+
+    # Appearance configuration
 
     if ask "Appply default appearance configuration?"; then
 	xfconf-query -v -c xsettings -p /Gtk/ButtonImages -n -t bool -s true
@@ -68,8 +72,13 @@ if ask "Do you want to install i3 configuration?"; then
 	xfconf-query -v -c xsettings -p /Net/ThemeName -n -t string -s "oxygen-gtk"
 
 	xfconf-query -v -c xfce4-notifyd -p /theme -n -t string -s "smoke"
-	xfconf-query -v -c xfce4-notifyd -p /notify-location -n -t unit 2
+	xfconf-query -v -c xfce4-notifyd -p /notify-location -n -t unit -s 2
     fi
+
+    # Display configuration
+    
+    # Enable xfce to detect monitors automatically
+    xfconf-query -v -c displays -p /Notify -n -t bool -s true
 
     # Check all required resources
 

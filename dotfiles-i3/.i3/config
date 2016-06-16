@@ -14,11 +14,14 @@ set $WM6 "6:6"
 set $WM7 "7:7"
 set $WM8 "8:"
 set $WM9 "9:9"
-set $WM10 "10:10"
+set $WM10 "10:"
 
 # Workspace
 
 workspace $WM8 output HDMI3
+workspace $WM2 output HDMI2
+workspace $WM3 output HDMI2
+workspace $WM4 output HDMI2
 
 # Fonts
 
@@ -46,13 +49,16 @@ bindsym $mod+t exec terminology
 # kill focused window (yeah, yeah, I know :)
 bindsym $alt+F4 kill
 
-# Run
+# run
 bindsym $mod+r exec --no-startup-id rofi -show run -font "Droid Sans Mono 9"
 bindsym $mod+s exec --no-startup-id rofi -show ssh -font "Droid Sans Mono 9" -terminal terminology
 bindsym Control+Escape exec --no-startup-id i3-dmenu-desktop --dmenu='rofi -dmenu -p "app:" -font "Droid Sans Mono 9"'
 
-# Screenshot
+# screenshot
 bindsym Print exec xfce4-screenshooter
+
+# display configuration
+bindsym $mod+d exec xfce4-display-settings
 
 # alternatively, you can use the cursor keys:
 bindsym $mod+Left focus left
@@ -93,9 +99,6 @@ bindsym $mod+space focus mode_toggle
 
 # focus the parent container
 bindsym $mod+p focus parent
-
-# focus the child container
-#bindsym $mod+d focus child
 
 # switch to workspace
 bindsym $mod+1 workspace $WM1
