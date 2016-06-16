@@ -6,7 +6,7 @@
 
 
 lock() {
-  ${HOME}.i3/i3lock.sh
+  ${HOME}/.i3/i3lock.sh
 }
 
 case "$1" in
