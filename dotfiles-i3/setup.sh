@@ -65,6 +65,13 @@ if ask "Do you want to install i3 configuration?"; then
 	xfconf-query -v -c keyboard-layout -p /Default/XkbLayout -n -t string -s "us,ru"
 	xfconf-query -v -c keyboard-layout -p /Default/XkbOptions/Group -n -t string -s "grp:alt_caps_toggle"
 	xfconf-query -v -c keyboard-layout -p /Default/XkbVariant -n -t string -s "os_winkeys"
+
+	## Removing default shortcuts, they should be handled by i3 
+	xfconf-query -c xfce4-keyboard-shortcuts -p /commands/custom -r -R
+	xfconf-query -c xfce4-keyboard-shortcuts -p /commands/custom/override -n -t bool -s true
+	xfconf-query -c xfce4-keyboard-shortcuts -p /xfwm4 -r -R
+	xfconf-query -c xfce4-keyboard-shortcuts -p /xfwm4/custom/override -n -t bool -s true
+	xfconf-query -c xfce4-keyboard-shortcuts -p /providers -r -R
     fi
 
     # Appearance configuration
