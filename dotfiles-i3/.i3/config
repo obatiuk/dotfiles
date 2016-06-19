@@ -183,7 +183,7 @@ bindsym XF86AudioMute exec --no-startup-id pactl set-sink-mute @DEFAULT_SINK@ to
 #bindsym XF86MonBrightnessUp exec xbacklight -inc 5 # increase screen brightness
 #bindsym XF86MonBrightnessDown exec xbacklight -dec 5y # decrease screen brightness
 
-bindsym $mod+h exec --no-startup-id dolphin ${HOME}
+bindsym $mod+h exec --no-startup-id thunar ${HOME}
 
 # Window settings
 
