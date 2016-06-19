@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+[ -n "$(echo $@ | grep "\-debug")" ] && set -x
+
 . ../functions
 
 #

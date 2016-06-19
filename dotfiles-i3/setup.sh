@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
-. ../functions
-
 [ -n "$(echo $@ | grep "\-debug")" ] && set -x
+
+. ../functions
 
 #
 # Variables
