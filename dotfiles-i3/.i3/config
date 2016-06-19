@@ -56,6 +56,7 @@ bindsym Control+Escape exec --no-startup-id i3-dmenu-desktop --dmenu='rofi -dmen
 
 # screenshot
 bindsym Print exec xfce4-screenshooter
+bindsym $mod+Shift+P exec xfconf-query -c xfce4-power-manager -p /xfce4-power-manager/presentation-mode -T
 
 # display configuration
 bindsym $mod+d exec xfce4-display-settings
@@ -221,7 +222,7 @@ assign [class="VirtualBox"] $WM8
 
 # Autostart
 
-exec --no-startup-id xfsettingsd --sm-client-disable &
+exec --no-startup-id xfsettingsd --sm-client-disable && sleep 1
 exec --no-startup-id xfce4-power-manager &
 exec --no-startup-id /usr/libexec/xfce-polkit &
 
