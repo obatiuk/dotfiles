@@ -21,7 +21,7 @@ if ask "Do you want to install base configuration?"; then
     # Target folders
 
     [ -d ${target_dir}/.Xresources.d ] || mkdir -vp ${target_dir}/.Xresources.d
-    [ -d ${target_dir}/.bash_profile.d ] || mkdir -vp ${target_dir}/.bash_profile.d
+    [ -d ${target_dir}/.bashrc.d ] || mkdir -vp ${target_dir}/.bashrc.d
 
     # Profile
 
@@ -38,7 +38,7 @@ if ask "Do you want to install base configuration?"; then
 
     # Bash profiles
 
-    ln -svfn ${dotfiles_dir}/.bash_profile.d/.bash_profile-git ${target_dir}/.bash_profile.d/.bash_profile-git
+    ln -svfn ${dotfiles_dir}/.bashrc.d/.bashrc-git ${target_dir}/.bashrc.d/.bashrc-git
 
     # Check all required resources
 

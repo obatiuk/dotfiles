@@ -1,0 +1,8 @@
+
+. /usr/share/git-core/contrib/completion/git-prompt.sh
+
+export GIT_PS1_SHOWCOLORHINTS=1
+export GIT_PS1_SHOWUNTRACKEDFILES=1
+export GIT_PS1_SHOWDIRTYSTATE=1
+
+export PROMPT_COMMAND='__git_ps1 "[\[\e[0;33m\]\u\[\e[0;m\]@\h \W"] "\\\$ "'
