@@ -21,6 +21,7 @@ if ask "Do you want to install base configuration?"; then
     # Target folders
 
     [ -d ${target_dir}/.Xresources.d ] || mkdir -vp ${target_dir}/.Xresources.d
+    [ -d ${target_dir}/.bash_profile.d ] || mkdir -vp ${target_dir}/.bash_profile.d
 
     # Profile
 
@@ -34,6 +35,10 @@ if ask "Do you want to install base configuration?"; then
     # X settings
 
     ln -svfn ${dotfiles_dir}/.Xresources.d/.Xresources-fonts ${target_dir}/.Xresources.d/.Xresources-fonts
+
+    # Bash profiles
+
+    ln -svfn ${dotfiles_dir}/.bash_profile.d/.bash_profile-git ${target_dir}/.bash_profile.d/.bash_profile-git
 
     # Check all required resources
 

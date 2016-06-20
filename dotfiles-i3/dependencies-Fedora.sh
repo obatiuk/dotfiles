@@ -38,7 +38,8 @@ sudo dnf -y --best --allowerasing install \
     fedora-icon-theme \
     gtk-xfce-engine \
     oxygen-gtk2 \
-    thunar
+    thunar \
+    git
 
 # Cleanup
 
