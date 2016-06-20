@@ -22,7 +22,6 @@ if ask "Do you want to install i3 configuration?"; then
 
     [ -d ${target_dir}/.config ] || mkdir -vp ${target_dir}/.config
     [ -d ${target_dir}/.Xresources.d ] || mkdir -vp ${target_dir}/.Xresources.d
-    [ -d ${target_dir}/.profile.d ] || mkdir -vp ${target_dir}/.profile.d
     [ -d ${target_dir}/.themes ] || mkdir -vp ${target_dir}/.themes
 
     # i3 Configuration
@@ -37,7 +36,6 @@ if ask "Do you want to install i3 configuration?"; then
 
     # X settings
 
-    ln -svfn ${dotfiles_dir}/.profile.d/.profile-i3 ${target_dir}/.profile.d/.profile-i3
     ln -svfn ${dotfiles_dir}/.Xresources.d/.Xresources-rofi ${target_dir}/.Xresources.d/.Xresources-rofi
 
     # Themes
