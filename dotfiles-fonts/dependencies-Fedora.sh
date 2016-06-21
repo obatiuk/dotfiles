@@ -9,7 +9,10 @@ sudo dnf config-manager --add-repo=http://download.opensuse.org/repositories/hom
 # Packages
 
 sudo dnf -y install \
-   freetype-infinality-ultimate
+   freetype-infinality-ultimate \
+   cabextract
+
+sudo dnf -y install http://sourceforge.net/projects/mscorefonts2/files/rpms/msttcore-fonts-installer-2.6-1.noarch.rpm
 
 # Cleanup
 
