@@ -49,8 +49,7 @@ sudo dnf install \
     oxygen-gtk2 \
     mc \
     htop \
-    cabextract \
-    unrar
+    cabextract
 
 # Cleanup
 
