@@ -47,7 +47,10 @@ sudo dnf install \
     fedora-icon-theme \
     adwaita-cursor-theme \
     oxygen-gtk2 \
-    mc
+    mc \
+    htop \
+    cabextract \
+    unrar
 
 # Cleanup
 
