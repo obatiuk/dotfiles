@@ -56,7 +56,8 @@ bindsym Control+Escape exec --no-startup-id i3-dmenu-desktop --dmenu='rofi -dmen
 
 # screenshot
 bindsym Print exec xfce4-screenshooter
-bindsym $mod+Shift+P exec xfconf-query -c xfce4-power-manager -p /xfce4-power-manager/presentation-mode -T
+bindsym $mod+Shift+P exec xfconf-query -c xfce4-power-manager -p /xfce4-power-manager/presentation-mode -T && notify-send 'Power Manager' 'Presentation mode has changed.' --icon=dialog-information
+
 
 # display configuration
 bindsym $mod+d exec xfce4-display-settings
