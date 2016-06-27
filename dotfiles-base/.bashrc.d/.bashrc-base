@@ -1,15 +1,16 @@
 
 # Base aliases
 
-alias ls='ls --color=auto'
-alias grep='grep --color=auto'
-alias free='free -mt'
+alias ls="ls --color=auto"
+alias grep="grep --color=auto"
+alias free="free -mt"
 alias space="du -S | sort -n -r |more"
-alias rm='rm -vi'
-alias du='du -kh'       # Makes a more readable output.
+alias rm="rm -vi"
+alias du="du -kh"       # Makes a more readable output.
 alias df="df -Tha --total"
 alias ps="ps auxf"
 alias mkdir="mkdir -pv"
+alias reload="source ~/.bashrc"
 
 # Make multiple shells share the same history file
 
@@ -19,8 +20,11 @@ export HISTCONTROL=ignoreboth   # ingore duplicates and spaces
 export HISTIGNORE='&:ls:ll:la:cd:exit:clear:history'
 
 # Append to the history file, don't overwrite it
-
 shopt -s histappend
+
+# check the window size after each command and, if necessary,
+# update the values of LINES and COLUMNS.
+shopt -s checkwinsize
 
 # Makes man more readable
 

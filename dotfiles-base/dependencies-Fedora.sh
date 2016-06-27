@@ -49,7 +49,9 @@ sudo dnf install \
     oxygen-gtk2 \
     mc \
     htop \
-    cabextract
+    cabextract \
+    sddm \
+    sddm-breeze
 
 # Cleanup
 
