@@ -6,5 +6,9 @@ trap "/bin/rm -f $image" INT TERM EXIT
 scrot $image
 i3lock -c 000000
 convert $image -blur 0x8 -paint 10  $image
-kill $(pgrep i3lock)
-i3lock -i $image
+
+if pgrep "i3lock" > /dev/null
+then
+    kill $(pgrep i3lock)
+    i3lock -i $image
+fi
