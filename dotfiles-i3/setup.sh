@@ -23,6 +23,7 @@ if ask "Do you want to install i3 configuration?"; then
     [ -d ${target_dir}/.config ] || mkdir -vp ${target_dir}/.config
     [ -d ${target_dir}/.Xresources.d ] || mkdir -vp ${target_dir}/.Xresources.d
     [ -d ${target_dir}/.themes ] || mkdir -vp ${target_dir}/.themes
+    [ -d ${target_dir}/.bash_profile.d ] || mkdir -vp ${target_dir}/.bash_profile.d
 
     # i3 Configuration
 
@@ -39,8 +40,12 @@ if ask "Do you want to install i3 configuration?"; then
     ln -svfn ${dotfiles_dir}/.Xresources.d/.Xresources-rofi ${target_dir}/.Xresources.d/.Xresources-rofi
 
     # Themes
-    
+
     ln -svfn ${dotfiles_dir}/.themes/smoke ${target_dir}/.themes/smoke
+
+    # custom bash_profile settings
+
+    ln -svfn ${dotfiles_dir}/.bash_profile.d/.bash_profile-java ${target_dir}/.bash_profile.d/.bash_profile-java
 
     # Power management
 
