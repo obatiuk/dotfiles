@@ -24,7 +24,6 @@ sudo dnf -y --best --allowerasing install \
     google-droid-sans-fonts \
     google-droid-serif-fonts \
     google-droid-sans-mono-fonts \
-    xbacklight \
     xautolock \
     pavucontrol \
     gnome-keyring \
@@ -39,6 +38,8 @@ sudo dnf -y --best --allowerasing install \
     gtk-xfce-engine \
     oxygen-gtk2 \
     thunar \
+    thunar-archive-plugin \
+    xarchiver \
     git
 
 # Cleanup
