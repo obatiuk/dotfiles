@@ -34,13 +34,9 @@ sudo dnf -y --best --allowerasing install \
     xfce4-screenshooter \
     xfce-polkit \
     xfce4-settings \
-    fedora-icon-theme \
-    gtk-xfce-engine \
-    oxygen-gtk2 \
     thunar \
     thunar-archive-plugin \
-    xarchiver \
-    git
+    xarchiver
 
 # Cleanup
 
