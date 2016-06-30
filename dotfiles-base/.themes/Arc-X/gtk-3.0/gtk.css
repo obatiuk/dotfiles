@@ -3851,8 +3851,8 @@ MarlinViewWindow .source-list.sidebar.view .scrollbar .slider, GeditFileBrowserW
 @define-color theme_selected_bg_color #5294E2;
 @define-color theme_selected_fg_color #ffffff;
 @define-color fg_color #5c616c;
-@define-color text_color #5c616c;
-@define-color bg_color #F5F6F7;
+@define-color text_color #1A1A1A;
+@define-color bg_color #EDECEB;
 @define-color base_color #ffffff;
 @define-color selected_bg_color #5294E2;
 @define-color selected_fg_color #ffffff;
