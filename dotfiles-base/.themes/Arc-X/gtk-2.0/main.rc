@@ -51,7 +51,7 @@ style "default" {
   GtkSpinButton::shadow_type = GTK_SHADOW_NONE
   GtkMenuBar::shadow-type = GTK_SHADOW_NONE
   GtkToolbar::shadow-type = GTK_SHADOW_NONE
-  GtkMenuBar::internal-padding = 0 #( every window is misaligned for the sake of menus ):
+  GtkMenuBar::internal-padding = 1 #( every window is misaligned for the sake of menus ):
   GtkMenu::horizontal-padding = 0
   GtkMenu::vertical-padding = 0
 
@@ -1980,7 +1980,7 @@ style "treeview_header" {
 
     image {
       function = BOX
-      file = "assets/tree_header.png"
+      file = "assets/tree_header-1.png"
       border = { 1, 1, 1, 1 }
       stretch = TRUE
     }
