@@ -84,6 +84,7 @@ if ask "Do you want to install i3 configuration?"; then
 
 	xfconf-query -v -c xfce4-notifyd -p /theme -n -t string -s "Default"
 	xfconf-query -v -c xfce4-notifyd -p /notify-location -n -t uint -s 2
+	xfconf-query -v -c xfce4-notifyd -p /initial-opacity -n -t double -s 0.9
     fi
 
     # Display configuration
