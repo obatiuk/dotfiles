@@ -46,7 +46,7 @@ if ask "Do you want to install i3 configuration?"; then
         xfconf-query -v -c xfce4-power-manager -p /xfce4-power-manager/lid-action-on-ac -n -t uint -s 1
         ## Lock screen
         xfconf-query -v -c xfce4-power-manager -p /xfce4-power-manager/lock-screen-suspend-hibernate -n -t bool -s true
-        xfconf-query -v -c xfce4-session -p /general/LockCommand -n -t string -s "${target_dir}/.i3/i3lock"
+        xfconf-query -v -c xfce4-session -p /general/LockCommand -n -t string -s "${target_dir}/.config/i3/i3lock"
         ## Hibernate on low power
         xfconf-query -v -c xfce4-power-manager -p /xfce4-power-manager/critical-power-action -n -t uint -s 2
     fi
