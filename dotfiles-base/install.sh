@@ -49,6 +49,10 @@ if ask "Do you want to install base configuration?"; then
     ln -svfn ${dotfiles_dir}/.bashrc.d/.bashrc-base ${target_dir}/.bashrc.d/.bashrc-base
     ln -svfn ${dotfiles_dir}/.bashrc.d/.bashrc-git ${target_dir}/.bashrc.d/.bashrc-git
 
+    # Git config
+
+    git config --global credential.helper gnome-keyring
+
     # Check all required resources
 
     checkAllResources

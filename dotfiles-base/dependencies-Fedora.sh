@@ -46,6 +46,8 @@ sudo dnf install \
     unrar \
     fedora-icon-theme \
     adwaita-cursor-theme \
+    gnome-keyring \
+    seahorse \
     gtk2 \
     gtk3 \
     gtk-murrine-engine \
