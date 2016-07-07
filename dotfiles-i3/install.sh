@@ -81,8 +81,8 @@ if ask "Do you want to install i3 configuration?"; then
     fi
 
     # Display configuration
-    
-    # Enable xfce to detect monitors automatically
+
+    ## Enable xfce to detect monitors automatically
     xfconf-query -v -c displays -p /Notify -n -t bool -s true
 
     # Check all required resources

@@ -64,9 +64,12 @@ checkProfile() {
 		cat <<-EOF >> ${target_dir}/.profile
 		
 		# DO NOT REMOVE THIS LINE. ${marker}
-		for file in ${target_dir}/.profile.d/.profile-* ; do
-		. \$file
-		done
+		if [ -d ${target_dir}/.profile.d ]; then
+		    for file in ${target_dir}/.profile.d/.profile-* ; do
+		        . \$file
+		    done
+		    unset file
+		fi
 		EOF
 	fi
 
@@ -88,9 +91,12 @@ checkBashProfile() {
 		cat <<-EOF >> ${target_dir}/.bash_profile
 		
 		# DO NOT REMOVE THIS LINE. ${marker}
-		for file in ${target_dir}/.bash_profile.d/.bash_profile-* ; do
-		. \$file
-		done
+		if [ -d ${target_dir}/.bash_profile.d ]; then
+		    for file in ${target_dir}/.bash_profile.d/.bash_profile-* ; do
+		        . \$file
+		    done
+		    unset file
+		fi
 		EOF
 	fi
 
@@ -112,10 +118,12 @@ checkBashrc() {
 		cat <<-EOF >> ${target_dir}/.bashrc
 		
 		# DO NOT REMOVE THIS LINE. ${marker}
-		for file in ${target_dir}/.bashrc.d/.bashrc-* ; do
-		. \$file
-		done
-		
+		if [ -d ${target_dir}/.bashrc.d ]; then
+		    for file in ${target_dir}/.bashrc.d/.bashrc-* ; do
+		        . \$file
+		    done
+		    unset file
+		fi
 		EOF
 	fi
 
