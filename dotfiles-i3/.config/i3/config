@@ -227,6 +227,8 @@ exec --no-startup-id nm-applet &
 exec --no-startup-id pnmixer &
 exec --no-startup-id compton --config ${HOME}/.config/i3/compton.conf &
 
+exec --no-startup-id /usr/bin/gnome-keyring-daemon --start --components=gpg,pkcs11,secrets,ssh &
+
 exec_always --no-startup-id feh --bg-fill ${HOME}/.config/wallpaper/default.png &
 
 # gaps
