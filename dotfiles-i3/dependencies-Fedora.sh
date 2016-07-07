@@ -36,7 +36,9 @@ sudo dnf -y --best --allowerasing install \
     xfce4-settings \
     thunar \
     thunar-archive-plugin \
-    xarchiver
+    thunar-volman \
+    xarchiver \
+    blueman
 
 # Cleanup
 

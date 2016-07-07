@@ -218,16 +218,17 @@ assign [class="VirtualBox"] $WM8
 
 # Autostart
 
-exec --no-startup-id xfsettingsd --sm-client-disable && sleep 1
-exec --no-startup-id xfce4-power-manager &
+exec --no-startup-id /usr/bin/xfsettingsd --sm-client-disable && sleep 1
+exec --no-startup-id /usr/bin/xfce4-power-manager &
 exec --no-startup-id /usr/libexec/xfce-polkit &
+exec --no-startup-id /usr/bin/xautolock -detectsleep -time 10 -locker $locker &
+exec --no-startup-id /usr/bin/nm-applet &
+exec --no-startup-id /usr/bin/pnmixer &
+exec --no-startup-id /usr/bin/blueman-applet &
+exec --no-startup-id /usr/bin/thunar --daemon &
+exec --no-startup-id /usr/bin/compton --config ${HOME}/.config/i3/compton.conf &
 
-exec --no-startup-id xautolock -detectsleep -time 10 -locker $locker &
-exec --no-startup-id nm-applet &
-exec --no-startup-id pnmixer &
-exec --no-startup-id compton --config ${HOME}/.config/i3/compton.conf &
-
-exec_always --no-startup-id feh --bg-fill ${HOME}/.config/wallpaper/default.png &
+exec_always --no-startup-id /usr/bin/feh --bg-fill ${HOME}/.config/wallpaper/default.png &
 
 # gaps
 for_window [class="^.*"] border pixel 0
