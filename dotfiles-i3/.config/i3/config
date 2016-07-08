@@ -229,6 +229,8 @@ exec --no-startup-id /usr/bin/thunar --daemon &
 exec --no-startup-id /usr/bin/compton --config ${HOME}/.config/i3/compton.conf &
 
 exec_always --no-startup-id /usr/bin/feh --bg-fill ${HOME}/.config/wallpaper/default.png &
+exec --no-startup-id /usr/bin/gnome-keyring-daemon --start --components=gpg,pkcs11,secrets,ssh &
+
 
 # gaps
 for_window [class="^.*"] border pixel 0

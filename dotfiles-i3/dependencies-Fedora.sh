@@ -26,8 +26,6 @@ sudo dnf -y --best --allowerasing install \
     google-droid-sans-mono-fonts \
     xautolock \
     pavucontrol \
-    gnome-keyring \
-    seahorse \
     xorg-x11-xinit-session \
     xfce4-notifyd \
     xfce4-power-manager \
