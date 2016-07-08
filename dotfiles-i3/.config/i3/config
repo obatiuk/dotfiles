@@ -218,6 +218,9 @@ assign [class="VirtualBox"] $WM8
 
 # Autostart
 
+exec_always --no-startup-id /usr/bin/feh --bg-fill ${HOME}/.config/wallpaper/default.png &
+
+exec --no-startup-id /usr/bin/gnome-keyring-daemon --start --components=gpg,pkcs11,secrets,ssh &
 exec --no-startup-id /usr/bin/xfsettingsd --sm-client-disable && sleep 1
 exec --no-startup-id /usr/bin/xfce4-power-manager &
 exec --no-startup-id /usr/libexec/xfce-polkit &
@@ -227,10 +230,6 @@ exec --no-startup-id /usr/bin/pnmixer &
 exec --no-startup-id /usr/bin/blueman-applet &
 exec --no-startup-id /usr/bin/thunar --daemon &
 exec --no-startup-id /usr/bin/compton --config ${HOME}/.config/i3/compton.conf &
-
-exec_always --no-startup-id /usr/bin/feh --bg-fill ${HOME}/.config/wallpaper/default.png &
-exec --no-startup-id /usr/bin/gnome-keyring-daemon --start --components=gpg,pkcs11,secrets,ssh &
-
 
 # gaps
 for_window [class="^.*"] border pixel 0
