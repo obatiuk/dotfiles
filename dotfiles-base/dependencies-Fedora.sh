@@ -55,7 +55,8 @@ sudo dnf install \
     htop \
     cabextract \
     sddm \
-    sddm-breeze
+    sddm-breeze \
+    crudini
 
 # Cleanup
 
