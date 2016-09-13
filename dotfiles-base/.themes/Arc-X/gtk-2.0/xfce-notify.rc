@@ -11,7 +11,6 @@ style "notify-window" {
 }
 
 style "notify-button" {
-
   bg[NORMAL] = "#434652"
   bg[PRELIGHT] = "#5C6070"
   bg[ACTIVE] = "#5294E2"
@@ -26,11 +25,9 @@ style "notify-button" {
     roundness = 2
     textstyle = 0
   }
-
 }
 
 style "notify-text" {
-
   GtkWidget::link-color = "#5294E2"
 
   fg[NORMAL] = "#BAC3CF"
@@ -40,17 +37,13 @@ style "notify-text" {
   engine "murrine" {
     textstyle = 0
   }
-
 }
 
 style "notify-summary" {
-
     font_name = "Bold"
-
 }
 
 style "notify-progressbar" {
-
   GtkProgressBar::min-horizontal-bar-height = 4
 
   xthickness   = 0
