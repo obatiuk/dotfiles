@@ -13,7 +13,6 @@ alias mkdir="mkdir -pv"
 alias reload="source ~/.bashrc"
 alias update="sudo dnf update"
 alias mnt="mount | column -t"
-alias fcount="find -maxdepth 1 -type d | sort | while read -r dir; do n=$(find "$dir" -type f | wc -l); printf "%4d : %s\n" $n "$dir"; done"
 
 # Make multiple shells share the same history file
 
@@ -40,6 +39,10 @@ export LESS_TERMCAP_ue=$'\E[0m'
 export LESS_TERMCAP_us=$'\E[01;32m'
 
 # Functions
+
+function fcount {
+    find -maxdepth 1 -type d | sort | while read -r dir; do n=$(find "$dir" -type f | wc -l); printf "%4d : %s\n" $n "$dir"; done
+}
 
 function extract {
     if [ -z "$1" ]; then
