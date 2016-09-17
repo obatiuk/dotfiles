@@ -12,6 +12,8 @@ alias ps="ps auxf"
 alias mkdir="mkdir -pv"
 alias reload="source ~/.bashrc"
 alias update="sudo dnf update"
+alias mnt="mount | column -t"
+alias fcount="find -maxdepth 1 -type d | sort | while read -r dir; do n=$(find "$dir" -type f | wc -l); printf "%4d : %s\n" $n "$dir"; done"
 
 # Make multiple shells share the same history file
 

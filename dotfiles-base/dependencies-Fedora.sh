@@ -56,7 +56,8 @@ sudo dnf install \
     cabextract \
     sddm \
     sddm-breeze \
-    crudini
+    crudini \
+    screenfetch
 
 # Cleanup
 
