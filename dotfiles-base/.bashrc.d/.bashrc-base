@@ -11,7 +11,7 @@ alias df="df -Tha --total"
 alias ps="ps auxf"
 alias mkdir="mkdir -pv"
 alias reload="source ~/.bashrc"
-alias update="sudo dnf update"
+alias update="sudo dnf update --refresh"
 alias mnt="mount | column -t"
 
 # Make multiple shells share the same history file

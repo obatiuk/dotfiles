@@ -2,7 +2,7 @@
 
 . ../functions
 
-# Enabling region51/compton copr repository for compton
+# Enabling copr repository for compton
 
 sudo dnf -y copr enable yaroslav/i3desktop
 
@@ -36,7 +36,14 @@ sudo dnf -y --best --allowerasing install \
     thunar-archive-plugin \
     thunar-volman \
     xarchiver \
-    blueman
+    blueman \
+    quicksynergy \
+    baobab \
+    gnome-shell-extension-user-theme \
+    system-config-printer \
+    gvfs-smb \
+    firewall-config \
+    gimp
 
 # Cleanup
 

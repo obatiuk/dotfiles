@@ -38,8 +38,9 @@ if ask "Do you want to install i3 configuration?"; then
     # Power management
 
     if ask "Apply default power-management configuration?"; then
-        ## Enabling Xfce4 power manager icon
+        ## Enabling Xfce4 power manager icon & notifications
         xfconf-query -v -c xfce4-power-manager -p /xfce4-power-manager/show-tray-icon -n -t int -s 1
+        xfconf-query -v -c xfce4-power-manager -p /xfce4-power-manager/general-notification -n -t bool -s true
         ## Lid action configuration
         xfconf-query -v -c xfce4-power-manager -p /xfce4-power-manager/logind-handle-lid-switch -n -t bool -s false
         xfconf-query -v -c xfce4-power-manager -p /xfce4-power-manager/lid-action-on-battery -n -t uint -s 1
@@ -78,6 +79,17 @@ if ask "Do you want to install i3 configuration?"; then
 	xfconf-query -v -c xfce4-notifyd -p /theme -n -t string -s "Default"
 	xfconf-query -v -c xfce4-notifyd -p /notify-location -n -t uint -s 2
 	xfconf-query -v -c xfce4-notifyd -p /initial-opacity -n -t double -s 0.9
+	
+	#Gnome 3
+	gsettings set org.gnome.shell enabled-extensions "['user-theme@gnome-shell-extensions.gcampax.github.com']"
+	gsettings set org.gnome.desktop.interface gtk-theme "Arc-X"
+	gsettings set org.gnome.desktop.wm.preferences theme "Arc-X"
+	gsettings set org.gnome.shell.extensions.user-theme name "Arc-X"
+	gsettings set org.gnome.desktop.interface icon-theme "Fedora"
+
+	#Gnome 2
+	gconftool-2 --type=string --set /desktop/gnome/interface/gtk_theme "Arc-X"
+	gconftool-2 --type=string --set /apps/metacity/general/theme "Arc-X"
     fi
 
     # Display configuration

@@ -2,6 +2,8 @@
 
 . ../functions
 
+sudo dnf -y update
+
 # Registering google-chrome & google-talkplugin repositories
 
 sudo bash -c 'cat << EOF > /etc/yum.repos.d/google-chrome.repo
@@ -29,12 +31,15 @@ EOF
 
 # Installing rpmfusion-free/nonfree repositories
 
-sudo dnf install http://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$release.noarch.rpm
-sudo dnf install http://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$release.noarch.rpm
+sudo dnf -y install http://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-${release}.noarch.rpm
+sudo dnf -y install http://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-${release}.noarch.rpm
+
+# Installing skype-alpha repository
+sudo dnf -y config-manager --add-repo https://repo.skype.com/data/skype-stable.repo
 
 # Packages
 
-sudo dnf install \
+sudo dnf -y install \
     google-chrome-stable \
     google-talkplugin \
     firefox \
@@ -42,7 +47,7 @@ sudo dnf install \
     google-droid-serif-fonts \
     google-droid-sans-mono-fonts \
     git \
-    filelight \
+    git-extras \
     unrar \
     fedora-icon-theme \
     adwaita-cursor-theme \
@@ -52,13 +57,19 @@ sudo dnf install \
     gtk3 \
     gtk-murrine-engine \
     mc \
+    gdm \
     htop \
-    cabextract \
-    sddm \
-    sddm-breeze \
     crudini \
-    screenfetch
+    screenfetch \
+    skypeforlinux \
+    gparted \
+    meld \
+    diffuse \
+    ecryptfs-utils \
+    adobe-source-code-pro-fonts
+
+sudo dnf -y --setopt=strict=0 install gstreamer{1,}-{ffmpeg,libav,plugins-{good,ugly,bad{,-free,-nonfree}}} 
 
 # Cleanup
 
-sudo dnf clean packages
+sudo dnf -y clean packages

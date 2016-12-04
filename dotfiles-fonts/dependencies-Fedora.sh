@@ -9,6 +9,7 @@ sudo dnf config-manager --add-repo=http://download.opensuse.org/repositories/hom
 # Packages
 
 sudo dnf -y install \
+   fontconfig-infinality-ultimate \
    freetype-infinality-ultimate \
    cabextract
 

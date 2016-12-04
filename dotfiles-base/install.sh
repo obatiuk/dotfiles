@@ -29,12 +29,6 @@ if ask "Do you want to install base configuration?"; then
 
     ln -svfn ${dotfiles_dir}/.face.icon ${target_dir}/.face.icon
 
-    if ask "Set SDDM user icon for current user?"; then
-	sudo cp -fv ${dotfiles_dir}/.face.icon /usr/share/sddm/faces/${USER}.face.icon
-	#setfacl -m u:sddm:x /home/${USER}
-	#setfacl -m u:sddm:r /home/${USER}/.face.icon
-    fi
-
     # Theme
 
     ln -svfn ${dotfiles_dir}/.themes/Arc-X ${target_dir}/.themes/Arc-X
@@ -62,5 +56,9 @@ if ask "Do you want to install base configuration?"; then
     # Check all required resources
 
     checkAllResources
+
+    if ask "Enable GDM?"; then
+	sudo systemctl enable gdm
+    fi
 
 fi
