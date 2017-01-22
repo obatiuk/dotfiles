@@ -43,7 +43,10 @@ sudo dnf -y --best --allowerasing install \
     system-config-printer \
     gvfs-smb \
     firewall-config \
-    gimp
+    gimp \
+    eog \
+    evince \
+    xdg-utils
 
 # Cleanup
 

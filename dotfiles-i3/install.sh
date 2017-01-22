@@ -97,6 +97,12 @@ if ask "Do you want to install i3 configuration?"; then
     ## Enable xfce to detect monitors automatically
     xfconf-query -v -c displays -p /Notify -n -t bool -s true
 
+    # Some default mime associations contains extra ";" character at the end. Fixing that.
+
+    xdg-mime default eog.desktop image/jpeg
+    xdg-mime default eog.desktop image/jpg
+    xdg-mime default evince.desktop application/pdf
+
     # Check all required resources
 
     checkAllResources
