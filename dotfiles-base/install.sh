@@ -60,5 +60,11 @@ if ask "Do you want to install base configuration?"; then
     if ask "Enable GDM?"; then
 	sudo systemctl enable gdm
     fi
-
+    
+    if ask "Generate default global .gitconfig?"; then
+	git config --global color.ui auto
+	git config --global core.autocrlf input
+	git config --global push.default simple
+	git config --global credential.helper gnome-keyring
+    fi
 fi
