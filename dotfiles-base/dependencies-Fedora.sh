@@ -57,6 +57,7 @@ sudo dnf -y install \
     gtk3 \
     gtk-murrine-engine \
     mc \
+    lynx \
     gdm \
     htop \
     crudini \
@@ -66,7 +67,9 @@ sudo dnf -y install \
     meld \
     diffuse \
     ecryptfs-utils \
-    adobe-source-code-pro-fonts
+    adobe-source-code-pro-fonts \
+    sysstat \
+    gnome-keyring
 
 sudo dnf -y --setopt=strict=0 install gstreamer{1,}-{ffmpeg,libav,plugins-{good,ugly,bad{,-free,-nonfree}}} 
 
