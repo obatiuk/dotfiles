@@ -46,7 +46,8 @@ sudo dnf -y --best --allowerasing install \
     gimp \
     eog \
     evince \
-    xdg-utils
+    xdg-utils \
+    file-roller
 
 # Cleanup
 

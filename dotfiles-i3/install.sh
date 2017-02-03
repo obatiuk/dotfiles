@@ -102,6 +102,7 @@ if ask "Do you want to install i3 configuration?"; then
     xdg-mime default eog.desktop image/jpeg
     xdg-mime default eog.desktop image/jpg
     xdg-mime default evince.desktop application/pdf
+    xdg-mime default org.gnome.FileRoller.desktop application/zip
 
     # Check all required resources
 
