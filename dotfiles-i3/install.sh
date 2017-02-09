@@ -26,6 +26,7 @@ if ask "Do you want to install i3 configuration?"; then
     # i3 Configuration
 
     ln -svfn ${dotfiles_dir}/.config/i3 ${target_dir}/.config/i3
+    ln -svfn ${dotfiles_dir}/.config/i3status ${target_dir}/.config/i3status
 
     # Wallpaper
 
@@ -101,8 +102,13 @@ if ask "Do you want to install i3 configuration?"; then
 
     xdg-mime default eog.desktop image/jpeg
     xdg-mime default eog.desktop image/jpg
+    xdg-mime default eog.desktop image/png
+
     xdg-mime default evince.desktop application/pdf
+
     xdg-mime default org.gnome.FileRoller.desktop application/zip
+
+    xdg-mime default org.gnome.Totem.desktop video/mp4
 
     # Check all required resources
 
