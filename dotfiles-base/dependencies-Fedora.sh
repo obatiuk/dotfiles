@@ -69,7 +69,8 @@ sudo dnf -y install \
     ecryptfs-utils \
     adobe-source-code-pro-fonts \
     sysstat \
-    gnome-keyring
+    gnome-keyring \
+    p7zip
 
 sudo dnf -y --setopt=strict=0 install gstreamer{1,}-{ffmpeg,libav,plugins-{good,ugly,bad{,-free,-nonfree}}} 
 
