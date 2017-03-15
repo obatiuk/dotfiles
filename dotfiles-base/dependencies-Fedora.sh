@@ -70,7 +70,8 @@ sudo dnf -y install \
     adobe-source-code-pro-fonts \
     sysstat \
     gnome-keyring \
-    p7zip
+    p7zip \
+    jad
 
 sudo dnf -y --setopt=strict=0 install gstreamer{1,}-{ffmpeg,libav,plugins-{good,ugly,bad{,-free,-nonfree}}} 
 
