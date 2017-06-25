@@ -58,7 +58,7 @@ if ask "Do you want to install i3 configuration?"; then
 
     if ask "Apply default keyboard configuration?"; then
 	xfconf-query -v -c keyboard-layout -p /Default/XkbDisable -n -t bool -s false
-	xfconf-query -v -c keyboard-layout -p /Default/XkbLayout -n -t string -s "us,ru"
+	xfconf-query -v -c keyboard-layout -p /Default/XkbLayout -n -t string -s "us,ru,ua"
 	xfconf-query -v -c keyboard-layout -p /Default/XkbOptions/Group -n -t string -s "grp:alt_caps_toggle"
 	xfconf-query -v -c keyboard-layout -p /Default/XkbVariant -n -t string -s "os_winkeys"
 
