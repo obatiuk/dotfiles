@@ -37,6 +37,7 @@ sudo dnf -y --best --allowerasing install \
     thunar-volman \
     xarchiver \
     blueman \
+    bluez-hid2hci \
     quicksynergy \
     baobab \
     gnome-shell-extension-user-theme \
