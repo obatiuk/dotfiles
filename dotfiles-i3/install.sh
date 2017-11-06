@@ -37,6 +37,11 @@ if ask "Do you want to install i3 configuration?"; then
     ln -svfn ${dotfiles_dir}/.Xresources.d/.Xresources-rofi ${target_dir}/.Xresources.d/.Xresources-rofi
     ln -svfn ${dotfiles_dir}/.Xresources.d/.Xresources-i3 ${target_dir}/.Xresources.d/.Xresources-i3
 
+    # redshift configuration
+
+    ln -svfn ${dotfiles_dir}/.config/redshift.conf ${target_dir}/.config/redshift.conf
+    systemctl --user enable redshift-gtk.service
+
     # Power management
 
     if ask "Apply default power-management configuration?"; then
@@ -110,6 +115,8 @@ if ask "Do you want to install i3 configuration?"; then
     xdg-mime default org.gnome.FileRoller.desktop application/zip
 
     xdg-mime default org.gnome.Totem.desktop video/mp4
+
+    xdg-mime default wine.desktop application/x-dosexec
 
     # Check all required resources
 

@@ -5,6 +5,7 @@
 # Enabling copr repository for compton
 
 sudo dnf -y copr enable yaroslav/i3desktop
+sudo dnf -y copr enable mosquito/atom
 
 # Packages
 
@@ -48,7 +49,10 @@ sudo dnf -y --best --allowerasing install \
     eog \
     evince \
     xdg-utils \
-    file-roller
+    file-roller \
+    atom \
+    redshift \
+    redshift-gtk
 
 # Cleanup
 
