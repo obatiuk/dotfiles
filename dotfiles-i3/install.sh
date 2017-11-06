@@ -40,7 +40,6 @@ if ask "Do you want to install i3 configuration?"; then
     # redshift configuration
 
     ln -svfn ${dotfiles_dir}/.config/redshift.conf ${target_dir}/.config/redshift.conf
-    systemctl --user enable redshift-gtk.service
 
     # Power management
 

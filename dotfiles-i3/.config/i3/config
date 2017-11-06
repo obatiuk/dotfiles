@@ -235,6 +235,7 @@ exec --no-startup-id /usr/bin/blueman-applet &
 exec --no-startup-id /usr/bin/thunar --daemon &
 exec --no-startup-id /usr/bin/compton --config ${HOME}/.config/i3/compton.conf &
 exec --no-startup-id /usr/bin/seapplet &
+exec --no-startup-id /usr/bin/redshift-gtk &
 
 # gaps
 for_window [class="^.*"] border pixel 0
