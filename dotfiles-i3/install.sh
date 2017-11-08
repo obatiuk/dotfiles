@@ -37,6 +37,9 @@ if ask "Do you want to install i3 configuration?"; then
     ln -svfn ${dotfiles_dir}/.Xresources.d/.Xresources-rofi ${target_dir}/.Xresources.d/.Xresources-rofi
     ln -svfn ${dotfiles_dir}/.Xresources.d/.Xresources-i3 ${target_dir}/.Xresources.d/.Xresources-i3
 
+    # Bash profile
+    ln -svfn ${dotfiles_dir}/.bashrc.d/.bashrc-i3 ${target_dir}/.bashrc.d/.bashrc-i3
+
     # redshift configuration
 
     ln -svfn ${dotfiles_dir}/.config/redshift.conf ${target_dir}/.config/redshift.conf

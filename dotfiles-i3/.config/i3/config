@@ -207,10 +207,6 @@ assign [class="Skype"] $WM1
 # Chrome
 for_window [title="Task Manager"] floating enable
 
-# Pure pomodoro chrome plugin
-for_window [class="google-chrome" instance="crx_hfilbmblidibnmifcabmolhlaekpfhak"] floating enable
-assign [class="google-chrome" instance="crx_hfilbmblidibnmifcabmolhlaekpfhak"] $WM1
-
 # Remmina
 assign [class="remmina"] $WM3
 
@@ -218,13 +214,10 @@ assign [class="remmina"] $WM3
 
 assign [class="VirtualBox"] $WM8
 
-
 # Autostart
 
 exec --no-startup-id xsetroot -solid "#000000"
 exec_always --no-startup-id /usr/bin/feh --bg-fill ${HOME}/.config/wallpaper/default.png &
-
-exec --no-startup-id /usr/bin/gnome-keyring-daemon --start --components=gpg,pkcs11,secrets,ssh &
 exec --no-startup-id /usr/bin/xfsettingsd --sm-client-disable && sleep 1
 exec --no-startup-id /usr/bin/xfce4-power-manager &
 exec --no-startup-id /usr/libexec/xfce-polkit &
