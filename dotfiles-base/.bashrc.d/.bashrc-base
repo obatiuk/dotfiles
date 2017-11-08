@@ -8,7 +8,6 @@ alias space="du -S | sort -n -r |more"
 alias rm="rm -vi"
 alias du="du -kh"       # Makes a more readable output.
 alias df="df -Tha --total"
-alias ps="ps auxf"
 alias mkdir="mkdir -pv"
 alias reload="source ~/.bashrc"
 alias update="sudo dnf update --refresh"
