@@ -45,7 +45,6 @@ if ask "Do you want to install base configuration?"; then
 
     # Bash profiles
 
-
     ln -svfn ${dotfiles_dir}/.bashrc.d/.bashrc-base ${target_dir}/.bashrc.d/.bashrc-base
     ln -svfn ${dotfiles_dir}/.bashrc.d/.bashrc-git ${target_dir}/.bashrc.d/.bashrc-git
 
