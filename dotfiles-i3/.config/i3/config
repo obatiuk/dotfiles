@@ -216,14 +216,14 @@ assign [class="VirtualBox"] $WM8
 
 # Autostart
 
-exec --no-startup-id /usr/bin/xset root -solid "#000000" &
-exec --no-startup-id /usr/bin/xset xset r rate 250 50 &
-exec_always --no-startup-id /usr/bin/feh --bg-fill ${HOME}/.config/wallpaper/default.png &
-exec --no-startup-id /usr/bin/xfsettingsd --sm-client-disable && sleep 1
-exec --no-startup-id /usr/bin/xfce4-power-manager &
-exec --no-startup-id /usr/libexec/xfce-polkit &
-exec --no-startup-id /usr/bin/xautolock -detectsleep -time 10 -locker $locker &
-exec --no-startup-id /usr/bin/nm-applet &
+exec --no-startup-id /usr/bin/xsetroot -solid "#000000" &
+exec --no-startup-id /usr/bin/xset r rate 250 50 &
+exec_always --no-startup-id /usr/bin/feh --bg-fill ${HOME}/.config/wallpaper/default.png &	# Set wallpaper
+exec --no-startup-id /usr/bin/xfsettingsd --sm-client-disable && sleep 1			# Starting xfce settings daemon
+exec --no-startup-id /usr/bin/xfce4-power-manager &						# Starting xfce power manager
+exec --no-startup-id /usr/libexec/xfce-polkit &							# Starting xfce policy kit
+exec --no-startup-id /usr/bin/xautolock -detectsleep -time 10 -locker $locker &			# Set $locker as a xautolock command and enable autolock after sleep
+exec --no-startup-id /usr/bin/nm-applet &							# Starting NetworkManager applet
 exec --no-startup-id /usr/bin/pnmixer &
 exec --no-startup-id /usr/bin/blueman-applet &
 exec --no-startup-id /usr/bin/thunar --daemon &
