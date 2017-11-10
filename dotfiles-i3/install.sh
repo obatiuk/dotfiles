@@ -69,7 +69,7 @@ if ask "Do you want to install i3 configuration?"; then
 	xfconf-query -v -c keyboard-layout -p /Default/XkbOptions/Group -n -t string -s "grp:alt_caps_toggle"
 	xfconf-query -v -c keyboard-layout -p /Default/XkbVariant -n -t string -s "os_winkeys"
 	xfconf-query -v -c keyboards -p /Default/KeyRepeat/Delay -n -t uint -s 250
-	xfconf-query -v -c keyboards -p /Default/KeyRepeat/Rate -n -t uint -s 70
+	xfconf-query -v -c keyboards -p /Default/KeyRepeat/Rate -n -t uint -s 50
 
 	## Removing default shortcuts, they should be handled by i3 
 	xfconf-query -c xfce4-keyboard-shortcuts -p /commands/custom -r -R
