@@ -6,7 +6,7 @@
 # Variables
 #
 
-dotfiles_dir=$(readlink -f "$0")
+dotfiles_dir=$(dirname $(readlink -f $0))
 
 #
 # Imports
@@ -59,7 +59,7 @@ if ask "Do you want to install i3 configuration?"; then
     ln -svfn ${dotfiles_dir}/.home/.Xresources.d/.Xresources-i3 ${config_dir}/.Xresources.d/.Xresources-i3
 
     # Bash profile
-    ln -svfn ${dotfiles_dir}/.bashrc.d/.bashrc-i3 ${config_dir}/.bashrc.d/.bashrc-i3
+    ln -svfn ${dotfiles_dir}/.home/.bashrc.d/.bashrc-i3 ${config_dir}/.bashrc.d/.bashrc-i3
 
     #
     # Settings

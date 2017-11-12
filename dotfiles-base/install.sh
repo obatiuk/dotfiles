@@ -6,7 +6,7 @@
 # Variables
 #
 
-dotfiles_dir=$(readlink -f "$0")
+dotfiles_dir=$(dirname $(readlink -f $0))
 
 #
 # Imports

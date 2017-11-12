@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
-. ../functions
+dotfiles_dir=$(dirname $(readlink -f $0))
+
+. ${dotfiles_dir}/../functions
 
 # Enabling copr repository for compton
 
