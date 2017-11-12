@@ -2,13 +2,17 @@
 
 [ -n "$(echo $@ | grep "\-debug")" ] && set -x
 
-. ../functions
-
 #
 # Variables
 #
 
-dotfiles_dir=$(pwd)
+dotfiles_dir=$(readlink -f "$0")
+
+#
+# Imports
+#
+
+. ${dotfiles_dir}/../functions
 
 #
 # Setup
@@ -18,31 +22,48 @@ if ask "Do you want to install i3 configuration?"; then
 
     ask "Install required dependencies? (Distro: ${distro})?" Y && bash ./dependencies-${distro}.sh
 
-    # Target folders
+    #
+    # Home folder
+    #
 
-    [ -d ${target_dir}/.config ] || mkdir -vp ${target_dir}/.config
-    [ -d ${target_dir}/.Xresources.d ] || mkdir -vp ${target_dir}/.Xresources.d
+
+    # Target home folders
+
+    [ -d ${home_dir}/.config ] || mkdir -vp ${home_dir}/.config
 
     # i3 Configuration
 
-    ln -svfn ${dotfiles_dir}/.config/i3 ${target_dir}/.config/i3
-    ln -svfn ${dotfiles_dir}/.config/i3status ${target_dir}/.config/i3status
+    ln -svfn ${dotfiles_dir}/.config/i3 ${home_dir}/.config/i3
+    ln -svfn ${dotfiles_dir}/.config/i3status ${home_dir}/.config/i3status
 
     # Wallpaper
 
-    ln -svfn ${dotfiles_dir}/.config/wallpaper ${target_dir}/.config/wallpaper
-
-    # X settings
-
-    ln -svfn ${dotfiles_dir}/.Xresources.d/.Xresources-rofi ${target_dir}/.Xresources.d/.Xresources-rofi
-    ln -svfn ${dotfiles_dir}/.Xresources.d/.Xresources-i3 ${target_dir}/.Xresources.d/.Xresources-i3
-
-    # Bash profile
-    ln -svfn ${dotfiles_dir}/.bashrc.d/.bashrc-i3 ${target_dir}/.bashrc.d/.bashrc-i3
+    ln -svfn ${dotfiles_dir}/.config/wallpaper ${home_dir}/.config/wallpaper
 
     # redshift configuration
 
-    ln -svfn ${dotfiles_dir}/.config/redshift.conf ${target_dir}/.config/redshift.conf
+    ln -svfn ${dotfiles_dir}/.config/redshift.conf ${home_dir}/.config/redshift.conf
+
+    #
+    # Config folder
+    #
+
+    # Target config folders
+
+    [ -d ${config_dir}/.Xresources.d ] || mkdir -vp ${config_dir}/.Xresources.d
+    [ -d ${config_dir}/.bashrc.d ] || mkdir -vp ${config_dir}/.bashrc.d
+
+    # X settings
+
+    ln -svfn ${dotfiles_dir}/.home/.Xresources.d/.Xresources-rofi ${config_dir}/.Xresources.d/.Xresources-rofi
+    ln -svfn ${dotfiles_dir}/.home/.Xresources.d/.Xresources-i3 ${config_dir}/.Xresources.d/.Xresources-i3
+
+    # Bash profile
+    ln -svfn ${dotfiles_dir}/.bashrc.d/.bashrc-i3 ${config_dir}/.bashrc.d/.bashrc-i3
+
+    #
+    # Settings
+    #
 
     # Power management
 

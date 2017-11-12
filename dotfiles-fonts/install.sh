@@ -2,13 +2,17 @@
 
 [ -n "$(echo $@ | grep "\-debug")" ] && set -x
 
-. ../functions
-
 #
 # Variables
 #
 
-dotfiles_dir=$(pwd)
+dotfiles_dir=$(readlink -f "$0")
+
+#
+# Imports
+#
+
+. ${dotfiles_dir}/../functions
 
 #
 # Setup
@@ -18,13 +22,21 @@ if ask "Do you want to install font configuration?"; then
 
     ask "Install required dependencies? (Distro: ${distro})?" Y && bash ./dependencies-${distro}.sh
 
-    # Target folders
+    #
+    # Config folder
+    #
 
-    [ -d ${target_dir}/.bash_profile.d ] || mkdir -vp ${target_dir}/.bash_profile.d
+    # Target config folders
+
+    [ -d ${config_dir}/.bash_profile.d ] || mkdir -vp ${config_dir}/.bash_profile.d
 
     # Adding configuration to the current profile
 
-    ln -svfn ${dotfiles_dir}/.bash_profile.d/.bash_profile-fonts ${target_dir}/.bash_profile.d/.bash_profile-fonts
+    ln -svfn ${dotfiles_dir}/.home/.bash_profile.d/.bash_profile-fonts ${config_dir}/.bash_profile.d/.bash_profile-fonts
+
+    #
+    # Settings
+    #
 
     # Enabling infinality fonts configuration
 
