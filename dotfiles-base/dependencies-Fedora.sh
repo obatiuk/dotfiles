@@ -34,9 +34,6 @@ EOF
 sudo dnf -y install http://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-${release}.noarch.rpm
 sudo dnf -y install http://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-${release}.noarch.rpm
 
-# Installing skype-alpha repository
-sudo dnf -y config-manager --add-repo https://repo.skype.com/data/skype-stable.repo
-
 # Packages
 
 sudo dnf -y install \
@@ -62,7 +59,6 @@ sudo dnf -y install \
     htop \
     crudini \
     screenfetch \
-    skypeforlinux \
     gparted \
     meld \
     diffuse \
