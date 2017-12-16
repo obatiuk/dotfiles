@@ -105,13 +105,15 @@ if ask "Do you want to install i3 configuration?"; then
     if ask "Appply default appearance configuration?"; then
 	xfconf-query -v -c xsettings -p /Gtk/ButtonImages -n -t bool -s true
 	xfconf-query -v -c xsettings -p /Gtk/FontName -n -t string -s "Sans 9"
+	xfconf-query -v -c xsettings -p /Gtk/IconSizes -n -t string -s "panel-menu=24,24:panel=20,20:gtk-button=18,18:gtk-large-toolbar=24,24"
+	
 	xfconf-query -v -c xsettings -p /Net/IconThemeName -n -t string -s "Fedora"
 	xfconf-query -v -c xsettings -p /Net/ThemeName -n -t string -s "Arc-X"
 
 	xfconf-query -v -c xfce4-notifyd -p /theme -n -t string -s "Default"
 	xfconf-query -v -c xfce4-notifyd -p /notify-location -n -t uint -s 2
 	xfconf-query -v -c xfce4-notifyd -p /initial-opacity -n -t double -s 0.9
-	
+
 	#Gnome 3
 	gsettings set org.gnome.shell enabled-extensions "['user-theme@gnome-shell-extensions.gcampax.github.com']"
 	gsettings set org.gnome.desktop.interface gtk-theme "Arc-X"
