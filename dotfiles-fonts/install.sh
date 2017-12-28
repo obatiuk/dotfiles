@@ -23,16 +23,10 @@ if ask "Do you want to install font configuration?"; then
     ask "Install required dependencies? (Distro: ${distro})?" Y && bash ./dependencies-${distro}.sh
 
     #
-    # Config folder
+    # Configuration files
     #
 
-    # Target config folders
-
-    [ -d ${config_dir}/.bash_profile.d ] || mkdir -vp ${config_dir}/.bash_profile.d
-
-    # Adding configuration to the current profile
-
-    ln -svfn ${dotfiles_dir}/.home/.bash_profile.d/.bash_profile-fonts ${config_dir}/.bash_profile.d/.bash_profile-fonts
+    stow --dir=packages --target=${HOME} -vv --stow dotfiles-fonts
 
     #
     # Settings

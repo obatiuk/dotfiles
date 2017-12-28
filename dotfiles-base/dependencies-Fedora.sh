@@ -70,7 +70,8 @@ sudo dnf -y install \
     gnome-keyring \
     p7zip \
     jad \
-    nmap
+    nmap \
+    stow
 
 sudo dnf -y --setopt=strict=0 install gstreamer{1,}-{ffmpeg,libav,plugins-{good,ugly,bad{,-free,-nonfree}}} 
 

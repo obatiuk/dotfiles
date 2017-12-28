@@ -23,43 +23,10 @@ if ask "Do you want to install i3 configuration?"; then
     ask "Install required dependencies? (Distro: ${distro})?" Y && bash ./dependencies-${distro}.sh
 
     #
-    # Home folder
+    # Configuration files
     #
 
-
-    # Target home folders
-
-    [ -d ${home_dir}/.config ] || mkdir -vp ${home_dir}/.config
-
-    # i3 Configuration
-
-    ln -svfn ${dotfiles_dir}/.config/i3 ${home_dir}/.config/i3
-    ln -svfn ${dotfiles_dir}/.config/i3status ${home_dir}/.config/i3status
-
-    # Wallpaper
-
-    ln -svfn ${dotfiles_dir}/.config/wallpaper ${home_dir}/.config/wallpaper
-
-    # redshift configuration
-
-    ln -svfn ${dotfiles_dir}/.config/redshift.conf ${home_dir}/.config/redshift.conf
-
-    #
-    # Config folder
-    #
-
-    # Target config folders
-
-    [ -d ${config_dir}/.Xresources.d ] || mkdir -vp ${config_dir}/.Xresources.d
-    [ -d ${config_dir}/.bashrc.d ] || mkdir -vp ${config_dir}/.bashrc.d
-
-    # X settings
-
-    ln -svfn ${dotfiles_dir}/.home/.Xresources.d/.Xresources-rofi ${config_dir}/.Xresources.d/.Xresources-rofi
-    ln -svfn ${dotfiles_dir}/.home/.Xresources.d/.Xresources-i3 ${config_dir}/.Xresources.d/.Xresources-i3
-
-    # Bash profile
-    ln -svfn ${dotfiles_dir}/.home/.bashrc.d/.bashrc-i3 ${config_dir}/.bashrc.d/.bashrc-i3
+    stow --dir=packages --target=${HOME} -vv --stow dotfiles-i3
 
     #
     # Settings
