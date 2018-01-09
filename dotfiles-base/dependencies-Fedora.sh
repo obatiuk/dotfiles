@@ -67,7 +67,6 @@ sudo dnf -y install \
     ecryptfs-utils \
     adobe-source-code-pro-fonts \
     sysstat \
-    gnome-keyring \
     p7zip \
     jad \
     nmap \
