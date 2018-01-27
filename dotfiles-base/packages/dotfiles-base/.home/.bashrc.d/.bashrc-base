@@ -1,3 +1,6 @@
+# GPG
+
+/usr/bin/gpgconf --launch gpg-agent
 
 # Base aliases
 

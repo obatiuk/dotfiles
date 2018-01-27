@@ -50,8 +50,6 @@ sudo dnf -y install \
     unrar \
     fedora-icon-theme \
     adwaita-cursor-theme \
-    gnome-keyring \
-    seahorse \
     gtk2 \
     gtk3 \
     gtk-murrine-engine \
@@ -70,7 +68,9 @@ sudo dnf -y install \
     p7zip \
     jad \
     nmap \
-    stow
+    stow \
+    gnupg \
+    gnupg2
 
 sudo dnf -y --setopt=strict=0 install gstreamer{1,}-{ffmpeg,libav,plugins-{good,ugly,bad{,-free,-nonfree}}} 
 

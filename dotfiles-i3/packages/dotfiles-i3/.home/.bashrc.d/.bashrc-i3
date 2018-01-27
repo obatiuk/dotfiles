@@ -1,1 +1,1 @@
-export $(/usr/bin/gnome-keyring-daemon --start --components=gpg,pkcs11,secrets,ssh)
+export $(/usr/bin/gnome-keyring-daemon --start --components=ssh,secrets,pkcs11)

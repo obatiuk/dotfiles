@@ -12,6 +12,8 @@ sudo dnf -y copr enable mosquito/atom
 # Packages
 
 sudo dnf -y --best --allowerasing install \
+    gnome-keyring \
+    seahorse \
     i3-gaps \
     i3status \
     i3lock \
