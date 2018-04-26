@@ -70,7 +70,8 @@ sudo dnf -y install \
     nmap \
     stow \
     gnupg \
-    gnupg2
+    gnupg2 \
+    snapd
 
 sudo dnf -y --setopt=strict=0 install gstreamer{1,}-{ffmpeg,libav,plugins-{good,ugly,bad{,-free,-nonfree}}} 
 

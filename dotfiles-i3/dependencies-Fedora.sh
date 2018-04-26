@@ -56,7 +56,8 @@ sudo dnf -y --best --allowerasing install \
     file-roller \
     atom \
     redshift \
-    redshift-gtk
+    redshift-gtk \
+    dropbox
 
 # Cleanup
 

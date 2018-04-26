@@ -36,6 +36,10 @@ if ask "Do you want to install base configuration?"; then
 
     git config --global credential.helper gnome-keyring
 
+    # Fix for snap bug: https://bugzilla.redhat.com/show_bug.cgi?id=1546896
+
+    sudo ln -s /usr/libexec/snapd /usr/lib/
+
     # Check all required resources
 
     checkAllResources
