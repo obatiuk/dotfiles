@@ -194,18 +194,8 @@ for_window [window_role="Preferences"] floating enable
 #for_window [window_type="menu"] floating enable
 for_window [class="Pavucontrol"] floating enable
 for_window [class="ksysguard"] floating enable
-
-# VPN
-
-for_window [class="^NC$"] floating enable
-assign [class="^NC$"] $WM1
-
-# Skype
-for_window [class="Skype"] floating enable
-assign [class="Skype"] $WM1
-
-# Chrome
 for_window [title="Task Manager"] floating enable
+for_window [class="File-roller"] floating enable
 
 # Remmina
 assign [class="remmina"] $WM3
