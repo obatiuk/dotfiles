@@ -47,7 +47,7 @@ if ask "Do you want to install 'minimal' configuration?"; then
 	git config --global color.ui auto
 	git config --global core.autocrlf input
 	git config --global push.default simple
-	git config --global credential.helper gnome-keyring
+	git config --global credential.helper libsecret
     fi
 
     # Check all required resources

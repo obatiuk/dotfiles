@@ -8,6 +8,7 @@
 ```bash
 mkdir -pv ${HOME}/.home
 git clone https://github.com/obatiuk/dotfiles.git ${HOME}/.home/.dotfiles.d
+git remote set-url origin git@github.com:obatiuk/dotfiles.git
 ```
 
 ## Notes
