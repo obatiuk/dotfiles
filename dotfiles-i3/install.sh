@@ -18,7 +18,7 @@ dotfiles_dir=$(dirname $(readlink -f $0))
 # Setup
 #
 
-if ask "Do you want to install i3 configuration?"; then
+if ask "Do you want to install 'i3' configuration?"; then
 
     ask "Install required dependencies? (Distro: ${distro})?" Y && bash ./dependencies-${distro}.sh
 
@@ -26,7 +26,7 @@ if ask "Do you want to install i3 configuration?"; then
     # Configuration files
     #
 
-    stow --dir=packages --target=${HOME} -vv --stow dotfiles-i3
+    stow --dir=packages --target=${HOME} -vv --stow --no-folding dotfiles-i3
 
     #
     # Settings
@@ -105,16 +105,16 @@ if ask "Do you want to install i3 configuration?"; then
     xdg-mime default eog.desktop image/png
 
     xdg-mime default evince.desktop application/pdf
-
     xdg-mime default org.gnome.FileRoller.desktop application/zip
-
     xdg-mime default org.gnome.Totem.desktop video/mp4
-
-    xdg-mime default wine.desktop application/x-dosexec
+    xdg-mime default wine.desktop application/x-dosexec11
+    xdg-mime default gedit.desktop text/plain
 
     # Check all required resources
 
     checkAllResources
+    
+    sudo systemctl disable bluetooth
 
     echo "i3 configuration files were successfully installed"
 else

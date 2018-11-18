@@ -2,7 +2,7 @@
 
 dotfiles_dir=$(dirname $(readlink -f $0))
 
-. ${dotfiles_dir}../functions
+. ${dotfiles_dir}/../functions
 
 sudo dnf -y update
 
@@ -13,8 +13,6 @@ sudo bash -c 'cat << EOF > /etc/yum.repos.d/google-chrome.repo
 name=google-chrome
 baseurl=http://dl.google.com/linux/chrome/rpm/stable/\$basearch
 enabled=1
-skip_if_unavailable = 1
-keepcache = 0
 gpgcheck=1
 gpgkey=https://dl-ssl.google.com/linux/linux_signing_key.pub
 EOF
@@ -26,8 +24,21 @@ name=google-talkplugin
 baseurl=http://dl.google.com/linux/talkplugin/rpm/stable/\$basearch
 enabled=1
 gpgcheck=1
-gpgcheck=1
 gpgkey=https://dl-ssl.google.com/linux/linux_signing_key.pub
+EOF
+'
+
+# Opera repository
+
+sudo bash -c 'cat << EOF > /etc/yum.repos.d/opera.repo
+[opera]
+name=Opera packages
+type=rpm-md
+baseurl=https://rpm.opera.com/rpm
+enabled=1
+gpgcheck=1
+gpgkey=https://rpm.opera.com/rpmrepo.key
+
 EOF
 '
 
@@ -36,42 +47,51 @@ EOF
 sudo dnf -y install http://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-${release}.noarch.rpm
 sudo dnf -y install http://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-${release}.noarch.rpm
 
-# Packages
+# Base packages
+
+sudo dnf -y install @base-x
 
 sudo dnf -y install \
-    google-chrome-stable \
-    google-talkplugin \
-    firefox \
-    google-droid-sans-fonts \
-    google-droid-serif-fonts \
-    google-droid-sans-mono-fonts \
-    git \
-    git-extras \
-    unrar \
+    gnome-shell \
     fedora-icon-theme \
     adwaita-cursor-theme \
     gtk2 \
     gtk3 \
     gtk-murrine-engine \
-    mc \
-    lynx \
     gdm \
-    htop \
-    crudini \
     screenfetch \
     gparted \
     meld \
     diffuse \
-    ecryptfs-utils \
-    adobe-source-code-pro-fonts \
-    sysstat \
-    p7zip \
     jad \
-    nmap \
-    stow \
-    gnupg \
-    gnupg2 \
-    snapd
+    pulseaudio-utils \
+    gvfs-mtp
+
+# Fonts
+
+sudo dnf -y install \
+    google-droid-sans-fonts \
+    google-droid-serif-fonts \
+    google-droid-sans-mono-fonts \
+    adobe-source-code-pro-fonts \
+    dejavu-fonts-common \
+    dejavu-sans-fonts \
+    dejavu-sans-mono-fonts \
+    dejavu-serif-fonts \
+    liberation-fonts-common \
+    liberation-mono-fonts \
+    liberation-narrow-fonts \
+    liberation-sans-fonts \
+    liberation-serif-fonts
+
+# Browsers
+
+sudo dnf -y install \
+    google-chrome-stable \
+    google-talkplugin \
+    opera-stable
+
+# Codecs
 
 sudo dnf -y --setopt=strict=0 install gstreamer{1,}-{ffmpeg,libav,plugins-{good,ugly,bad{,-free,-nonfree}}} 
 

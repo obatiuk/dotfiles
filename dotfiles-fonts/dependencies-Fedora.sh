@@ -4,18 +4,34 @@ dotfiles_dir=$(dirname $(readlink -f $0))
 
 . ${dotfiles_dir}/../functions
 
-# Installing external repository for infinality packages
+# *** Fedora <25
 
-sudo dnf config-manager --add-repo=http://download.opensuse.org/repositories/home:/fastrizwaan/Fedora_${release}/home:fastrizwaan.repo
+if [ "$release" -le 25 ]; then
 
-# Packages
+    # Installing external repository for infinality packages
 
-sudo dnf -y install \
-   fontconfig-infinality-ultimate \
-   freetype-infinality-ultimate \
-   cabextract
+    sudo dnf config-manager --add-repo=http://download.opensuse.org/repositories/home:/fastrizwaan/Fedora_${release}/home:fastrizwaan.repo
 
-sudo dnf -y install http://sourceforge.net/projects/mscorefonts2/files/rpms/msttcore-fonts-installer-2.6-1.noarch.rpm
+    # Packages
+
+    sudo dnf -y install \
+	fontconfig-infinality-ultimate \
+	freetype-infinality-ultimate \
+
+
+# *** Fedora 28+
+
+elif [ "$release" -ge 29 ]; then
+
+    # Better fonts repository
+
+    sudo dnf copr enable dawid/better_fonts
+
+    sudo dnf -y install \
+	fontconfig-enhanced-defaults \
+	fontconfig-font-replacements
+
+fi
 
 # Cleanup
 

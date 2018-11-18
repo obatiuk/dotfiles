@@ -18,7 +18,7 @@ dotfiles_dir=$(dirname $(readlink -f $0))
 # Setup
 #
 
-if ask "Do you want to install font configuration?"; then
+if ask "Do you want to install 'fonts' configuration?"; then
 
     ask "Install required dependencies? (Distro: ${distro})?" Y && bash ./dependencies-${distro}.sh
 
@@ -26,7 +26,7 @@ if ask "Do you want to install font configuration?"; then
     # Configuration files
     #
 
-    stow --dir=packages --target=${HOME} -vv --stow dotfiles-fonts
+    stow --dir=packages --target=${HOME} -vv --stow --no-folding dotfiles-fonts
 
     #
     # Settings

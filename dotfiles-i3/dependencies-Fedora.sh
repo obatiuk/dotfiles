@@ -4,20 +4,19 @@ dotfiles_dir=$(dirname $(readlink -f $0))
 
 . ${dotfiles_dir}/../functions
 
-# Enabling copr repository for compton
+# Enabling copr repositories
 
-sudo dnf -y copr enable yaroslav/i3desktop
-sudo dnf -y copr enable mosquito/atom
+sudo dnf -y copr enable gregw/i3desktop
 
 # Packages
 
 sudo dnf -y --best --allowerasing install \
+    i3-gaps \
+    xfconf \
     gnome-keyring \
     seahorse \
-    i3-gaps \
     i3status \
     i3lock \
-    rofi \
     network-manager-applet \
     terminology \
     pnmixer \
@@ -26,9 +25,6 @@ sudo dnf -y --best --allowerasing install \
     ImageMagick \
     scrot \
     fontawesome-fonts \
-    google-droid-sans-fonts \
-    google-droid-serif-fonts \
-    google-droid-sans-mono-fonts \
     xautolock \
     pavucontrol \
     xorg-x11-xinit-session \
@@ -54,10 +50,14 @@ sudo dnf -y --best --allowerasing install \
     evince \
     xdg-utils \
     file-roller \
-    atom \
     redshift \
     redshift-gtk \
-    dropbox
+    dropbox \
+    gedit
+
+# MS fonts
+
+sudo dnf -y install http://sourceforge.net/projects/mscorefonts2/files/rpms/msttcore-fonts-installer-2.6-1.noarch.rpm
 
 # Cleanup
 
