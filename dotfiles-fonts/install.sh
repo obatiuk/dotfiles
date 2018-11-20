@@ -22,19 +22,23 @@ if ask "Do you want to install 'fonts' configuration?"; then
 
     ask "Install required dependencies? (Distro: ${distro})?" Y && bash ./dependencies-${distro}.sh
 
-    #
-    # Configuration files
-    #
 
-    stow --dir=packages --target=${HOME} -vv --stow --no-folding dotfiles-fonts
+    if [ "$release" -le 25 ]; then
 
-    #
-    # Settings
-    #
+	#
+	# Configuration files
+	#
 
-    # Enabling infinality fonts configuration
+	stow --dir=packages --target=${HOME} -vv --stow --no-folding dotfiles-fonts-infinality
 
-    sudo bash /etc/fonts/infinality/infctl.sh setstyle infinality
+	#
+	# Settings
+	#
+
+	# Enabling infinality fonts configuration
+
+	sudo bash /etc/fonts/infinality/infctl.sh setstyle infinality
+    fi
 
     # Check all required resources
 
