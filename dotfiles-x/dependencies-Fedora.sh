@@ -95,6 +95,13 @@ sudo dnf -y install \
 
 sudo dnf -y --setopt=strict=0 install gstreamer{1,}-{ffmpeg,libav,plugins-{good,ugly,bad{,-free,-nonfree}}} 
 
+# HP printer support
+
+sudo dnf -y install \
+    cups \
+    hplip \
+    hplip-gui
+
 # Cleanup
 
 sudo dnf -y clean packages
