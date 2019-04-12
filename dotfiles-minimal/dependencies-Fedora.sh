@@ -44,7 +44,9 @@ sudo dnf -y install \
     git-extras \
     htop \
     mc \
-    keybase
+    keybase \
+    pwgen \
+    samba-client
 
 # Additional packages
 

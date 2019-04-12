@@ -65,7 +65,9 @@ sudo dnf -y install \
     diffuse \
     jad \
     pulseaudio-utils \
-    gvfs-mtp
+    gvfs-mtp \
+    NetworkManager-openvpn-gnome \
+    gnome-calculator
 
 # Fonts
 
@@ -91,6 +93,14 @@ sudo dnf -y install \
     google-talkplugin \
     opera-stable
 
+# Office
+
+sudo dnf -y install \
+    libreoffice-core \
+    libreoffice-writer \
+    libreoffice-calc \
+    libreoffice-filters
+
 # Codecs
 
 sudo dnf -y --setopt=strict=0 install gstreamer{1,}-{ffmpeg,libav,plugins-{good,ugly,bad{,-free,-nonfree}}} 
@@ -101,6 +111,30 @@ sudo dnf -y install \
     cups \
     hplip \
     hplip-gui
+    gcc-c++ \
+    dbus \
+    gcc \
+    libusb \
+    libtool \
+    libjpeg \
+    xsane \
+    rpm-build \
+    dbus-devel \
+    libjpeg-devel \
+    cups-devel \
+    libusb-devel \
+    sane-backends-devel \
+    net-snmp-devel \
+    openssl-devel \
+    python3-PyQt4 \
+    python3-devel \
+    python2-notify
+
+# Avahi
+
+sudo dnf -y install \
+    avahi \
+    avahi-tools
 
 # Cleanup
 

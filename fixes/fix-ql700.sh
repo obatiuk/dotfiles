@@ -13,3 +13,4 @@
 
 sudo restorecon -RFv /usr/lib/cups/filter/* 
 sudo setsebool -P cups_execmem 1
+sudo setsebool mmap_low_allowed 1

@@ -93,6 +93,10 @@ if ask "Do you want to install 'i3' configuration?"; then
 	gconftool-2 --type=string --set /apps/metacity/general/theme "Arc-X"
     fi
 
+    # Thunar configuration
+
+    xfconf-query -v -c thunar -p /last-view -n -t string -s "ThunarDetailsView"
+
     # Display configuration
 
     ## Enable xfce to detect monitors automatically
@@ -109,15 +113,16 @@ if ask "Do you want to install 'i3' configuration?"; then
     xdg-mime default org.gnome.Totem.desktop video/mp4
     xdg-mime default wine.desktop application/x-dosexec11
     xdg-mime default gedit.desktop text/plain
+    xdg-mime default libreoffice-writer.desktop text/rtf
+    xdg-mime default libreoffice-calc.desktop text/csv
 
     # Check all required resources
 
     checkAllResources
-    
+
     sudo systemctl disable bluetooth
 
     echo "i3 configuration files were successfully installed"
 else
     echo "i3 configuration files were not installed".
 fi
-

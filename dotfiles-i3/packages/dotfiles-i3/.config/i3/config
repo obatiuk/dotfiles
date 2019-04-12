@@ -190,12 +190,14 @@ for_window [window_role="pop-up"] floating enable
 for_window [window_role="bubble"] floating enable
 for_window [window_role="task_dialog"] floating enable
 for_window [window_role="Preferences"] floating enable
-#for_window [window_type="dialog"] floating enable
-#for_window [window_type="menu"] floating enable
+for_window [window_type="dialog"] floating enable
 for_window [class="Pavucontrol"] floating enable
 for_window [class="ksysguard"] floating enable
 for_window [title="Task Manager"] floating enable
 for_window [class="File-roller"] floating enable
+for_window [class="Gnome-calculator"] floating enable
+for_window [class="Nm-connection-editor"] floating enable
+for_window [class="System-config-printer"] floating enable
 
 # Remmina
 assign [class="remmina"] $WM3
@@ -219,7 +221,7 @@ exec --no-startup-id /usr/bin/blueman-applet &
 exec --no-startup-id /usr/bin/thunar --daemon &
 exec --no-startup-id /usr/bin/compton --config ${HOME}/.config/i3/compton.conf &
 exec --no-startup-id /usr/bin/seapplet &
-exec --no-startup-id /usr/bin/redshift-gtk &
+exec --no-startup-id (/usr/libexec/geoclue-2.0/demos/agent | /usr/bin/redshift-gtk) &
 exec --no-startup-id dropbox start &
 
 # gaps
