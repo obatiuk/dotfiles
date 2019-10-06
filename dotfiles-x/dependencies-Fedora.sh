@@ -91,7 +91,9 @@ sudo dnf -y install \
 sudo dnf -y install \
     google-chrome-stable \
     google-talkplugin \
-    opera-stable
+    opera-stable \
+    chromium-libs-media \
+    chromium-libs-media-freeworld
 
 # Office
 

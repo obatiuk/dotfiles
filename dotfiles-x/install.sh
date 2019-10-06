@@ -36,6 +36,12 @@ if ask "Do you want to install 'X' configuration?"; then
     # Git config
 
     git config --global credential.helper gnome-keyring
+    
+    # Enable video playback in Opera
+    
+    sudo ln -sf /usr/lib64/chromium-browser /usr/lib -v
+    sudo ln -sf /etc/alternatives/libffmpeg.so /usr/lib64/libffmpeg.so
+
 
     if ask "Enable Graphic Mode?"; then
 	sudo systemctl set-default graphical.target
