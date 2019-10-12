@@ -94,7 +94,8 @@ The "auto_switch" option of module-bluetooth-policy got a new mode: mode "2" can
 ### Automatically load driver modules for Bluetooth hardware
 .ifexists module-bluetooth-policy.so
 load-module module-bluetooth-policy auto_switch=2
-.endif```
+.endif
+```
 
 __Source: https://freedesktop.org/wiki/Software/PulseAudio/Documentation/User/Bluetooth/#index1h2__
 
