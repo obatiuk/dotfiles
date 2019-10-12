@@ -198,6 +198,7 @@ for_window [class="File-roller"] floating enable
 for_window [class="Gnome-calculator"] floating enable
 for_window [class="Nm-connection-editor"] floating enable
 for_window [class="System-config-printer"] floating enable
+for_window [class="Blueman-manager"] floating enable
 
 # Remmina
 assign [class="remmina"] $WM3

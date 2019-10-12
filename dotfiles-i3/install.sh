@@ -116,11 +116,13 @@ if ask "Do you want to install 'i3' configuration?"; then
     xdg-mime default libreoffice-writer.desktop text/rtf
     xdg-mime default libreoffice-calc.desktop text/csv
 
+    # Bluetooth
+
+    sudo systemctl enable bluetooth
+
     # Check all required resources
 
     checkAllResources
-
-    sudo systemctl disable bluetooth
 
     echo "i3 configuration files were successfully installed"
 else

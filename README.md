@@ -69,6 +69,36 @@ sudo hp-plugin
 hp-check
 ```
 
+### Bluetooth
+
+To make your headset auto connect you need to enable PulseAudio's switch-on-connect module. Do this by adding the following lines to `/etc/pulse/default.pa`:
+
+```bash
+# automatically switch to newly-connected devices
+load-module module-switch-on-connect
+```
+and check in `/etc/bluetooth/main.conf`:
+
+```bash
+[Policy]
+AutoEnable=true
+```
+
+__Source: https://wiki.archlinux.org/index.php/Bluetooth_headset#Setting_up_auto_connection__
+
+Enable possible autoswitch to HSP from A2DP
+
+The "auto_switch" option of module-bluetooth-policy got a new mode: mode "2" can be used to enable automatic profile switching from A2DP to HSP when a recording stream appears without any role set.
+
+```bash
+### Automatically load driver modules for Bluetooth hardware
+.ifexists module-bluetooth-policy.so
+load-module module-bluetooth-policy auto_switch=2
+.endif```
+
+__Source: https://freedesktop.org/wiki/Software/PulseAudio/Documentation/User/Bluetooth/#index1h2__
+
+
 ## TODO
 
 * Add "updates are available" indicator to i3 status bar
