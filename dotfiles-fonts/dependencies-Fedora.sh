@@ -33,6 +33,27 @@ elif [ "$release" -ge 29 ]; then
 
 fi
 
+# Fonts
+
+sudo dnf -y install \
+    google-droid-sans-fonts \
+    google-droid-serif-fonts \
+    google-droid-sans-mono-fonts \
+    adobe-source-code-pro-fonts \
+    dejavu-fonts-common \
+    dejavu-sans-fonts \
+    dejavu-sans-mono-fonts \
+    dejavu-serif-fonts \
+    liberation-fonts-common \
+    liberation-mono-fonts \
+    liberation-narrow-fonts \
+    liberation-sans-fonts \
+    liberation-serif-fonts
+
+# MS fonts
+
+sudo dnf -y install http://sourceforge.net/projects/mscorefonts2/files/rpms/msttcore-fonts-installer-2.6-1.noarch.rpm
+
 # Cleanup
 
 sudo dnf clean packages

@@ -32,7 +32,6 @@ sudo dnf -y install \
     redhat-lsb-core \
     nano \
     iwl*-firmware \
-    gparted \
     ecryptfs-utils \
     stow \
     gnupg \
@@ -46,7 +45,10 @@ sudo dnf -y install \
     mc \
     keybase \
     pwgen \
-    samba-client
+    samba-client \
+    tree \
+    rpmconf \
+    rsync
 
 # Additional packages
 
@@ -58,6 +60,12 @@ sudo dnf -y install \
     p7zip \
     nmap \
     cabextract
+
+# Plymouth
+
+sudo dnf -y install \
+    plymouth \
+    plymouth-system-theme
 
 # Cleanup
 

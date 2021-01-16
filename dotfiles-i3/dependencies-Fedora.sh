@@ -18,13 +18,10 @@ sudo dnf -y --best --allowerasing install \
     i3status \
     i3lock \
     network-manager-applet \
-    terminology \
     pnmixer \
     compton \
     feh \
-    ImageMagick \
     scrot \
-    fontawesome-fonts \
     xautolock \
     pavucontrol \
     xorg-x11-xinit-session \
@@ -39,25 +36,18 @@ sudo dnf -y --best --allowerasing install \
     xarchiver \
     blueman \
     bluez-hid2hci \
-    quicksynergy \
-    baobab \
     gnome-shell-extension-user-theme \
     system-config-printer \
     gvfs-smb \
     firewall-config \
-    gimp \
     eog \
     evince \
     xdg-utils \
     file-roller \
     redshift \
     redshift-gtk \
-    dropbox \
-    gedit
-
-# MS fonts
-
-sudo dnf -y install http://sourceforge.net/projects/mscorefonts2/files/rpms/msttcore-fonts-installer-2.6-1.noarch.rpm
+    gedit \
+    terminilogy
 
 # Cleanup
 

@@ -50,6 +50,41 @@ if ask "Do you want to install 'minimal' configuration?"; then
 	git config --global credential.helper libsecret
     fi
 
+    # Use random MAC address for every WiFi/Ethernet connection by default: https://fedoramagazine.org/randomize-mac-address-nm/
+
+    sudo tee /etc/NetworkManager/conf.d/00-randomize-mac.conf <<- 'EOF'
+    [device]
+    wifi.scan-rand-mac-address=yes
+
+    [connection]
+    wifi.cloned-mac-address=random
+    ethernet.cloned-mac-address=random
+    EOF
+
+    # Configure plymouth
+
+    if ask "Apply default Plymouth configuration?"; then
+	sudo plymouth-set-default-theme bgrt -R
+	sudo grub2-editenv - set menu_auto_hide=1
+	sudo grub2-mkconfig -o /boot/grub2/grub.cfg
+    fi
+
+    # Power management
+
+    # Source: https://www.reddit.com/r/Fedora/comments/5pueys/how_to_save_power_with_your_laptop_running_fedora/
+
+    if ask "Enable tuned profiles?"; then
+	sudo dnf install powertop smartmontools tuned-utils
+	sudo powertop2tuned -n -e laptop
+
+	sudo tee /etc/udev/rules.d/powersave.rules <<-'EOF'
+	    SUBSYSTEM=="power_supply", ATTR{online}=="0", RUN+="/usr/sbin/tuned-adm profile laptop"
+	    SUBSYSTEM=="power_supply", ATTR{online}=="1", RUN+="/usr/sbin/tuned-adm profile desktop"
+	EOF
+
+	sudo systemctl enable tuned
+    fi
+
     # Check all required resources
 
     checkAllResources
