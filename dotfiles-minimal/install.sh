@@ -48,6 +48,7 @@ if ask "Do you want to install 'minimal' configuration?"; then
 	git config --global core.autocrlf input
 	git config --global push.default simple
 	git config --global credential.helper libsecret
+	git config --global commit.gpgsign true
     fi
 
     # Use random MAC address for every WiFi/Ethernet connection by default: https://fedoramagazine.org/randomize-mac-address-nm/
