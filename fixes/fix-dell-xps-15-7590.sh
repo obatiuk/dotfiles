@@ -1,5 +1,7 @@
 #!/bin/sh
 
+sudo dnf install v4l-utils
+
 #
 # Suspend
 #
@@ -13,3 +15,8 @@ sudo grub2-mkconfig -o /boot/grub2/grub.cfg
 # Intel sound
 
 echo "options snd-hda-intel model=dell-headset-multi" | sudo tee /etc/modprobe.d/dell.conf
+
+# Camera settings
+
+# Remove redness from video stream
+v4l2-ctl -c saturation=42
