@@ -2,7 +2,7 @@
 
 ## Installation
 
-* Install Fedora Workstation minimal (follow instruction [here](https://github.com/benmat/fedora-install))
+* Install Fedora Workstation minimal (follow instructions [here](https://github.com/benmat/fedora-install))
 * Get latest dotfiles
 
 ```bash
