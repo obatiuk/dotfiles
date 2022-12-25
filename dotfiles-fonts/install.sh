@@ -18,10 +18,9 @@ dotfiles_dir=$(dirname $(readlink -f $0))
 # Setup
 #
 
-if ask "Do you want to install 'fonts' configuration?"; then
+if ask "Do you want to apply 'fonts' configuration?" N; then
 
-    ask "Install required dependencies? (Distro: ${distro})?" Y && bash ./dependencies-${distro}.sh
-
+    bash "./dependencies-${distro}@${release}.sh" &&
 
     if [ "$release" -le 25 ]; then
 
@@ -44,5 +43,10 @@ if ask "Do you want to install 'fonts' configuration?"; then
 
     checkAllResources
 
+    echo "'fonts' configuration was successfully applied"
+else
+    echo "'fonts' configuration was not applied"
 fi
+
+
 

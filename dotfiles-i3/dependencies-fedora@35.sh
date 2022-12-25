@@ -4,9 +4,9 @@ dotfiles_dir=$(dirname $(readlink -f $0))
 
 . ${dotfiles_dir}/../functions
 
-# Enabling copr repositories
+if ask "Install required dependencies?" N; then
 
-sudo dnf -y copr enable gregw/i3desktop
+sudo dnf -y groupinstall "i3 desktop"
 
 # Packages
 
@@ -47,8 +47,12 @@ sudo dnf -y --best --allowerasing install \
     redshift \
     redshift-gtk \
     gedit \
-    terminilogy
+    terminilogy \
+    micro \
+    bat
 
 # Cleanup
 
 sudo dnf clean packages
+
+fi

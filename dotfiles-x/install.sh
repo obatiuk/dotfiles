@@ -19,9 +19,9 @@ echo $dotfiles_dir
 # Setup
 #
 
-if ask "Do you want to install 'X' configuration?"; then
+if ask "Do you want to apply 'X' configuration?"; then
 
-    ask "Install required dependencies? (Distro: ${distro})?" Y && bash ./dependencies-${distro}.sh
+     bash "./dependencies-${distro}@${release}.sh"
 
     #
     # Configuration files
@@ -37,20 +37,21 @@ if ask "Do you want to install 'X' configuration?"; then
 
     git config --global credential.helper gnome-keyring
 
-    if ask "Enable Graphic Mode?"; then
+    if ask "Enable Graphic Mode?" Y; then
 	sudo systemctl set-default graphical.target
     fi
 
-    if ask "Enable GDM?"; then
+    if ask "Start Graphic Mode?" Y; then
 	sudo systemctl enable gdm
-    fi
-
-    if ask "Start X?"; then
-		sudo systemctl isolate graphical.target
+	sudo systemctl isolate graphical.target
     fi
 
     # Check all required resources
 
     checkAllResources
 
+    echo "'X' configuration was successfully applied"
+else
+    echo "'X' configuration was not applied"
 fi
+

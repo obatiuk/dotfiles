@@ -4,6 +4,9 @@ dotfiles_dir=$(dirname $(readlink -f $0))
 
 . ${dotfiles_dir}/../functions
 
+
+if ask "Install required dependencies?" N; then
+
 # *** Fedora <25
 
 if [ "$release" -le 25 ]; then
@@ -18,8 +21,7 @@ if [ "$release" -le 25 ]; then
 	fontconfig-infinality-ultimate \
 	freetype-infinality-ultimate \
 
-
-# *** Fedora 28+
+# *** Fedora 29+
 
 elif [ "$release" -ge 29 ]; then
 
@@ -39,6 +41,7 @@ sudo dnf -y install \
     google-droid-sans-fonts \
     google-droid-serif-fonts \
     google-droid-sans-mono-fonts \
+    google-roboto-fonts \
     adobe-source-code-pro-fonts \
     dejavu-fonts-common \
     dejavu-sans-fonts \
@@ -48,7 +51,8 @@ sudo dnf -y install \
     liberation-mono-fonts \
     liberation-narrow-fonts \
     liberation-sans-fonts \
-    liberation-serif-fonts
+    liberation-serif-fonts \
+    jetbrains-mono-fonts-all
 
 # MS fonts
 
@@ -57,3 +61,5 @@ sudo dnf -y install http://sourceforge.net/projects/mscorefonts2/files/rpms/mstt
 # Cleanup
 
 sudo dnf clean packages
+
+fi

@@ -4,6 +4,8 @@ dotfiles_dir=$(dirname $(readlink -f $0))
 
 . ${dotfiles_dir}/../functions
 
+if ask "Install required dependencies?" N; then
+
 sudo dnf -y update
 
 # Base packages
@@ -19,7 +21,6 @@ sudo dnf -y install \
     gtk-murrine-engine \
     gdm \
     screenfetch \
-    pulseaudio-utils \
     gvfs-mtp \
     NetworkManager-openvpn-gnome \
     gnome-calculator
@@ -33,3 +34,5 @@ sudo dnf -y install \
 # Cleanup
 
 sudo dnf -y clean packages
+
+fi

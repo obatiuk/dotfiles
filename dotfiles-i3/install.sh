@@ -18,9 +18,9 @@ dotfiles_dir=$(dirname $(readlink -f $0))
 # Setup
 #
 
-if ask "Do you want to install 'i3' configuration?"; then
+if ask "Do you want to apply 'i3' configuration?"; then
 
-    ask "Install required dependencies? (Distro: ${distro})?" Y && bash ./dependencies-${distro}.sh
+    bash "./dependencies-${distro}@${release}.sh"
 
     #
     # Configuration files
@@ -124,7 +124,7 @@ if ask "Do you want to install 'i3' configuration?"; then
 
     checkAllResources
 
-    echo "i3 configuration files were successfully installed"
+    echo "'i3' configuration was successfully applied"
 else
-    echo "i3 configuration files were not installed".
+    echo "'i3' configuration was not applied"
 fi

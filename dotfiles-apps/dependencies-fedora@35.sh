@@ -4,6 +4,8 @@ dotfiles_dir=$(dirname $(readlink -f $0))
 
 . ${dotfiles_dir}/../functions
 
+if ask "Install required dependencies?" N; then
+
 sudo dnf -y update
 
 # Installing rpmfusion-free/nonfree repositories
@@ -15,15 +17,14 @@ sudo dnf -y install http://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonf
 
 if [ "$release" -le 30 ]; then
 
-sudo bash -c 'cat << EOF > /etc/yum.repos.d/google-chrome.repo
-[google-chrome]
-name=google-chrome
-baseurl=http://dl.google.com/linux/chrome/rpm/stable/\$basearch
-enabled=1
-gpgcheck=1
-gpgkey=https://dl-ssl.google.com/linux/linux_signing_key.pub
+sudo tee /etc/yum.repos.d/google-chrome.repo <<- 'EOF'
+    [google-chrome]
+    name=google-chrome
+    baseurl=http://dl.google.com/linux/chrome/rpm/stable/$basearch
+    enabled=1
+    gpgcheck=1
+    gpgkey=https://dl-ssl.google.com/linux/linux_signing_key.pub
 EOF
-'
 
 else
 
@@ -31,29 +32,39 @@ else
 
 fi
 
-sudo bash -c 'cat << EOF > /etc/yum.repos.d/google-talkplugin.repo
-[google-talkplugin]
-name=google-talkplugin
-baseurl=http://dl.google.com/linux/talkplugin/rpm/stable/\$basearch
-enabled=1
-gpgcheck=1
-gpgkey=https://dl-ssl.google.com/linux/linux_signing_key.pub
+sudo tee /etc/yum.repos.d/google-talkplugin.repo <<- 'EOF'
+    [google-talkplugin]
+    name=google-talkplugin
+    baseurl=http://dl.google.com/linux/talkplugin/rpm/stable/$basearch
+    enabled=1
+    gpgcheck=1
+    gpgkey=https://dl-ssl.google.com/linux/linux_signing_key.pub
 EOF
-'
+
+# Keybase repository
+
+sudo tee /etc/yum.repos.d/keybase.repo <<- 'EOF'
+    [keybase]
+    name=keybase
+    baseurl=http://prerelease.keybase.io/rpm/x86_64
+    enabled=1
+    gpgcheck=1
+    gpgkey=https://keybase.io/docs/server_security/code_signing_key.asc
+EOF
 
 # Opera repository
 
-sudo bash -c 'cat << EOF > /etc/yum.repos.d/opera.repo
-[opera]
-name=Opera packages
-type=rpm-md
-baseurl=https://rpm.opera.com/rpm
-enabled=1
-gpgcheck=1
-gpgkey=https://rpm.opera.com/rpmrepo.key
+# use `snap` to install opera. Keep repository, but disable it for now.
 
+sudo tee /etc/yum.repos.d/opera.repo <<-'EOF'
+    [opera]
+    name=Opera packages
+    type=rpm-md
+    baseurl=https://rpm.opera.com/rpm
+    enabled=0
+    gpgcheck=1
+    gpgkey=https://rpm.opera.com/rpmrepo.key
 EOF
-'
 
 # Packages
 
@@ -73,10 +84,7 @@ sudo dnf -y --best --allowerasing install \
 sudo dnf -y install \
     fedora-workstation-repositories \
     google-chrome-stable \
-    google-talkplugin \
-    opera-stable \
-    chromium-libs-media-freeworld \
-    chromium-freeworld
+    google-talkplugin
 
 # Office
 
@@ -117,8 +125,17 @@ sudo dnf -y install \
     python3-devel \
     snap
 
-sudo snap install chromium-ffmpeg
+# Other
+
+sudo snap install
+    chromium-ffmpeg \
+    opera \
+    seahorse \
+    pinentry-gtk \
+    keybase
 
 # Cleanup
 
 sudo dnf clean packages
+
+fi

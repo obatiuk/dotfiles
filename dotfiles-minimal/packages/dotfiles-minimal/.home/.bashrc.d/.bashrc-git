@@ -1,3 +1,9 @@
+# User specific aliases and functions
+
+# Settings in this file are only for interactive shells.
+# I don't know why bash loads this file for scp etc.,
+# but return if that's the case.
+[ "$PS1" ] || return
 
 [ -r /usr/share/git-core/contrib/completion/git-prompt.sh ] && . /usr/share/git-core/contrib/completion/git-prompt.sh
 

@@ -211,7 +211,7 @@ assign [class="VirtualBox"] $WM8
 
 exec --no-startup-id /usr/bin/xsetroot -solid "#000000" &
 exec --no-startup-id /usr/bin/xset r rate 250 50 &
-exec_always --no-startup-id /usr/bin/feh --bg-fill ${HOME}/.config/wallpaper/default.png &	# Set wallpaper
+exec_always --no-startup-id /usr/bin/feh --bg-fill ${HOME}/.config/wallpaper/wallpaper-i3.png &	# Set wallpaper
 exec --no-startup-id /usr/bin/xfsettingsd --sm-client-disable && sleep 1			# Starting xfce settings daemon
 exec --no-startup-id /usr/bin/xfce4-power-manager &						# Starting xfce power manager
 exec --no-startup-id /usr/libexec/xfce-polkit &							# Starting xfce policy kit

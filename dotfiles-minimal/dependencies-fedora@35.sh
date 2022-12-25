@@ -4,24 +4,14 @@ dotfiles_dir=$(dirname $(readlink -f $0))
 
 . ${dotfiles_dir}/../functions
 
+if ask "Install required dependencies?" N; then
+
 sudo dnf -y update
 
 # Installing rpmfusion-free/nonfree repositories
 
 sudo dnf -y install http://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-${release}.noarch.rpm
 sudo dnf -y install http://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-${release}.noarch.rpm
-
-# Keybase repository
-
-sudo bash -c 'cat << EOF > /etc/yum.repos.d/keybase.repo
-[keybase]
-name=keybase
-baseurl=http://prerelease.keybase.io/rpm/x86_64
-enabled=1
-gpgcheck=1
-gpgkey=https://keybase.io/docs/server_security/code_signing_key.asc
-EOF
-'
 
 # Base system packages
 
@@ -34,8 +24,8 @@ sudo dnf -y install \
     iwl*-firmware \
     ecryptfs-utils \
     stow \
-    gnupg \
     gnupg2 \
+    pinentry-tty \
     snapd \
     usbutils \
     pciutils \
@@ -43,12 +33,16 @@ sudo dnf -y install \
     git-extras \
     htop \
     mc \
-    keybase \
     pwgen \
     samba-client \
     tree \
     rpmconf \
-    rsync
+    rsync \
+    bat \
+    fzf \
+    fd-find \
+    ydiff \
+    power-profiles-daemon
 
 # Additional packages
 
@@ -59,7 +53,15 @@ sudo dnf -y install \
     sysstat \
     p7zip \
     nmap \
-    cabextract
+    cabextract \
+    iotop \
+    qrencode
+
+# dnf plugins
+
+sudo dnf -y install \
+    dnf-plugin-diff \
+    dnf-plugins-extras-tracer
 
 # Plymouth
 
@@ -70,3 +72,5 @@ sudo dnf -y install \
 # Cleanup
 
 sudo dnf -y clean packages
+
+fi

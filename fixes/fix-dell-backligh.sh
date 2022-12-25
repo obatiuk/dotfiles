@@ -57,4 +57,4 @@ RestartSec=1
 WantedBy=default.target
 EOF
 
-systemctl --user enable xbacklightmon.service && systemctl --user start xbacklightmon.service
+systemctl --user enable -now xbacklightmon.service
