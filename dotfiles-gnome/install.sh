@@ -105,6 +105,8 @@ if ask "Do you want to apply 'Gnome' configuration?" N; then
     gsettings set org.gnome.desktop.interface monospace-font-name 'JetBrainsMono Nerd Font Mono 10'
     gsettings set org.gnome.desktop.interface font-name 'Sans 9'
     gsettings set org.gnome.desktop.interface document-font-name 'Sans 9'
+    gsettings set org.gnome.desktop.interface font-antialiasing 'grayscale'
+    gsettings set org.gnome.desktop.interface font-hinting 'slight'
 
     ## Display settings
 
@@ -216,6 +218,8 @@ if ask "Do you want to apply 'Gnome' configuration?" N; then
     ## Basic templates
 
     touch ${templates_dir}/'New Text File.txt'
+
+    sudo systemctl enable gdm
 
     echo "'Gnome' configuration was successfully applied"
 else

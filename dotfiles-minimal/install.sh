@@ -45,18 +45,12 @@ if ask "Do you want to apply 'minimal' configuration?" N; then
 
     if ask "Generate default global .gitconfig?" Y; then
 	git config --global init.defaultBranch master
-
 	git config --global color.ui auto
 	git config --global color.diff never
-
 	git config --global core.autocrlf input
-
 	git config --global push.default simple
-
 	git config --global credential.helper libsecret
-
 	git config --global commit.gpgsign true
-
 	git config --global pager.diff "ydiff"
 	git config --global pager.show "ydiff"
 	git config --global pager.log bat

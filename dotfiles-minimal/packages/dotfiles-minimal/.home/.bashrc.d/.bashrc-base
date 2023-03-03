@@ -16,7 +16,7 @@ alias grep="grep --color=auto"
 alias free="free -ht"
 alias space="du -S | sort -n -r | more"
 alias rm="rm -vi"
-alias du="du -kh"									# Makes a more readable output
+alias du="du -kh"						# Makes a more readable output
 alias df="df -Tha --total"
 alias mkdir="mkdir -pv"
 alias reload="source ~/.bashrc"
@@ -29,7 +29,7 @@ alias qr='qrencode -m 2 -t utf8 <<< "$1"'
 
 # Make multiple shells share the same history file
 
-export HISTSIZE=1000						# Bash history will save N commands
+export HISTSIZE=1000					# Bash history will save N commands
 export HISTFILESIZE=${HISTSIZE}				# Bash will remember N commands
 export HISTCONTROL=ignoreboth				# Ignore duplicates and spaces
 export HISTIGNORE='&:ls:ll:la:cd:exit:clear:history'
@@ -60,6 +60,17 @@ export FZF_ALT_C_COMMAND="fd -t d . $HOME"
 # ydiff settings
 export YDIFF_OPTIONS='-s -w0 --pager=bat'
 
+# GPG settings
+export GPG_TTY=$(tty)
+pw() {
+    export PASSWORD_STORE_CLIP_TIME=8
+    export PASSWORD_STORE_X_SELECTION=primary
+    pass -c2 $1; sleep 5; pass -c $1; sleep 5; pass otp -c $1; exit
+}
+
+
+# pass settings
+export PASSWORD_STORE_ENABLE_EXTENSIONS=true
 
 # Functions
 

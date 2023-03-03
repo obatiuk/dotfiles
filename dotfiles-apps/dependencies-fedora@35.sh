@@ -132,6 +132,7 @@ sudo snap install
     opera \
     seahorse \
     pinentry-gtk \
+    pinentry-gnome3 \
     keybase
 
 # Cleanup

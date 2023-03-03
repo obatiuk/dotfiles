@@ -38,11 +38,15 @@ sudo dnf -y install \
     tree \
     rpmconf \
     rsync \
+    restic \
+    rclone \
     bat \
     fzf \
     fd-find \
     ydiff \
-    power-profiles-daemon
+    power-profiles-daemon \
+    pass \
+    pass-otp
 
 # Additional packages
 
@@ -55,7 +59,8 @@ sudo dnf -y install \
     nmap \
     cabextract \
     iotop \
-    qrencode
+    qrencode \
+    acpi
 
 # dnf plugins
 

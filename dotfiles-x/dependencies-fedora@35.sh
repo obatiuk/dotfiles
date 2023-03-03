@@ -12,19 +12,6 @@ sudo dnf -y update
 
 sudo dnf -y install @base-x
 
-sudo dnf -y install \
-    gnome-shell \
-    fedora-icon-theme \
-    adwaita-cursor-theme \
-    gtk2 \
-    gtk3 \
-    gtk-murrine-engine \
-    gdm \
-    screenfetch \
-    gvfs-mtp \
-    NetworkManager-openvpn-gnome \
-    gnome-calculator
-
 # Avahi
 
 sudo dnf -y install \

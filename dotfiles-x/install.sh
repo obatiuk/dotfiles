@@ -42,7 +42,6 @@ if ask "Do you want to apply 'X' configuration?"; then
     fi
 
     if ask "Start Graphic Mode?" Y; then
-	sudo systemctl enable gdm
 	sudo systemctl isolate graphical.target
     fi
 
