@@ -94,8 +94,8 @@ if ask "Do you want to apply 'Gnome' configuration?" N; then
     gsettings set org.gnome.mutter.keybindings toggle-tiled-left []
     gsettings set org.gnome.mutter.keybindings toggle-tiled-right []
 
-    gsettings set org.gnome.desktop.input-sources sources [('xkb', 'us'), ('xkb', 'ru'), ('xkb', 'ua')]
-    gsettings set org.gnome.desktop.input-sources mru-sources [('xkb', 'us'), ('xkb', 'ru'), ('xkb', 'ua')]
+    gsettings set org.gnome.desktop.input-sources sources "[('xkb', 'us'), ('xkb', 'ru'), ('xkb', 'ua')]"
+    gsettings set org.gnome.desktop.input-sources mru-sources "[('xkb', 'us'), ('xkb', 'ru'), ('xkb', 'ua')]"
 
     ## Custom global keyboard shortcuts
 
@@ -245,6 +245,8 @@ if ask "Do you want to apply 'Gnome' configuration?" N; then
     touch ${templates_dir}/'New Text File.txt'
 
     sudo systemctl enable gdm
+
+    checkAllResources
 
     echo "'Gnome' configuration was successfully applied"
 else
