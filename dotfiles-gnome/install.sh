@@ -31,6 +31,14 @@ if ask "Do you want to apply 'Gnome' configuration?" N; then
     stow --dir=packages --target=${HOME} -vv --stow --no-folding dotfiles-gnome
 
     #
+    # Make sure `ddcutil` works
+    #
+
+    sudo groupadd --force --system i2c
+    sudo ln -svf /usr/share/ddcutil/data/45-ddcutil-i2c.rules /etc/udev/rules.d
+    sudo usermod ${USER} -aG i2c
+
+    #
     # Settings
     #
 
@@ -71,15 +79,6 @@ if ask "Do you want to apply 'Gnome' configuration?" N; then
     gsettings set org.gnome.desktop.wm.keybindings switch-windows-backward "['<Primary><Shift>Tab']"
     gsettings set org.gnome.desktop.wm.keybindings switch-group "['<Primary>grave']"
     gsettings set org.gnome.desktop.wm.keybindings switch-group-backward "['<Primary><Shift>grave']"
-
-    gsettings set org.gnome.desktop.input-sources sources [('xkb', 'us'), ('xkb', 'ru'), ('xkb', 'ua')]
-    gsettings set org.gnome.desktop.input-sources mru-sources [('xkb', 'us'), ('xkb', 'ru'), ('xkb', 'ua')]
-
-    ## Workspace
-
-    gsettings set org.gnome.mutter dynamic-workspaces false
-    gsettings set org.gnome.desktop.wm.preferences num-workspaces 1
-    gsettings set org.gnome.mutter workspaces-only-on-primary false
     gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-1 "['<Super>1']"
     gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-2 "['<Super>2']"
     gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-3 "['<Super>3']"
@@ -87,19 +86,45 @@ if ask "Do you want to apply 'Gnome' configuration?" N; then
     gsettings set org.gnome.desktop.wm.keybindings move-to-monitor-right "['<Shift><Super>x']"
     gsettings set org.gnome.desktop.wm.keybindings move-to-monitor-lefet "['<Shift><Super>z']"
     gsettings set org.gnome.desktop.wm.keybindings maximize "['<Shift><Super>f']"
-#    gsettings set org.gnome.mutter.keybindings toggle-tiled-left "['<Shift><Super>Left']"
-#    gsettings set org.gnome.mutter.keybindings toggle-tiled-right "['<Shift><Super>Right']"
-    gsettings set org.gnome.settings-daemon.plugins.media-keys home "['<Super>h']"
     gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-up []
     gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-down []
     gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-left []
     gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-right []
 
-    ## Interface settings
+    gsettings set org.gnome.mutter.keybindings toggle-tiled-left []
+    gsettings set org.gnome.mutter.keybindings toggle-tiled-right []
+
+    gsettings set org.gnome.desktop.input-sources sources [('xkb', 'us'), ('xkb', 'ru'), ('xkb', 'ua')]
+    gsettings set org.gnome.desktop.input-sources mru-sources [('xkb', 'us'), ('xkb', 'ru'), ('xkb', 'ua')]
+
+    ## Custom global keyboard shortcuts
+
+    gsettings set org.gnome.settings-daemon.plugins.media-keys custom-keybindings "['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2/']"
+
+    gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/ name 'Run Terminal'
+    gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/ command "$(command -v gnome-terminal)"
+    gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/ binding '<Super>t'
+
+    gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/ name 'Dell KVM - Switch Input'
+    gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/ command "${HOME}/.local/bin/ddcutil-dell-kvm-switch-input.sh"
+    gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/ binding '<Alt>i'
+
+    gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2/ name 'Display Ulauncer'
+    gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2/ command "$(command -v ulauncher-toggle)"
+    gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2/ binding '<Super>r'
+
+    ## Top pannel settings
 
     gsettings set org.gnome.desktop.interface show-battery-percentage true
     gsettings set org.gnome.desktop.interface clock-show-weekday true
 
+    ## Workspace
+
+    gsettings set org.gnome.mutter dynamic-workspaces false
+    gsettings set org.gnome.desktop.wm.preferences num-workspaces 1
+    gsettings set org.gnome.mutter workspaces-only-on-primary false
+    gsettings set org.gnome.settings-daemon.plugins.media-keys home "['<Super>h']"
+    
     ## Fonts
 
     gsettings set org.gnome.desktop.interface monospace-font-name 'JetBrainsMono Nerd Font Mono 10'
@@ -140,7 +165,7 @@ if ask "Do you want to apply 'Gnome' configuration?" N; then
     gsettings set org.gtk.Settings.FileChooser location-mode 'path-bar'
     gsettings set org.gtk.Settings.FileChooser sort-directories-first true
 
-    ## gedit
+    ## gEdit
 
     gsettings set org.gnome.gedit.preferences.editor auto-save true
     gsettings set org.gnome.gedit.preferences.ui statusbar-visible true

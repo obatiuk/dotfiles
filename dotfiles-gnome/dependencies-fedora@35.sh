@@ -12,28 +12,29 @@ sudo dnf install @gnome-desktop
 
 # Packages
 
-sudo dnf -y install \
+sudo dnf -y --best --allowerasing install \
+    gdm \
     gnome-shell \
+    gnome-shell-extension-dash-to-dock \
+    gnome-shell-extension-appindicator \
     fedora-icon-theme \
+    adwaita-icon-theme \
     adwaita-cursor-theme \
+    arc-theme \
     gtk2 \
     gtk3 \
     gtk-murrine-engine \
-    gdm \
+    fedora-workstation-repositories \
+    pinentry-gtk \
+    pinentry-gnome3 \
+    jetbrains-mono-fonts-all \
     screenfetch \
     gvfs-mtp \
     NetworkManager-openvpn-gnome \
-    gnome-calculator
-
-sudo dnf -y --best --allowerasing install \
-    fedora-workstation-repositories \
-    arc-theme \
-    adwaita-icon-theme \
-    adwaita-cursor-theme \
-    gnome-shell-extension-dash-to-dock \
-    gnome-shell-extension-appindicator \
-    pinentry-gtk \
-    pinentry-gnome3
+    gnome-calculator \
+    gnome-terminal \
+    ddcutil \
+    ulauncher
 
 # Cleanup
 
