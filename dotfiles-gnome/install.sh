@@ -32,6 +32,7 @@ if ask "Do you want to apply 'Gnome' configuration?" N; then
 
     #
     # Make sure `ddcutil` works
+    # Source: https://www.ddcutil.com/i2c_permissions/
     #
 
     sudo groupadd --force --system i2c
@@ -84,7 +85,7 @@ if ask "Do you want to apply 'Gnome' configuration?" N; then
     gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-3 "['<Super>3']"
     gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-4 "['<Super>4']"
     gsettings set org.gnome.desktop.wm.keybindings move-to-monitor-right "['<Shift><Super>x']"
-    gsettings set org.gnome.desktop.wm.keybindings move-to-monitor-lefet "['<Shift><Super>z']"
+    gsettings set org.gnome.desktop.wm.keybindings move-to-monitor-left "['<Shift><Super>z']"
     gsettings set org.gnome.desktop.wm.keybindings maximize "['<Shift><Super>f']"
     gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-up []
     gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-down []
