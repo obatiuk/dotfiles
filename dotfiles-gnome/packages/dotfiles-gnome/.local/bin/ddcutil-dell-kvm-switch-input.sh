@@ -9,8 +9,10 @@
 set -o nounset
 set -o errexit
 
+model='DELL U3821DW'
+
 # Get current input
-current=$(ddcutil getvcp 60 | sed -n "s/.*(sl=\(.*\))/\1/p")
+current=$(ddcutil -l "${model}" getvcp 60 | sed -n "s/.*(sl=\(.*\))/\1/p")
 
 # Get the other input
 case $current in
@@ -32,4 +34,4 @@ case $current in
 esac
 
 # Set new input
-ddcutil setvcp 60 $output
+ddcutil -l "${model}" setvcp 60 $output
