@@ -46,7 +46,9 @@ sudo dnf -y install \
     ydiff \
     power-profiles-daemon \
     pass \
-    pass-otp
+    pass-otp \
+    screen \
+    tio
 
 # Additional packages
 
