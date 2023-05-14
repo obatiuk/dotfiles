@@ -176,7 +176,7 @@ if ask "Do you want to apply 'Gnome' configuration?" N; then
     gsettings set org.gnome.gedit.preferences.editor display-line-numbers true
     gsettings set org.gnome.gedit.preferences.print print-header false
     gsettings set org.gnome.gedit.preferences.ui side-panel-visible true
-    gsettings set org.gnome.gedit.plugins active-plugins ['docinfo', 'filebrowser', 'spell', 'modelines', 'time']
+    gsettings set org.gnome.gedit.plugins active-plugins "['docinfo', 'filebrowser', 'spell', 'modelines', 'time']"
 
     ## Terminal
 
