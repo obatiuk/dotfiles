@@ -9,14 +9,13 @@
 [ -f /etc/bashrc ] && . /etc/bashrc
 
 # Base aliases
-
-alias ls="ls --color=auto --human-readable"			# More readable output
+alias ls="ls --color=auto --human-readable"                                     # More readable output
 alias la="ls -la --color=auto --human-readable"
 alias grep="grep --color=auto"
 alias free="free -ht"
 alias space="du -S | sort -n -r | more"
 alias rm="rm -vi"
-alias du="du -kh"						# Makes a more readable output
+alias du="du -kh"                                                               # Makes a more readable output
 alias df="df -Tha --total"
 alias mkdir="mkdir -pv"
 alias reload="source ~/.bashrc"
@@ -28,12 +27,12 @@ alias dotfiles="cd ${HOME}/.home/.dotfiles.d"
 alias qr='qrencode -m 2 -t utf8 <<< "$1"'
 
 # Make multiple shells share the same history file
-
-export HISTSIZE=1000					# Bash history will save N commands
-export HISTFILESIZE=${HISTSIZE}				# Bash will remember N commands
-export HISTCONTROL=ignoreboth				# Ignore duplicates and spaces
+export HISTSIZE=1000000                                                         # Bash history will save N commands
+export HISTFILESIZE=${HISTSIZE}                                                 # Bash will remember N commands
+export HISTCONTROL=ignoredups:erasedups                                         # Ignore duplicates and spaces
 export HISTIGNORE='&:ls:ll:la:cd:exit:clear:history'
 export HISTTIMEFORMAT='%F %T '
+export PROMPT_COMMAND="history -n; history -w; history -c; history -r; $PROMPT_COMMAND"
 
 # Append to the history file, don't overwrite it
 shopt -s histappend
@@ -49,6 +48,7 @@ export MANPAGER="less -s -M +Gg"
 # Source: http://unix.stackexchange.com/a/147
 
 # default editor (use `editor` alternative)
+export VISUAL=/usr/bin/editor
 export EDITOR=/usr/bin/editor
 
 # fzf settings
