@@ -1,0 +1,53 @@
+# Top-level configuration
+root = true
+
+# Common rules
+[*]
+end_of_line = lf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+curly_bracket_next_line = false
+spaces_around_operators = true
+continuation_indent_size = 4
+ij_formatter_off_tag = @formatter:off
+ij_formatter_on_tag = @formatter:on
+ij_formatter_tags_enabled = true
+
+[*.{sh,bash}]
+indent_style = tab
+indent_size = 4
+
+# Use Windows linebreaks for batch files
+[*.bat]
+indent_style = tab
+indent_size = 4
+end_of_line = crlf
+
+[*.{cpp,py}]
+indent_style = space
+indent_size = 4
+
+[*.{js,ts}]
+indent_style = tab
+indent_size = 4
+quote_type = single
+
+[*.md]
+indent_style = tab
+indent_size = 4
+trim_trailing_whitespace = false
+
+[Makefile]
+indent_style = tab
+
+# Preserver tabs in "tabl separated values" files
+[*.tsv]
+indent_size = 4
+indent_style = tab
+
+[*.{java,gradle}]
+indent_style = tab
+indent_size = 4
+max_line_length = 120
+ij_continuation_indent_size = 4
