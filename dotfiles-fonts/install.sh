@@ -20,33 +20,30 @@ dotfiles_dir=$(dirname $(readlink -f $0))
 
 if ask "Do you want to apply 'fonts' configuration?" N; then
 
-    bash "./dependencies-${distro}@${release}.sh" &&
+	bash "./dependencies-${distro}@${release}.sh"
 
-    if [ "$release" -le 25 ]; then
+	if [ "$release" -le 25 ]; then
 
-	#
-	# Configuration files
-	#
+		#
+		# Configuration files
+		#
 
-	stow --dir=packages --target=${HOME} -vv --stow --no-folding dotfiles-fonts-infinality
+		stow --dir=packages --target=${HOME} -vv --stow --no-folding dotfiles-fonts-infinality
 
-	#
-	# Settings
-	#
+		#
+		# Settings
+		#
 
-	# Enabling infinality fonts configuration
+		# Enabling infinality fonts configuration
 
-	sudo bash /etc/fonts/infinality/infctl.sh setstyle infinality
-    fi
+		sudo bash /etc/fonts/infinality/infctl.sh setstyle infinality
+	fi
 
-    # Check all required resources
+	# Check all required resources
 
-    checkAllResources
+	checkAllResources
 
-    echo "'fonts' configuration was successfully applied"
+	echo "'fonts' configuration was successfully applied"
 else
-    echo "'fonts' configuration was not applied"
+	echo "'fonts' configuration was not applied"
 fi
-
-
-

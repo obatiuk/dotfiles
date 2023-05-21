@@ -6,20 +6,20 @@ dotfiles_dir=$(dirname $(readlink -f $0))
 
 if ask "Install required dependencies?" N; then
 
-sudo dnf -y update
+	sudo dnf -y update
 
-# Base packages
+	# Base packages
 
-sudo dnf -y install @base-x
+	sudo dnf -y install @base-x
 
-# Avahi
+	# Avahi
 
-sudo dnf -y install \
-    avahi \
-    avahi-tools
+	sudo dnf -y install \
+		avahi \
+		avahi-tools
 
-# Cleanup
+	# Cleanup
 
-sudo dnf -y clean packages
+	sudo dnf -y clean packages
 
 fi

@@ -21,36 +21,35 @@ echo $dotfiles_dir
 
 if ask "Do you want to apply 'X' configuration?"; then
 
-     bash "./dependencies-${distro}@${release}.sh"
+	bash "./dependencies-${distro}@${release}.sh"
 
-    #
-    # Configuration files
-    #
+	#
+	# Configuration files
+	#
 
-    stow --dir=packages --target=${HOME} -vv --stow --no-folding dotfiles-x
+	stow --dir=packages --target=${HOME} -vv --stow --no-folding dotfiles-x
 
-    #
-    # Settings
-    #
+	#
+	# Settings
+	#
 
-    # Git config
+	# Git config
 
-    git config --global credential.helper gnome-keyring
+	git config --global credential.helper gnome-keyring
 
-    if ask "Enable Graphic Mode?" Y; then
-	sudo systemctl set-default graphical.target
-    fi
+	if ask "Enable Graphic Mode?" Y; then
+		sudo systemctl set-default graphical.target
+	fi
 
-    if ask "Start Graphic Mode?" Y; then
-	sudo systemctl isolate graphical.target
-    fi
+	if ask "Start Graphic Mode?" Y; then
+		sudo systemctl isolate graphical.target
+	fi
 
-    # Check all required resources
+	# Check all required resources
 
-    checkAllResources
+	checkAllResources
 
-    echo "'X' configuration was successfully applied"
+	echo "'X' configuration was successfully applied"
 else
-    echo "'X' configuration was not applied"
+	echo "'X' configuration was not applied"
 fi
-

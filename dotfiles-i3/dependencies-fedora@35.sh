@@ -6,53 +6,53 @@ dotfiles_dir=$(dirname $(readlink -f $0))
 
 if ask "Install required dependencies?" N; then
 
-sudo dnf -y groupinstall "i3 desktop"
+	sudo dnf -y groupinstall "i3 desktop"
 
-# Packages
+	# Packages
 
-sudo dnf -y --best --allowerasing install \
-    i3-gaps \
-    xfconf \
-    gnome-keyring \
-    seahorse \
-    i3status \
-    i3lock \
-    network-manager-applet \
-    pnmixer \
-    compton \
-    feh \
-    scrot \
-    xautolock \
-    pavucontrol \
-    xorg-x11-xinit-session \
-    xfce4-notifyd \
-    xfce4-power-manager \
-    xfce4-screenshooter \
-    xfce-polkit \
-    xfce4-settings \
-    thunar \
-    thunar-archive-plugin \
-    thunar-volman \
-    xarchiver \
-    blueman \
-    bluez-hid2hci \
-    gnome-shell-extension-user-theme \
-    system-config-printer \
-    gvfs-smb \
-    firewall-config \
-    eog \
-    evince \
-    xdg-utils \
-    file-roller \
-    redshift \
-    redshift-gtk \
-    gedit \
-    terminilogy \
-    micro \
-    bat
+	sudo dnf -y --best --allowerasing install \
+		i3-gaps \
+		xfconf \
+		gnome-keyring \
+		seahorse \
+		i3status \
+		i3lock \
+		network-manager-applet \
+		pnmixer \
+		compton \
+		feh \
+		scrot \
+		xautolock \
+		pavucontrol \
+		xorg-x11-xinit-session \
+		xfce4-notifyd \
+		xfce4-power-manager \
+		xfce4-screenshooter \
+		xfce-polkit \
+		xfce4-settings \
+		thunar \
+		thunar-archive-plugin \
+		thunar-volman \
+		xarchiver \
+		blueman \
+		bluez-hid2hci \
+		gnome-shell-extension-user-theme \
+		system-config-printer \
+		gvfs-smb \
+		firewall-config \
+		eog \
+		evince \
+		xdg-utils \
+		file-roller \
+		redshift \
+		redshift-gtk \
+		gedit \
+		terminilogy \
+		micro \
+		bat
 
-# Cleanup
+	# Cleanup
 
-sudo dnf clean packages
+	sudo dnf clean packages
 
 fi

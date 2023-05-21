@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Fix for iwlwifi performance drop for "Intel Corporation Centrino Advanced-N 6235 (rev 24)" network controler
+# Fix for iwlwifi performance drop for "Intel Corporation Centrino Advanced-N 6235 (rev 24)" network controller
 #
 # Source:
 # - https://wireless.wiki.kernel.org/en/users/Drivers/iwlwifi#wifibluetooth_coexistence

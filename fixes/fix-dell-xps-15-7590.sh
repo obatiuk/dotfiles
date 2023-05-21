@@ -18,15 +18,14 @@ v4l2-ctl -c saturation=42
 
 # Headphones are not automatically recognized by the system
 
-sudo tee /etc/modprobe.d/dell.conf << 'EOF'
-# https://bbs.archlinux.org/viewtopic.php?id=222322
-options snd-hda-intel model=dell-headset-multi
+sudo tee /etc/modprobe.d/dell.conf <<- 'EOF'
+	# https://bbs.archlinux.org/viewtopic.php?id=222322
+	options snd-hda-intel model=dell-headset-multi
 EOF
 
-# Disable bluetooth autosuspend
+# Disable bluetooth auto-suspend
 
-sudo tee /etc/modprobe.d/btusb.conf << 'EOF'
-# https://bbs.archlinux.org/viewtopic.php?id=222322
-options btusb enable_autosuspend=0
+sudo tee /etc/modprobe.d/btusb.conf <<- 'EOF'
+	# https://bbs.archlinux.org/viewtopic.php?id=222322
+	options btusb enable_autosuspend=0
 EOF
-

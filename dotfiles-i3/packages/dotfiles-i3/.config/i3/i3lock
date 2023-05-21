@@ -1,22 +1,20 @@
 #!/usr/bin/env bash
 
-if ! pgrep "i3lock" > /dev/null
-then
+if ! pgrep "i3lock" > /dev/null; then
 
-    image=$(mktemp --suffix=.png)
-    trap "/bin/rm -f $image" INT TERM EXIT
+	image=$(mktemp --suffix=.png)
+	trap "/bin/rm -f $image" INT TERM EXIT
 
-    scrot $image
+	scrot $image
 
-    /usr/bin/i3lock -c 000000
+	/usr/bin/i3lock -c 000000
 
-    convert $image -blur 0x8 -paint 10 $image
+	convert $image -blur 0x8 -paint 10 $image
 
-    if pgrep "i3lock" > /dev/null
-    then
-	kill $(pgrep i3lock)
-	/usr/bin/i3lock -i $image
-    fi
+	if pgrep "i3lock" > /dev/null; then
+		kill $(pgrep i3lock)
+		/usr/bin/i3lock -i $image
+	fi
 
-    unset image
+	unset image
 fi

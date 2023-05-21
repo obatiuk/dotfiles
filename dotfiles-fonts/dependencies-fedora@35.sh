@@ -4,62 +4,61 @@ dotfiles_dir=$(dirname $(readlink -f $0))
 
 . ${dotfiles_dir}/../functions
 
-
 if ask "Install required dependencies?" N; then
 
-# *** Fedora <25
+	# *** Fedora <25
 
-if [ "$release" -le 25 ]; then
+	if [ "$release" -le 25 ]; then
 
-    # Installing external repository for infinality packages
+		# Installing external repository for infinality packages
 
-    sudo dnf config-manager --add-repo=http://download.opensuse.org/repositories/home:/fastrizwaan/Fedora_${release}/home:fastrizwaan.repo
+		sudo dnf config-manager --add-repo=http://download.opensuse.org/repositories/home:/fastrizwaan/Fedora_${release}/home:fastrizwaan.repo
 
-    # Packages
+		# Packages
 
-    sudo dnf -y install \
-	fontconfig-infinality-ultimate \
-	freetype-infinality-ultimate \
+		sudo dnf -y install \
+			fontconfig-infinality-ultimate \
+			freetype-infinality-ultimate
 
-# *** Fedora 29+
+	# *** Fedora 29+
 
-elif [ "$release" -ge 29 ]; then
+	elif [ "$release" -ge 29 ]; then
 
-    # Better fonts repository
+		# Better fonts repository
 
-    sudo dnf copr enable dawid/better_fonts
+		sudo dnf copr enable dawid/better_fonts
 
-    sudo dnf -y install \
-	fontconfig-enhanced-defaults \
-	fontconfig-font-replacements
+		sudo dnf -y install \
+			fontconfig-enhanced-defaults \
+			fontconfig-font-replacements
 
-fi
+	fi
 
-# Fonts
+	# Fonts
 
-sudo dnf -y install \
-    google-droid-sans-fonts \
-    google-droid-serif-fonts \
-    google-droid-sans-mono-fonts \
-    google-roboto-fonts \
-    adobe-source-code-pro-fonts \
-    dejavu-fonts-common \
-    dejavu-sans-fonts \
-    dejavu-sans-mono-fonts \
-    dejavu-serif-fonts \
-    liberation-fonts-common \
-    liberation-mono-fonts \
-    liberation-narrow-fonts \
-    liberation-sans-fonts \
-    liberation-serif-fonts \
-    jetbrains-mono-fonts-all
+	sudo dnf -y install \
+		google-droid-sans-fonts \
+		google-droid-serif-fonts \
+		google-droid-sans-mono-fonts \
+		google-roboto-fonts \
+		adobe-source-code-pro-fonts \
+		dejavu-fonts-common \
+		dejavu-sans-fonts \
+		dejavu-sans-mono-fonts \
+		dejavu-serif-fonts \
+		liberation-fonts-common \
+		liberation-mono-fonts \
+		liberation-narrow-fonts \
+		liberation-sans-fonts \
+		liberation-serif-fonts \
+		jetbrains-mono-fonts-all
 
-# MS fonts
+	# MS fonts
 
-sudo dnf -y install http://sourceforge.net/projects/mscorefonts2/files/rpms/msttcore-fonts-installer-2.6-1.noarch.rpm
+	sudo dnf -y install http://sourceforge.net/projects/mscorefonts2/files/rpms/msttcore-fonts-installer-2.6-1.noarch.rpm
 
-# Cleanup
+	# Cleanup
 
-sudo dnf clean packages
+	sudo dnf clean packages
 
 fi

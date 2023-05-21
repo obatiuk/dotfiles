@@ -25,6 +25,7 @@ alias cat="bat --paging=never"
 alias edit="/usr/bin/editor"
 alias dotfiles="cd ${HOME}/.home/.dotfiles.d"
 alias qr='qrencode -m 2 -t utf8 <<< "$1"'
+alias sshkeys='for key in ${HOME}/.ssh/id_*; do echo -n "${key%.pub}: "; ssh-keygen -l -f "${key}"; done | sort | uniq'
 
 # Make multiple shells share the same history file
 export HISTSIZE=1000000                                                         # Bash history will save N commands
@@ -77,68 +78,67 @@ export PASSWORD_STORE_ENABLE_EXTENSIONS=true
 # Makes man more readable and it's not affecting `env` output
 
 function man {
-     env \
-       LESS_TERMCAP_mb=$(tput bold; tput setaf 2) \
-       LESS_TERMCAP_md=$(tput bold; tput setaf 6) \
-       LESS_TERMCAP_me=$(tput sgr0) \
-       LESS_TERMCAP_so=$(tput bold; tput setaf 3; tput setab 4) \
-       LESS_TERMCAP_se=$(tput rmso; tput sgr0) \
-       LESS_TERMCAP_us=$(tput smul; tput bold; tput setaf 7) \
-       LESS_TERMCAP_ue=$(tput rmul; tput sgr0) \
-       LESS_TERMCAP_mr=$(tput rev) \
-       LESS_TERMCAP_mh=$(tput dim) \
-       LESS_TERMCAP_ZN=$(tput ssubm) \
-       LESS_TERMCAP_ZV=$(tput rsubm) \
-       LESS_TERMCAP_ZO=$(tput ssupm) \
-       LESS_TERMCAP_ZW=$(tput rsupm) \
-       PAGER="${commands[less]:-$PAGER}" \
-       man "$@"
+	env \
+		LESS_TERMCAP_mb=$(tput bold; tput setaf 2) \
+		LESS_TERMCAP_md=$(tput bold; tput setaf 6) \
+		LESS_TERMCAP_me=$(tput sgr0) \
+		LESS_TERMCAP_so=$(tput bold; tput setaf 3; tput setab 4) \
+		LESS_TERMCAP_se=$(tput rmso; tput sgr0) \
+		LESS_TERMCAP_us=$(tput smul; tput bold; tput setaf 7) \
+		LESS_TERMCAP_ue=$(tput rmul; tput sgr0) \
+		LESS_TERMCAP_mr=$(tput rev) \
+		LESS_TERMCAP_mh=$(tput dim) \
+		LESS_TERMCAP_ZN=$(tput ssubm) \
+		LESS_TERMCAP_ZV=$(tput rsubm) \
+		LESS_TERMCAP_ZO=$(tput ssupm) \
+		LESS_TERMCAP_ZW=$(tput rsupm) \
+		PAGER="${commands[less]:-$PAGER}" \
+		man "$@"
 }
 
 function fcount {
-    find -maxdepth 1 -type d | sort | while read -r dir; do n=$(find "$dir" -type f | wc -l); printf "%4d : %s\n" $n "$dir"; done
+	find . -maxdepth 1 -type d | sort | while read -r dir; do n=$(find "$dir" -type f | wc -l); printf "%4d : %s\n" $n "$dir"; done
 }
 
 
 # Source: https://github.com/xvoland/Extract/blob/master/extract.sh
 
 function extract {
- if [ -z "$1" ]; then
-    # display usage if no parameters given
-    echo "Usage: extract <path/file_name>.<zip|rar|bz2|gz|tar|tbz2|tgz|Z|7z|xz|ex|tar.bz2|tar.gz|tar.xz>"
-    echo "       extract <path/file_name_1.ext> [path/file_name_2.ext] [path/file_name_3.ext]"
- else
-    for n in "$@"
-    do
-      if [ -f "$n" ] ; then
-          case "${n%,}" in
-            *.cbt|*.tar.bz2|*.tar.gz|*.tar.xz|*.tbz2|*.tgz|*.txz|*.tar) tar xvf "$n"       ;;
-            *.lzma)      unlzma ./"$n"      ;;
-            *.bz2)       bunzip2 ./"$n"     ;;
-            *.cbr|*.rar) unrar x -ad ./"$n" ;;
-            *.gz)        gunzip ./"$n"      ;;
-            *.cbz|*.epub|*.zip) unzip ./"$n"       ;;
-            *.z)         uncompress ./"$n"  ;;
-            *.7z|*.apk|*.arj|*.cab|*.cb7|*.chm|*.deb|*.dmg|*.iso|*.lzh|*.msi|*.pkg|*.rpm|*.udf|*.wim|*.xar) 7z x ./"$n"        ;;
-            *.xz)        unxz ./"$n"        ;;
-            *.exe)       cabextract ./"$n"  ;;
-            *.cpio)      cpio -id < ./"$n"  ;;
-            *.cba|*.ace) unace x ./"$n"     ;;
-            *.zpaq)      zpaq x ./"$n"      ;;
-            *.arc)       arc e ./"$n"       ;;
-            *.cso)       ciso 0 ./"$n" ./"$n.iso" && \
-                              extract $n.iso && \rm -f $n ;;
-            *)
-                         echo "extract: '$n' - unknown archive method"
-                         return 1
-                         ;;
-          esac
-      else
-          echo "'$n' - file does not exist"
-          return 1
-      fi
-    done
-fi
+	if [ -z "$1" ]; then
+		# display usage if no parameters given
+		echo "Usage: extract <path/file_name>.<zip|rar|bz2|gz|tar|tbz2|tgz|Z|7z|xz|ex|tar.bz2|tar.gz|tar.xz>"
+		echo "       extract <path/file_name_1.ext> [path/file_name_2.ext] [path/file_name_3.ext]"
+	else
+		for n in "$@" ; do
+			if [ -f "$n" ] ; then
+				case "${n%,}" in
+					*.cbt|*.tar.bz2|*.tar.gz|*.tar.xz|*.tbz2|*.tgz|*.txz|*.tar) tar xvf "$n"       ;;
+					*.lzma)      unlzma ./"$n"      ;;
+					*.bz2)       bunzip2 ./"$n"     ;;
+					*.cbr|*.rar) unrar x -ad ./"$n" ;;
+					*.gz)        gunzip ./"$n"      ;;
+					*.cbz|*.epub|*.zip) unzip ./"$n"       ;;
+					*.z)         uncompress ./"$n"  ;;
+					*.7z|*.apk|*.arj|*.cab|*.cb7|*.chm|*.deb|*.dmg|*.iso|*.lzh|*.msi|*.pkg|*.rpm|*.udf|*.wim|*.xar) 7z x ./"$n"        ;;
+					*.xz)        unxz ./"$n"        ;;
+					*.exe)       cabextract ./"$n"  ;;
+					*.cpio)      cpio -id < ./"$n"  ;;
+					*.cba|*.ace) unace x ./"$n"     ;;
+					*.zpaq)      zpaq x ./"$n"      ;;
+					*.arc)       arc e ./"$n"       ;;
+					*.cso)       ciso 0 ./"$n" ./"$n.iso" && \
+									  extract $n.iso && \rm -f $n ;;
+					*)
+								 echo "extract: '$n' - unknown archive method"
+								 return 1
+								 ;;
+				esac
+			else
+				echo "'$n' - file does not exist"
+				return 1
+			fi
+		done
+	fi
 }
 
 function ff {

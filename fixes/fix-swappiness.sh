@@ -7,7 +7,7 @@
 # - https://help.ubuntu.com/community/SwapFaq
 # - https://wiki.archlinux.org/index.php/Solid_State_Drives
 
-sudo tee -a /etc/sysctl.conf <<-EOF
-vm.swappiness=1
-vm.vfs_cache_pressure=50
+sudo tee -a /etc/sysctl.conf <<- EOF
+	vm.swappiness=1
+	vm.vfs_cache_pressure=50
 EOF

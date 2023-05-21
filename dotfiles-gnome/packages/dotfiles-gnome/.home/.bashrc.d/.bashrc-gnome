@@ -2,23 +2,23 @@
 
 function img64 {
 
-    usage() {
-	echo "Usage: img64 [FILE]"
-	echo -e "Formats: APNG BMP GIF JPEG PNG WEBP\n"
-    }
+	usage() {
+		echo "Usage: img64 [FILE]"
+		echo -e "Formats: APNG BMP GIF JPEG PNG WEBP\n"
+	}
 
-    # Print usage and exit if the file was not provided
-    [ $# -eq 0 ] && echo -e "\nError: file is not specified\n" && usage && return 1
+	# Print usage and exit if the file was not provided
+	[ $# -eq 0 ] && echo -e "\nError: file is not specified\n" && usage && return 1
 
-    # Check if file exists and is a regular file
-    [ ! -f $1 ] && echo -e "\nError: file not found\n" && usage && return 1
+	# Check if file exists and is a regular file
+	[ ! -f $1 ] && echo -e "\nError: file not found\n" && usage && return 1
 
-    # Grab the image format
-    local fmt=$(file "$1" | grep -iEo 'apng|bmp|gif|jpeg|png|webp' | head -n1 | tr '[:upper:]' '[:lower:]')
+	# Grab the image format
+	local fmt=$(file "$1" | grep -iEo 'apng|bmp|gif|jpeg|png|webp' | head -n1 | tr '[:upper:]' '[:lower:]')
 
-    # Check if the image format is supported
-    [ -z "$fmt" ] && echo -e "\nError: unsupported file format\n" && usage && return 1
+	# Check if the image format is supported
+	[ -z "$fmt" ] && echo -e "\nError: unsupported file format\n" && usage && return 1
 
-    # Generate template
-    echo "data:image/"$fmt";base64,$(base64 -w 0 "$1")"
+	# Generate template
+	echo "data:image/${fmt};base64,$(base64 -w 0 "$1")"
 }
