@@ -48,7 +48,8 @@ if ask "Install required dependencies?" N; then
 		pass \
 		pass-otp \
 		screen \
-		tio
+		tio \
+		git-credential-libsecret
 
 	# Additional packages
 
