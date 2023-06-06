@@ -8,6 +8,9 @@
 # Source global definitions
 [ -f /etc/bashrc ] && . /etc/bashrc
 
+# Use bash-completion, if available
+[[  -f /usr/share/bash-completion/bash_completion ]] && . /usr/share/bash-completion/bash_completion
+
 # Base aliases
 alias ls="ls --color=auto --human-readable"                                     # More readable output
 alias la="ls -la --color=auto --human-readable"
@@ -72,6 +75,8 @@ pw() {
 
 # pass settings
 export PASSWORD_STORE_ENABLE_EXTENSIONS=true
+export PASSWORD_STORE_DIR=${HOME}/.password-store
+export PASSWORD_STORE_EXTENSIONS_DIR=${PASSWORD_STORE_DIR}/.extensions
 
 # Functions
 
@@ -143,4 +148,13 @@ function extract {
 
 function ff {
 	grep -r "$1" .;
+}
+
+function pg {
+	if [ -z "$1" ]; then
+		# display usage if no parameters given
+		echo "Usage: pg <password-key>"
+   	else
+   		pass-gen | sed '/^Reading.*/d;q' | pass add -e "$@"
+   	fi
 }
