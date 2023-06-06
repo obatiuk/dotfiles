@@ -7,7 +7,6 @@
 #
 
 dotfiles_dir=$(dirname $(readlink -f $0))
-echo $dotfiles_dir
 
 #
 # Imports
@@ -51,9 +50,13 @@ if ask "Do you want to apply 'minimal' configuration?" N; then
 		git config --global push.default simple
 		git config --global credential.helper libsecret
 		git config --global commit.gpgsign true
+		git config --global log.showSignature true
 		git config --global pager.diff "ydiff"
 		git config --global pager.show "ydiff"
 		git config --global pager.log bat
+		git config --global diff.gpg.textconv 'gpg --no-tty --decrypt --quiet'
+		git config --global blame.gpg.textconv 'gpg --no-tty --decrypt --quiet'
+
 	fi
 
 	# Use random MAC address for every WiFi/Ethernet connection by default: https://fedoramagazine.org/randomize-mac-address-nm/
@@ -78,9 +81,13 @@ if ask "Do you want to apply 'minimal' configuration?" N; then
 	# Make dnf faster
 
 	if ask "Apply dnf speed improvements?" Y; then
-		echo 'fastestmirror=1' | sudo tee -a /etc/dnf/dnf.conf
-		echo 'max_parallel_downloads=10' | sudo tee -a /etc/dnf/dnf.conf
-		echo 'deltarpm=true' | sudo tee -a /etc/dnf/dnf.conf
+
+		sudo tee -a /etc/dnf/dnf.conf <<- 'EOF'
+			fastestmirror=1
+			max_parallel_downloads=10
+			deltarpm=true
+		EOF
+
 	fi
 
 	# Power management

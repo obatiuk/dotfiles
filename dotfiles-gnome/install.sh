@@ -8,7 +8,7 @@
 
 dotfiles_dir=$(dirname $(readlink -f $0))
 templates_dir=$(xdg-user-dir TEMPLATES)
-: ${templates_dir:=${HOME}/Templates}
+: "${templates_dir:=${HOME}/Templates}"
 
 #
 # Imports
@@ -189,6 +189,27 @@ if ask "Do you want to apply 'Gnome' configuration?" N; then
 	gsettings set org.gnome.Terminal.Legacy.Settings shortcuts-enabled false
 	gsettings set org.gnome.Terminal.Legacy.Settings menu-accelerator-enabled false
 	gsettings set org.gnome.Terminal.Legacy.Settings shell-integration-enabled true
+	gsettings set org.gnome.Terminal.Legacy.Settings confirm-close false
+
+	dconf load /org/gnome/terminal/legacy/ <<< "
+[profiles:]
+default='21d40fb8-4721-4265-a563-5cef1638998d'
+list=['21d40fb8-4721-4265-a563-5cef1638998d']
+
+[profiles:/:21d40fb8-4721-4265-a563-5cef1638998d]
+audible-bell=false
+background-color='rgb(0,0,0)'
+background-transparency-percent=5
+bold-is-bright=false
+font='JetBrainsMono Nerd Font Mono 9'
+foreground-color='rgb(255,255,255)'
+login-shell=true
+palette=['rgb(0,0,0)', 'rgb(227,89,81)', 'rgb(35,180,126)', 'rgb(232,180,112)', 'rgb(83,125,177)', 'rgb(183,107,196)', 'rgb(74,178,170)', 'rgb(255,255,255)', 'rgb(255,255,255)', 'rgb(249,117,89)', 'rgb(62,207,142)', 'rgb(250,219,108)', 'rgb(25,151,198)', 'rgb(215,130,218)', 'rgb(125,214,207)', 'rgb(255,255,255)']
+use-system-font=false
+use-theme-colors=true
+use-transparent-background=false
+visible-name='My Profile'
+"
 
 	# Privacy
 
@@ -250,7 +271,10 @@ if ask "Do you want to apply 'Gnome' configuration?" N; then
 
 	# Basic templates
 
-	touch ${templates_dir}/'New Text File.txt'
+	touch "${templates_dir}/'New Text File.txt'"
+
+	# Default apps in dock
+	gsettings set org.gnome.shell favorite-apps "['org.gnome.Nautilus.desktop', 'org.gnome.Terminal.desktop', 'intellij-idea-community_intellij-idea-community.desktop', 'com.vscodium.codium.desktop', 'vivaldi-stable.desktop', 'google-chrome.desktop', 'md.obsidian.Obsidian.desktop', 'org.gnome.gedit.desktop', 'org.gnome.Software.desktop', 'gnome-control-center.desktop', 'org.gnome.Pomodoro.desktop']"
 
 	sudo systemctl enable gdm
 

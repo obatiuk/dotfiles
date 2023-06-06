@@ -105,8 +105,8 @@ if ask "Install required dependencies?" N; then
 	sudo dnf -y install \
 		cups \
 		hplip \
-		hplip-gui
-	gcc-c++ \
+		hplip-gui \
+		gcc-c++ \
 		dbus \
 		gcc \
 		libusb \
@@ -122,8 +122,7 @@ if ask "Install required dependencies?" N; then
 		net-snmp-devel \
 		openssl-devel \
 		python3-PyQt4 \
-		python3-devel \
-		snap
+		python3-devel
 
 	# Other
 
@@ -133,7 +132,13 @@ if ask "Install required dependencies?" N; then
 		seahorse \
 		pinentry-gtk \
 		pinentry-gnome3 \
-		keybase
+		keybase \
+		brave \
+		intellij-idea-community \
+		remarkable-desktop
+
+	flatpak -y install \
+		com.vscodium.codium
 
 	# Cleanup
 

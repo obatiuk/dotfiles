@@ -26,6 +26,8 @@ if ask "Do you want to apply 'apps' configuration?" N; then
 	# Settings
 	#
 
+	# git
+
 	git config --global diff.tool meld
 	git config --global difftool.prompt false
 	git config --global difftool.meld.cmd 'meld "$LOCAL" "$REMOTE"'
