@@ -28,8 +28,11 @@ chmod u+x "${APP_STORAGE}/install-gnome-extensions/install-gnome-extensions.sh"
 # https://extensions.gnome.org/extension/989/syncthing-icon/
 # https://extensions.gnome.org/extension/3733/tiling-assistant/
 # https://extensions.gnome.org/extension/3258/wi-fi-power-management-toggle/
+# https://extensions.gnome.org/extension/1112/screenshot-tool/
+# https://extensions.gnome.org/extension/779/clipboard-indicator/
+# https://extensions.gnome.org/extension/3780/ddterm/
 
-. "${LOCAL_BIN}/install-gnome-extensions.sh" --enable 3499 1401 3193 3210 4135 4451 4099 2120 989 3733 3258
+. "${LOCAL_BIN}/install-gnome-extensions.sh" --enable 3499 1401 3193 3210 4135 4451 4099 2120 989 3733 3258 1112 779 3780
 
 dconf load /org/gnome/shell/extensions/ <<< "
 [Logo-menu]
