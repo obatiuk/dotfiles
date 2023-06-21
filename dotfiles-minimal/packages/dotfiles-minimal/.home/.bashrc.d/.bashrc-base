@@ -33,7 +33,7 @@ alias sshkeys='for key in ${HOME}/.ssh/id_*; do echo -n "${key%.pub}: "; ssh-key
 # Make multiple shells share the same history file
 export HISTSIZE=1000000                                                         # Bash history will save N commands
 export HISTFILESIZE=${HISTSIZE}                                                 # Bash will remember N commands
-export HISTCONTROL=ignoredups:erasedups                                         # Ignore duplicates and spaces
+export HISTCONTROL=ignoreboth:erasedups                                         # Ignore duplicates and spaces
 export HISTIGNORE='&:ls:ll:la:cd:exit:clear:history'
 export HISTTIMEFORMAT='%F %T '
 export PROMPT_COMMAND="history -n; history -w; history -c; history -r; $PROMPT_COMMAND"
