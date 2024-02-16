@@ -1,0 +1,107 @@
+/***********************************************************************
+	BUTTON GROUP
+***********************************************************************/
+/* Button group vertical position */
+#browser.linux .window-buttongroup {
+	top: 10px;
+}
+
+#browser.linux:not(.address-top):not(.tabs-top) .window-buttongroup {
+	top: 6px;
+}
+
+/* Remove background on window buttons */
+#browser .window-buttongroup button {
+	width: 16px;
+	height: 16px;
+	background-color: transparent !important;
+	zoom: 0.9;
+}
+
+/* Hide default svg images on buttons */
+.window-buttongroup svg {
+	display: none;
+}
+
+/***********************************************************************
+	MINIMIZE BUTTON
+***********************************************************************/
+/* Button images */
+.window-minimize { background: url('arc/titlebutton-minimize.png') no-repeat; }
+.window-minimize:hover { background: url('arc/titlebutton-minimize-hover.png') no-repeat !important; }
+.window-minimize:hover:active { background: url('arc/titlebutton-minimize-active.png') no-repeat !important; }
+.isblurred .window-minimize { background: url('arc/titlebutton-minimize-backdrop.png') no-repeat; }
+#browser.theme-dark .window-minimize { background: url('arc/titlebutton-minimize-dark.png') no-repeat; }
+#browser.theme-dark .window-minimize:hover { background: url('arc/titlebutton-minimize-hover-dark.png') no-repeat !important; }
+#browser.theme-dark .window-minimize:hover:active { background: url('arc/titlebutton-minimize-active-dark.png') no-repeat !important; }
+#browser.theme-dark .isblurred .window-minimize { background: url('arc/titlebutton-minimize-backdrop-dark.png') no-repeat; }
+#browser.theme-light.acc-dark .window-minimize { background: url('arc/titlebutton-minimize-dark.png') no-repeat; }
+#browser.theme-light.acc-dark .window-minimize:hover { background: url('arc/titlebutton-minimize-hover-dark.png') no-repeat !important; }
+#browser.theme-light.acc-dark .window-minimize:hover:active { background: url('arc/titlebutton-minimize-active-dark.png') no-repeat !important; }
+#browser.theme-light.acc-dark .isblurred .window-minimize { background: url('arc/titlebutton-minimize-backdrop-dark.png') no-repeat; }
+
+/***********************************************************************
+	MAXIMIZE/UNMAXIMIZE BUTTON
+***********************************************************************/
+/* Horizontal position */
+.linux .window-maximize {
+	margin-left: 14px !important;
+}
+
+.linux.alt .window-maximize {
+	margin-left: -45px !important;
+}
+
+/* Button images */
+.window-maximize { background: url('arc/titlebutton-maximize.png') no-repeat; }
+.window-maximize:hover { background: url('arc/titlebutton-maximize-hover.png') no-repeat !important; }
+.window-maximize:hover:active { background: url('arc/titlebutton-maximize-active.png') no-repeat !important; }
+.isblurred .window-maximize { background: url('arc/titlebutton-maximize-backdrop.png') no-repeat; }
+.maximized .window-maximize { background: url('arc/titlebutton-unmaximize.png') no-repeat; }
+.maximized .window-maximize:hover { background: url('arc/titlebutton-unmaximize-hover.png') no-repeat !important; }
+.maximized .window-maximize:hover:active { background: url('arc/titlebutton-unmaximize-active.png') no-repeat !important; }
+.maximized.isblurred .window-maximize { background: url('arc/titlebutton-unmaximize-backdrop.png') no-repeat; }
+#browser.theme-dark .window-maximize { background: url('arc/titlebutton-maximize-dark.png') no-repeat; }
+#browser.theme-dark .window-maximize:hover { background: url('arc/titlebutton-maximize-hover-dark.png') no-repeat !important; }
+#browser.theme-dark .window-maximize:hover:active { background: url('arc/titlebutton-maximize-active-dark.png') no-repeat !important; }
+#browser.theme-dark .isblurred .window-maximize { background: url('arc/titlebutton-maximize-backdrop-dark.png') no-repeat; }
+#browser.theme-dark.maximized .window-maximize { background: url('arc/titlebutton-unmaximize-dark.png') no-repeat; }
+#browser.theme-dark.maximized .window-maximize:hover { background: url('arc/titlebutton-unmaximize-hover-dark.png') no-repeat !important; }
+#browser.theme-dark.maximized .window-maximize:hover:active { background: url('arc/titlebutton-unmaximize-active-dark.png') no-repeat !important; }
+#browser.theme-dark.maximized.isblurred .window-maximize { background: url('arc/titlebutton-unmaximize-backdrop-dark.png') no-repeat; }
+#browser.theme-light.acc-dark .window-maximize { background: url('arc/titlebutton-maximize-dark.png') no-repeat; }
+#browser.theme-light.acc-dark .window-maximize:hover { background: url('arc/titlebutton-maximize-hover-dark.png') no-repeat !important; }
+#browser.theme-light.acc-dark .window-maximize:hover:active { background: url('arc/titlebutton-maximize-active-dark.png') no-repeat !important; }
+#browser.theme-light.acc-dark .isblurred .window-maximize { background: url('arc/titlebutton-maximize-backdrop-dark.png') no-repeat; }
+#browser.theme-light.acc-dark.maximized .window-maximize { background: url('arc/titlebutton-unmaximize-dark.png') no-repeat; }
+#browser.theme-light.acc-dark.maximized .window-maximize:hover { background: url('arc/titlebutton-unmaximize-hover-dark.png') no-repeat !important; }
+#browser.theme-light.acc-dark.maximized .window-maximize:hover:active { background: url('arc/titlebutton-unmaximize-active-dark.png') no-repeat !important; }
+#browser.theme-light.acc-dark.maximized.isblurred .window-maximize { background: url('arc/titlebutton-unmaximize-backdrop-dark.png') no-repeat; }
+
+/***********************************************************************
+	CLOSE BUTTON
+***********************************************************************/
+/* Horizontal position */
+.linux .window-close {
+	margin-left: 13px !important;
+	margin-right: 6px !important;
+}
+
+.linux.alt .window-close {
+	margin-left: 6px !important;
+	margin-right: 40px !important;
+}
+
+/* Button images */
+.window-close { background: url('arc/titlebutton-close.png') no-repeat; }
+.window-close:hover { background: url('arc/titlebutton-close-hover.png') no-repeat !important; }
+.window-close:hover:active { background: url('arc/titlebutton-close-active.png') no-repeat !important; }
+.isblurred .window-close { background: url('arc/titlebutton-close-backdrop.png') no-repeat; }
+#browser.theme-dark .window-close { background: url('arc/titlebutton-close-dark.png') no-repeat; }
+#browser.theme-dark .window-close:hover { background: url('arc/titlebutton-close-hover-dark.png') no-repeat !important; }
+#browser.theme-dark .window-close:hover:active { background: url('arc/titlebutton-close-active-dark.png') no-repeat !important; }
+#browser.theme-dark .isblurred .window-close { background: url('arc/titlebutton-close-backdrop-dark.png') no-repeat; }
+#browser.theme-light.acc-dark .window-close { background: url('arc/titlebutton-close-dark.png') no-repeat; }
+#browser.theme-light.acc-dark .window-close:hover { background: url('arc/titlebutton-close-hover-dark.png') no-repeat !important; }
+#browser.theme-light.acc-dark .window-close:hover:active { background: url('arc/titlebutton-close-active-dark.png') no-repeat !important; }
+#browser.theme-light.acc-dark .isblurred .window-close { background: url('arc/titlebutton-close-backdrop-dark.png') no-repeat; }

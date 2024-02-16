@@ -22,6 +22,13 @@ if ask "Do you want to apply 'apps' configuration?" N; then
 
 	bash "./dependencies-${distro}@${release}.sh"
 
+
+	#
+	# Configuration files
+	#
+
+	stow --dir=packages --target=${HOME} -vv --stow --no-folding dotfiles-apps
+
 	#
 	# Settings
 	#

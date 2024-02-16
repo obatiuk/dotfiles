@@ -66,6 +66,10 @@ if ask "Install required dependencies?" N; then
 		gpgkey=https://rpm.opera.com/rpmrepo.key
 	EOF
 
+	# vivaldi repository
+
+	sudo dnf config-manager --add-repo https://repo.vivaldi.com/stable/vivaldi-fedora.repo
+
 	# Packages
 
 	sudo dnf -y --best --allowerasing install \
@@ -135,7 +139,8 @@ if ask "Install required dependencies?" N; then
 		keybase \
 		brave \
 		intellij-idea-community \
-		remarkable-desktop
+		remarkable-desktop \
+		vivaldi-stable
 
 	flatpak -y install \
 		com.vscodium.codium

@@ -1,0 +1,40 @@
+/* Omnibox drop-down translucency */
+.OmniDropdown
+{
+    background: var(--colorBgAlpha);
+    backdrop-filter: blur(10px);
+}
+
+/* Quick command menu translucency */
+#modal-bg
+{
+    background-color: var(--colorBgAlpha);
+    backdrop-filter: blur(10px);
+}
+
+/* Sets the background color to any non-selected 
+ * element of the quick command menu to transparent */
+#modal-bg *:not([data-selected])
+{
+    background-color: rgba(0,0,0,0) !important;
+}
+
+#cycler {
+    background-color: var(--colorBgAlpha);
+    backdrop-filter: blur(10px);
+    box-shadow: none;
+}
+
+.toolbar-addressbar {
+    background-color: var(--colorBgAlpha);
+    backdrop-filter: blur(5px);
+}
+
+.toolbar-extensions {
+    background-color: transparent !important;
+}
+
+.addressfield, .searchfield {
+    background-color: var(--colorBgAlpha) !important;
+}
+
