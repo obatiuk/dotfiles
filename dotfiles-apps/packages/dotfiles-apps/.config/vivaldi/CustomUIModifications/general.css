@@ -1,6 +1,6 @@
 /*********************************************************
   Browser window
 **********************************************************/
-  
+
 /* Add solid border when not in full screen */
-body { border: 1px solid #000000 !important}
+body { border: 1px solid #313742 !important }
