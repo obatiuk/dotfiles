@@ -158,3 +158,5 @@ function pg {
    		pass-gen | sed '/^Reading.*/d;q' | pass add -e "$@"
    	fi
 }
+
+exists() { [[ ${1:0:1} == "/" ]] && { test -f $1 || test -d $1; } || command -v $1 >/dev/null 2>&1; }
