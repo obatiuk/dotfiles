@@ -77,7 +77,6 @@ if ask "Install required dependencies?" N; then
 		fontawesome-fonts \
 		baobab \
 		gimp \
-		dropbox \
 		gparted \
 		meld \
 		diffuse \

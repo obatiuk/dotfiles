@@ -223,7 +223,6 @@ exec --no-startup-id /usr/bin/thunar --daemon &
 exec --no-startup-id /usr/bin/compton --config ${HOME}/.config/i3/compton.conf &
 exec --no-startup-id /usr/bin/seapplet &
 exec --no-startup-id (/usr/libexec/geoclue-2.0/demos/agent | /usr/bin/redshift-gtk) &
-exec --no-startup-id dropbox start &
 
 # gaps
 for_window [class="^.*"] border pixel 0
