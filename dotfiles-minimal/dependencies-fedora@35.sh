@@ -63,7 +63,8 @@ if ask "Install required dependencies?" N; then
 		cabextract \
 		iotop \
 		qrencode \
-		acpi
+		acpi \
+		uuid
 
 	# dnf plugins
 
