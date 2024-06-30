@@ -1,5 +1,12 @@
 # .bashrc-gnome
 
+# User specific environment
+if ! [[ "$PATH" =~ "$HOME/bin:$HOME/.home/bin" ]]
+then
+    PATH="$HOME/bin:$HOME/.home/bin:$PATH"
+fi
+export PATH
+
 function img64 {
 
 	usage() {
