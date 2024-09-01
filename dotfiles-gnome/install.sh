@@ -221,7 +221,7 @@ visible-name='My Profile'
 
 	# Folders
 
-	gsettings set org.gnome.gnome-screenshot auto-save-directory "file:///home/${USER}/Pictures/Screenshots"
+	gsettings set org.gnome.gnome-screenshot auto-save-directory "file:///${XDG_PICTURES_DIR}/Screenshots"
 
 	# Login screen / Session manager
 
@@ -240,7 +240,7 @@ visible-name='My Profile'
 	gsettings set org.gnome.gnome-screenshot include-pointer false
 	gsettings set org.gnome.gnome-screenshot delay 2
 	gsettings set org.gnome.gnome-screenshot take-window-shot false
-	gsettings set org.gnome.gnome-screenshot last-save-directory "file:///home/${USER}/Pictures/Screenshots"
+	gsettings set org.gnome.gnome-screenshot last-save-directory "file:///home/${XDG_PICTURES_DIR}/Screenshots"
 
 	# Indexing
 
