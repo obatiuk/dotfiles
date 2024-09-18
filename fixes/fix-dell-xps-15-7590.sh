@@ -1,15 +1,14 @@
 #!/usr/bin/env bash
 
-sudo dnf install v4l-utils
+sudo dnf install grubby v4l-utils
 
 #
-# Suspend
+# Fix issue with suspend
 #
-# Source: https://wiki.archlinux.org/index.php/Dell_XPS_15_9570#Suspend
+# Source: https://wiki.archlinux.org/title/Power_management/Suspend_and_hibernate#Changing_suspend_method
 #
 
-grub2-editenv - set "$(grub2-editenv - list | grep kernelopts) mem_sleep_default=deep"
-sudo grub2-mkconfig -o /etc/grub2.cfg
+sudo grubby --args="mem_sleep_default=deep" --update-kernel=ALL
 
 # Camera settings
 
