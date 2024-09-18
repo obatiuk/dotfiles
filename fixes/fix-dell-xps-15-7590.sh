@@ -5,10 +5,17 @@ sudo dnf install grubby v4l-utils
 #
 # Fix issue with suspend
 #
-# Source: https://wiki.archlinux.org/title/Power_management/Suspend_and_hibernate#Changing_suspend_method
-#
-
-sudo grubby --args="mem_sleep_default=deep" --update-kernel=ALL
+sudo grubby --remove-args="mem_sleep_default=deep" --update-kernel=ALL
+sudo mkdir -pv /etc/systemd/sleep.conf.d \
+ && sudo tee /etc/systemd/sleep.conf.d/mem-deep.conf <<- EOF
+	#
+	# Created manually on $(date -I) by ${USER}
+	#
+	# https://wiki.archlinux.org/title/Power_management/Suspend_and_hibernate#Changing_suspend_method
+	#
+	[Sleep]
+	MemorySleepMode=deep
+EOF
 
 # Camera settings
 
