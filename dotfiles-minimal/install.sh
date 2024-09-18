@@ -64,7 +64,10 @@ if ask "Do you want to apply 'minimal' configuration?" N; then
 
 	# Use random MAC address for every WiFi/Ethernet connection by default: https://fedoramagazine.org/randomize-mac-address-nm/
 
-	sudo tee /etc/NetworkManager/conf.d/00-randomize-mac.conf <<- 'EOF'
+	sudo tee /etc/NetworkManager/conf.d/00-randomize-mac.conf <<- EOF
+		#
+		# Created by dotfiles setup script on $(date -I) by ${USER}
+		#
 		[device]
 		wifi.scan-rand-mac-address=yes
 
@@ -77,7 +80,6 @@ if ask "Do you want to apply 'minimal' configuration?" N; then
 
 	if ask "Apply default plymouth configuration?" Y; then
 		sudo plymouth-set-default-theme bgrt -R
-		sudo grub2-editenv - set menu_auto_hide=1
 		sudo grub2-mkconfig -o /boot/grub2/grub.cfg
 	fi
 
@@ -85,7 +87,10 @@ if ask "Do you want to apply 'minimal' configuration?" N; then
 
 	if ask "Apply dnf speed improvements?" Y; then
 
-		sudo tee -a /etc/dnf/dnf.conf <<- 'EOF'
+		sudo tee -a /etc/dnf/dnf.conf <<- EOF
+			#
+			# Created by dotfiles setup script on $(date -I) by ${USER}
+			#
 			fastestmirror=1
 			max_parallel_downloads=10
 			deltarpm=true
@@ -98,21 +103,22 @@ if ask "Do you want to apply 'minimal' configuration?" N; then
 	if ask "Enable power profile auto switch?" Y; then
 		sudo systemctl start power-profiles-daemon
 		sudo tee /etc/udev/rules.d/81-ppm.auto.rules <<- EOF
-			# Manually created at $(date -I) by ${USER}
+			#
+			# Created by dotfiles setup script on $(date -I) by ${USER}
 			#
 			# Custom udev rules to select power-profiles-daemon profile based on power status
 			#
 			# See: obsidian://advanced-uri?vault=default&uid=6e02b6e7-0113-4067-80c1-ce182b689f39
-
+			#
 			SUBSYSTEM=="power_supply", ATTR{online}=="1", RUN+="/usr/bin/powerprofilesctl set performance"
 			SUBSYSTEM=="power_supply", ATTR{status}=="Discharging", ATTR{capacity_level}=="Normal", RUN+="/usr/bin/powerprofilesctl set balanced"
 			SUBSYSTEM=="power_supply", ATTR{status}=="Discharging", ATTR{capacity_level}=="Low", RUN+="/usr/bin/powerprofilesctl set power-saver"
-
 		EOF
 		sudo udevadm control --reload-rules && sudo udevadm trigger
 	fi
 
-	timedatectl set-local-rtc 0 # Make sure RTC is not in local TZ
+	# Make sure that the system is configured to maintain the RTC in universal time
+	timedatectl set-local-rtc 0
 
 	# Check all required resources
 

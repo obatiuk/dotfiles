@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 # Fedora 29 - fix ecryptfs automount upon login
 #

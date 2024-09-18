@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 # Fix swappiness and VFS cache pressure for desktop machine
 #
@@ -7,7 +7,10 @@
 # - https://help.ubuntu.com/community/SwapFaq
 # - https://wiki.archlinux.org/index.php/Solid_State_Drives
 
-sudo tee -a /etc/sysctl.conf <<- EOF
+sudo tee /etc/sysctl.d/97-swappiness.conf <<- EOF
+	#
+	# Created manually on $(date -I) by ${USER}
+	#
 	vm.swappiness=1
 	vm.vfs_cache_pressure=50
 EOF

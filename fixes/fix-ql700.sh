@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 #
 # Fix QL-700 brother printer access if SELinux is enabled

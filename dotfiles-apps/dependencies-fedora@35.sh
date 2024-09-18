@@ -19,10 +19,13 @@ if ask "Install required dependencies?" N; then
 
 	if [ "$release" -le 30 ]; then
 
-		sudo tee /etc/yum.repos.d/google-chrome.repo <<- 'EOF'
+		sudo tee /etc/yum.repos.d/google-chrome.repo <<- EOF
+			#
+			# Created by dotfiles setup script on $(date -I) by ${USER}
+			#
 			[google-chrome]
 			name=google-chrome
-			baseurl=http://dl.google.com/linux/chrome/rpm/stable/$basearch
+			baseurl=http://dl.google.com/linux/chrome/rpm/stable/\$basearch
 			enabled=1
 			gpgcheck=1
 			gpgkey=https://dl-ssl.google.com/linux/linux_signing_key.pub
@@ -34,10 +37,13 @@ if ask "Install required dependencies?" N; then
 
 	fi
 
-	sudo tee /etc/yum.repos.d/google-talkplugin.repo <<- 'EOF'
+	sudo tee /etc/yum.repos.d/google-talkplugin.repo <<- EOF
+		#
+		# Created by dotfiles setup script on $(date -I) by ${USER}
+		#
 		[google-talkplugin]
 		name=google-talkplugin
-		baseurl=http://dl.google.com/linux/talkplugin/rpm/stable/$basearch
+		baseurl=http://dl.google.com/linux/talkplugin/rpm/stable/\$basearch
 		enabled=1
 		gpgcheck=1
 		gpgkey=https://dl-ssl.google.com/linux/linux_signing_key.pub
@@ -45,7 +51,10 @@ if ask "Install required dependencies?" N; then
 
 	# Keybase repository
 
-	sudo tee /etc/yum.repos.d/keybase.repo <<- 'EOF'
+	sudo tee /etc/yum.repos.d/keybase.repo <<- EOF
+		#
+		# Created by dotfiles setup script on $(date -I) by ${USER}
+		#
 		[keybase]
 		name=keybase
 		baseurl=http://prerelease.keybase.io/rpm/x86_64
@@ -58,7 +67,10 @@ if ask "Install required dependencies?" N; then
 
 	# use `snap` to install opera. Keep repository, but disable it for now.
 
-	sudo tee /etc/yum.repos.d/opera.repo <<- 'EOF'
+	sudo tee /etc/yum.repos.d/opera.repo <<- EOF
+		#
+		# Created by dotfiles setup script on $(date -I) by ${USER}
+		#
 		[opera]
 		name=Opera packages
 		type=rpm-md

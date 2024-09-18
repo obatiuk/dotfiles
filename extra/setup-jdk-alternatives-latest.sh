@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env bash
+
 JDK_DIR=/usr/java/latest
 PRIORITY=20000
 
