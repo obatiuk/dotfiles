@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 
-dotfiles_dir=$(dirname $(readlink -f $0))
+# shellcheck disable=SC2154
 
-. ${dotfiles_dir}/../functions
+dotfiles_dir=$(dirname "$(readlink -f "$0")")
+
+. "${dotfiles_dir}/../functions"
 
 if ask "Install required dependencies?" N; then
 
@@ -12,7 +14,7 @@ if ask "Install required dependencies?" N; then
 
 		# Installing external repository for infinality packages
 
-		sudo dnf config-manager --add-repo=http://download.opensuse.org/repositories/home:/fastrizwaan/Fedora_${release}/home:fastrizwaan.repo
+		sudo dnf config-manager --add-repo="http://download.opensuse.org/repositories/home:/fastrizwaan/Fedora_${release}/home:fastrizwaan.repo"
 
 		# Packages
 

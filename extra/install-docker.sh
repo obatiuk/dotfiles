@@ -20,6 +20,6 @@ sudo dnf config-manager \
 sudo dnf install docker-ce docker-ce-cli containerd.io
 
 sudo groupadd docker
-sudo usermod -aG docker ${USER}
+sudo usermod -aG docker "${USER}"
 
 sudo systemctl start docker

@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 
-dotfiles_dir=$(dirname $(readlink -f $0))
+# shellcheck disable=SC2154
 
-. ${dotfiles_dir}/../functions
+dotfiles_dir=$(dirname "$(readlink -f "$0")")
+
+. "${dotfiles_dir}/../functions"
 
 if ask "Install required dependencies?" N; then
 
@@ -10,8 +12,8 @@ if ask "Install required dependencies?" N; then
 
 	# Installing rpmfusion-free/nonfree repositories
 
-	sudo dnf -y install http://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-${release}.noarch.rpm
-	sudo dnf -y install http://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-${release}.noarch.rpm
+	sudo dnf -y install "http://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-${release}.noarch.rpm"
+	sudo dnf -y install "http://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-${release}.noarch.rpm"
 
 	# Base system packages
 

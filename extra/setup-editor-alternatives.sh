@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# shellcheck disable=SC2162
+
 #
 # Simple ask function
 # Source http://djm.me/ask

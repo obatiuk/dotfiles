@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
-dotfiles_dir=$(dirname $(readlink -f $0))
+dotfiles_dir=$(dirname "$(readlink -f "$0")")
 
-. ${dotfiles_dir}/../functions
+. "${dotfiles_dir}/../functions"
 
 if ask "Install required dependencies?" N; then
 

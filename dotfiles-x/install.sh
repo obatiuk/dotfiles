@@ -1,19 +1,21 @@
 #!/usr/bin/env bash
 
-[ -n "$(echo $@ | grep "\-debug")" ] && set -x
+# shellcheck disable=SC2143
+# shellcheck disable=SC2154
+
+[ -n "$(echo "$@" | grep "\-debug")" ] && set -x
 
 #
 # Variables
 #
 
-dotfiles_dir=$(dirname $(readlink -f $0))
-echo $dotfiles_dir
+dotfiles_dir=$(dirname "$(readlink -f "$0")")
 
 #
 # Imports
 #
 
-. ${dotfiles_dir}/../functions
+. "${dotfiles_dir}/../functions"
 
 #
 # Setup
@@ -27,7 +29,7 @@ if ask "Do you want to apply 'X' configuration?"; then
 	# Configuration files
 	#
 
-	stow --dir=packages --target=${HOME} -vv --stow --no-folding dotfiles-x
+	stow --dir=packages --target="${HOME}" -vv --stow --no-folding dotfiles-x
 
 	#
 	# Settings

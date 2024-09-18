@@ -1,18 +1,21 @@
 #!/usr/bin/env bash
 
-[ -n "$(echo $@ | grep "\-debug")" ] && set -x
+# shellcheck disable=SC2143
+# shellcheck disable=SC2154
+
+[ -n "$(echo "$@" | grep "\-debug")" ] && set -x
 
 #
 # Variables
 #
 
-dotfiles_dir=$(dirname $(readlink -f $0))
+dotfiles_dir=$(dirname "$(readlink -f "$0")")
 
 #
 # Imports
 #
 
-. ${dotfiles_dir}/../functions
+. "${dotfiles_dir}/../functions"
 
 #
 # Setup
@@ -26,7 +29,7 @@ if ask "Do you want to apply 'minimal' configuration?" N; then
 	# Stow/Restow configuration files
 	#
 
-	stow --dir=packages --target=${HOME} -vv --stow --no-folding dotfiles-minimal
+	stow --dir=packages --target="${HOME}" -vv --stow --no-folding dotfiles-minimal
 
 	#
 	# Settings
@@ -92,7 +95,7 @@ if ask "Do you want to apply 'minimal' configuration?" N; then
 
 	# Power management
 
-	if ask "Enable power profile autoswitch?" Y; then
+	if ask "Enable power profile auto switch?" Y; then
 		sudo systemctl start power-profiles-daemon
 		sudo tee /etc/udev/rules.d/81-ppm.auto.rules <<- EOF
 			# Manually created at $(date -I) by ${USER}

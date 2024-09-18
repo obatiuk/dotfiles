@@ -40,9 +40,9 @@ EOF
 sudo chown root:root /usr/local/bin/xbacklightmon
 sudo chmod 755 /usr/local/bin/xbacklightmon
 
-mkdir -p $HOME/.config/systemd/user/
+mkdir -p "${HOME}/.config/systemd/user/"
 
-tee $HOME/.config/systemd/user/xbacklightmon.service <<- 'EOF'
+tee "${HOME}/.config/systemd/user/xbacklightmon.service" <<- 'EOF'
 	[Unit]
 	Description=Ugly fix to be able to control the brightness of OLED screens via keyboard brightness
 	After=multi-user.target

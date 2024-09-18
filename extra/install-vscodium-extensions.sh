@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# shellcheck disable=SC2143
+
 # Sanity checks
 command -v flatpak > /dev/null 2>&1 || { echo "'flatpak' not found. Aborting!" && exit 1; }
 [ -n "$(flatpak list | grep com.vscodium.codium)" ] || { echo "'vscodium' is not installed. Aborting!" && exit 1; }

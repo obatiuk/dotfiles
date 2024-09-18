@@ -13,9 +13,9 @@ command -v pass > /dev/null 2>&1 || { echo "'pass' command not found. Aborting!"
 : "${APP_STORAGE:=${HOME_STORAGE}/opt}"
 : "${BASH_COMPLETION_USER_DIR:=${XDG_DATA_HOME:-$HOME/.local/share}/bash-completion}/completions"
 
-mkdir -p "${APP_STORAGE}"
-mkdir -p "${PASSWORD_STORE_EXTENSIONS_DIR}"
-mkdir -p "${BASH_COMPLETION_USER_DIR}"
+mkdir -pv "${APP_STORAGE}"
+mkdir -pv "${PASSWORD_STORE_EXTENSIONS_DIR}"
+mkdir -pv "${BASH_COMPLETION_USER_DIR}"
 
 declare -a __extension_map=(
 	'pass-symlink.git /src/ symlink.bash'
@@ -24,7 +24,7 @@ declare -a __extension_map=(
 	'pass-ln.git / ln.bash'
 )
 for row in "${__extension_map[@]}"; do
-	read -a entry <<< "${row}"
+	read -ar entry <<< "${row}"
 	git clone "https://github.com/obatiuk/${entry[0]}" "${APP_STORAGE}/${entry[0]}"
 	ln -s "${APP_STORAGE}/${entry[0]}${entry[1]}${entry[2]}" "${PASSWORD_STORE_EXTENSIONS_DIR}/${entry[2]}"
 done
@@ -33,7 +33,7 @@ declare -a __completion_map=(
 	'pass-ln.git / pass-ln.bash.completion pass-ln'
 )
 for row in "${__completion_map[@]}"; do
-	read -a entry <<< "${row}"
+	read -ar entry <<< "${row}"
 	git clone "https://github.com/obatiuk/${entry[0]}" "${APP_STORAGE}/${entry[0]}"
 	ln -s "${APP_STORAGE}/${entry[0]}${entry[1]}${entry[2]}" "${BASH_COMPLETION_USER_DIR}/${entry[3]}"
 done

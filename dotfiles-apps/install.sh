@@ -1,18 +1,22 @@
 #!/usr/bin/env bash
 
-[ -n "$(echo $@ | grep "\-debug")" ] && set -x
+# shellcheck disable=SC2154
+# shellcheck disable=SC2143
+# shellcheck disable=SC2016
+
+[ -n "$(echo "$@" | grep "\-debug")" ] && set -x
 
 #
 # Variables
 #
 
-dotfiles_dir=$(dirname $(readlink -f $0))
+dotfiles_dir=$(dirname "$(readlink -f "$0")")
 
 #
 # Imports
 #
 
-. ${dotfiles_dir}/../functions
+. "${dotfiles_dir}/../functions"
 
 #
 # Setup

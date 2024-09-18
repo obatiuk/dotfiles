@@ -1,18 +1,21 @@
 #!/usr/bin/env bash
 
-[ -n "$(echo $@ | grep "\-debug")" ] && set -x
+# shellcheck disable=SC2143
+# shellcheck disable=SC2154
+
+[ -n "$(echo "$@" | grep "\-debug")" ] && set -x
 
 #
 # Variables
 #
 
-dotfiles_dir=$(dirname $(readlink -f $0))
+dotfiles_dir=$(dirname "$(readlink -f "$0")")
 
 #
 # Imports
 #
 
-. ${dotfiles_dir}/../functions
+. "${dotfiles_dir}/../functions"
 
 #
 # Setup
@@ -28,13 +31,13 @@ if ask "Do you want to apply 'fonts' configuration?" N; then
 		# Configuration files
 		#
 
-		stow --dir=packages --target=${HOME} -vv --stow --no-folding dotfiles-fonts-infinality
+		stow --dir=packages --target="${HOME}" -vv --stow --no-folding dotfiles-fonts-infinality
 
 		#
 		# Settings
 		#
 
-		# Enabling infinality fonts configuration
+		# Enabling `Infinality` fonts configuration
 
 		sudo bash /etc/fonts/infinality/infctl.sh setstyle infinality
 	fi

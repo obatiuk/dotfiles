@@ -1,12 +1,15 @@
 #!/usr/bin/env bash
 
-[ -n "$(echo $@ | grep "\-debug")" ] && set -x
+# shellcheck disable=SC2143
+# shellcheck disable=SC2154
+
+[ -n "$(echo "$@" | grep "\-debug")" ] && set -x
 
 #
 # Variables
 #
 
-dotfiles_dir=$(dirname $(readlink -f $0))
+dotfiles_dir=$(dirname "$(readlink -f "$0")")
 templates_dir=$(xdg-user-dir TEMPLATES)
 : "${templates_dir:=${HOME}/Templates}"
 
@@ -14,7 +17,7 @@ templates_dir=$(xdg-user-dir TEMPLATES)
 # Imports
 #
 
-. ${dotfiles_dir}/../functions
+. "${dotfiles_dir}/../functions"
 
 #
 # Setup

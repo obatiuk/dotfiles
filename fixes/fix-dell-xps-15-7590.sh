@@ -9,7 +9,7 @@ sudo dnf install v4l-utils
 #
 
 grub2-editenv - set "$(grub2-editenv - list | grep kernelopts) mem_sleep_default=deep"
-sudo grub2-mkconfig -o /boot/grub2/grub.cfg
+sudo grub2-mkconfig -o /etc/grub2.cfg
 
 # Camera settings
 
