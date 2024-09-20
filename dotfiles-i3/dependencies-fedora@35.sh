@@ -49,7 +49,6 @@ if ask "Install required dependencies?" N; then
 		gedit \
 		terminilogy \
 		micro \
-		bat
 
 	# Cleanup
 

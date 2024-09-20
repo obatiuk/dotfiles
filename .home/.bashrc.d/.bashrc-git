@@ -1,0 +1,19 @@
+# Settings in this file are only for interactive shells.
+# I don't know why bash loads this file for scp etc.,
+# but return if that's the case.
+[ "$PS1" ] || return
+
+[ -r /usr/share/git-core/contrib/completion/git-prompt.sh ] && . /usr/share/git-core/contrib/completion/git-prompt.sh
+
+# If the function __git_ps1 is NOT defined, create a dummy
+type __git_ps1 > /dev/null 2>&1
+if [ $? != "0" ] ; then
+    # define a dummy function so that it can be safely used in PS1 below.
+    __git_ps1() { echo ; }
+fi
+
+export GIT_PS1_SHOWCOLORHINTS=1
+export GIT_PS1_SHOWUNTRACKEDFILES=1
+export GIT_PS1_SHOWDIRTYSTATE=1
+
+export PROMPT_COMMAND='history -n; history -w; history -c; history -r; __git_ps1 "[\[\e[0;33m\]\u\[\e[0;m\]@\h \W"] "\\\$ "'

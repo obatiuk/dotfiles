@@ -2,7 +2,6 @@
 
 # Sanity checks
 command -v git > /dev/null 2>&1 || { echo "'git' command not found. Aborting!" && exit 1; }
-command -v python3 > /dev/null 2>&1 || { echo "'python3' command not found. Aborting!" && exit 1; }
 
 # make sure that required environment variables are set during installation
 : "${ULAUNCHER_EXTENSIONS:=${HOME}/.local/share/ulauncher/extensions}"

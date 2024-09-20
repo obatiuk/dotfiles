@@ -1,0 +1,42 @@
+[color]
+	ui = auto
+[core]
+	autocrlf = input
+	pager = git-split-diffs --color | less -RFX
+[push]
+	default = simple
+[credential]
+	helper = libsecret
+[user]
+	name = Oleksii Batiuk
+	email = oleksii.batiuk@gmail.com
+	signingkey = E41FBCFDF8C2DB5C\\!
+[commit]
+	gpgsign = true
+[init]
+	defaultBranch = master
+[filter "lfs"]
+	required = true
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
+[diff]
+	tool = meld
+[difftool]
+	prompt = false
+[difftool "meld"]
+	cmd = meld \"$LOCAL\" \"$REMOTE\"
+[merge]
+	tool = meld
+[mergetool "meld"]
+	cmd = meld \"$LOCAL\" \"$MERGED\" \"$REMOTE\" --output \"$MERGED\"
+[pager]
+	log = bat
+[split-diffs]
+	theme-name = dark
+[log]
+	showSignature = true
+[diff "gpg"]
+	textconv = gpg --no-tty --decrypt --quiet
+[blame "gpg"]
+	textconv = gpg --no-tty --decrypt --quiet

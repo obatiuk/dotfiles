@@ -1,0 +1,9 @@
+/* * { -GtkWidget-cursor-aspect-ratio: 0.2; } */
+
+VteTerminal,
+TerminalScreen,
+vte-terminal,
+terminal-window {
+    padding: 10px;
+    -vte-terminal-inner-border: 10px;
+}

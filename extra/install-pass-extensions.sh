@@ -11,7 +11,7 @@ command -v pass > /dev/null 2>&1 || { echo "'pass' command not found. Aborting!"
 : "${PASSWORD_STORE_EXTENSIONS_DIR:=${PASSWORD_STORE_DIR}/.extensions}"
 : "${HOME_STORAGE:=${HOME}/.home}"
 : "${APP_STORAGE:=${HOME_STORAGE}/opt}"
-: "${BASH_COMPLETION_USER_DIR:=${XDG_DATA_HOME:-$HOME/.local/share}/bash-completion}/completions"
+: "${BASH_COMPLETION_USER_DIR:=${XDG_DATA_HOME:-${HOME}/.local/share}/bash-completion}/completions"
 
 mkdir -pv "${APP_STORAGE}"
 mkdir -pv "${PASSWORD_STORE_EXTENSIONS_DIR}"
