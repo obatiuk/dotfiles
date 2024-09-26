@@ -299,7 +299,7 @@ arc-them-git-build:
 	@mkdir -pv $(OPT_PATH)
 	@rebuild_theme=false
 	@if [ ! -d $(OPT_PATH)/arc-theme ]; then
-		cd $(OPT_PATH) && git clone https://github.com/jnsh/arc-theme --depth 1
+		cd $(OPT_PATH) && git clone https://github.com/obatiuk/arc-theme --depth 1
 		cd $(OPT_PATH)/arc-theme && git pull
 		cd $(OPT_PATH)/arc-theme && meson setup --reconfigure --prefix=$(HOME)/.local \
 			-Dvariants=dark,darker \
