@@ -1,9 +1,0 @@
-! Rofi configs
-rofi.lines: 10
-rofi.opacity: 90
-rofi.location: 2
-rofi.separator-style: none
-
-rofi.color-enabled: true
-rofi.color-window: #2d2d2d, #2d2d2d
-rofi.color-normal: #2d2d2d, #ffffff, #2d2d2d, #4084d6, #ffffff
