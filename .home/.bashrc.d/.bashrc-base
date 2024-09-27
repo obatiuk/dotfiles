@@ -196,3 +196,17 @@ function qr {
 function sshkeys {
 	for key in "${HOME}"/.ssh/id_*; do echo -n "${key%.pub}: "; ssh-keygen -l -f "${key}"; done | sort | uniq
 }
+
+function search {
+
+	usage() {
+		echo -e "Usage: search [package]\n"
+	}
+
+	[ $# -eq 0 ] && echo -e "\nError: package is not specified\n" && usage && return 1
+
+	local package="$1"
+	echo "dnf: " && dnf -q search "$package"
+	command -v flatpak > /dev/null 2>&1 && echo -e "\nflatpak: " && flatpak search "$package" | grep -i "$package"
+	command -v snap > /dev/null 2>&1 && echo -e "\nsnap: " && snap search "$package" | grep -i "$package"
+}

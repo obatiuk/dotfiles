@@ -1,0 +1,3 @@
+.gitattributes !filter !diff
+include/gnome-shell-extension-gsconnect.ini filter=git-crypt diff=git-crypt
+*.png -text diff=exif

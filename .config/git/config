@@ -40,3 +40,5 @@
 	textconv = gpg --no-tty --decrypt --quiet
 [blame "gpg"]
 	textconv = gpg --no-tty --decrypt --quiet
+[diff "exif"]
+	textconv = exiftool

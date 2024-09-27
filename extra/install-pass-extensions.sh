@@ -24,18 +24,18 @@ declare -a __extension_map=(
 	'pass-ln.git / ln.bash'
 )
 for row in "${__extension_map[@]}"; do
-	read -ar entry <<< "${row}"
+	read -ra entry <<< "${row}"
 	git clone "https://github.com/obatiuk/${entry[0]}" "${APP_STORAGE}/${entry[0]}"
-	ln -s "${APP_STORAGE}/${entry[0]}${entry[1]}${entry[2]}" "${PASSWORD_STORE_EXTENSIONS_DIR}/${entry[2]}"
+	ln -svfn "${APP_STORAGE}/${entry[0]}${entry[1]}${entry[2]}" "${PASSWORD_STORE_EXTENSIONS_DIR}/${entry[2]}"
 done
 
 declare -a __completion_map=(
 	'pass-ln.git / pass-ln.bash.completion pass-ln'
 )
 for row in "${__completion_map[@]}"; do
-	read -ar entry <<< "${row}"
+	read -ra entry <<< "${row}"
 	git clone "https://github.com/obatiuk/${entry[0]}" "${APP_STORAGE}/${entry[0]}"
-	ln -s "${APP_STORAGE}/${entry[0]}${entry[1]}${entry[2]}" "${BASH_COMPLETION_USER_DIR}/${entry[3]}"
+	ln -svfn "${APP_STORAGE}/${entry[0]}${entry[1]}${entry[2]}" "${BASH_COMPLETION_USER_DIR}/${entry[3]}"
 done
 
 # make sure `pass-age` extension works correctly
@@ -56,3 +56,9 @@ for extension in "${__extensions[@]}"; do
 	cd "${APP_STORAGE}" && git clone "https://github.com/obatiuk/${extension}" "${extension}" \
 		&& cd "${extension}" && sudo make install
 done
+
+unset row
+unset extension
+unset __extension_ma
+unset __completion_map
+unset __extensions

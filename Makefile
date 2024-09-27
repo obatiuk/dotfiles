@@ -3,6 +3,9 @@
 .DEFAULT_GOAL := help
 
 SHELL = /bin/bash
+# .SHELLFLAGS := -eu -o pipefail -c # Useful debug options
+MAKEFLAGS += --warn-undefined-variables
+MAKEFLAGS += --no-builtin-rules
 
 colon := :
 $(colon) := :
@@ -10,10 +13,10 @@ space := $(subst ,, )
 dash := -
 slash := /
 
-export XDG_CONFIG_HOME ?= $${HOME}/.config
-export XDG_DATA_HOME ?= $${HOME}/.local/share
-export XDG_PICTURES_DIR ?= $${HOME}/Private/Pictures
-export NVM_DIR ?= $${XDG_DATA_HOME}/nvm
+export XDG_CONFIG_HOME ?= $(HOME)/.config
+export XDG_DATA_HOME ?= $(HOME)/.local/share
+export XDG_PICTURES_DIR ?= $(HOME)/Private/Pictures
+export NVM_DIR ?= $(XDG_DATA_HOME)/nvm
 
 top := $(shell pwd)
 now := $(shell date +%Y-%m-%d_%H:%M:%S)
@@ -24,11 +27,11 @@ model := $(shell (if command -v hostnamectl > /dev/null 2>&1; \
 
 INCLUDE = ./include
 
-XDG_CONFIG_HOME_PATH := $(shell echo $(XDG_CONFIG_HOME))
-XDG_DATA_HOME_PATH := $(shell echo $(XDG_DATA_HOME))
-XDG_PICTURES_DIR_PATH := $(shell echo $(XDG_PICTURES_DIR))
+XDG_CONFIG_HOME_PATH := $(XDG_CONFIG_HOME)
+XDG_DATA_HOME_PATH := $(XDG_DATA_HOME)
+XDG_PICTURES_DIR_PATH := $(XDG_PICTURES_DIR)
 
-NVM_PATH = $(shell echo $(NVM_DIR))
+NVM_PATH = $(NVM_DIR)
 NVM_CMD = . $(NVM_PATH)/nvm.sh && nvm
 
 MAKEFILE_NAME := $(abspath $(lastword $(MAKEFILE_LIST)))
@@ -40,11 +43,15 @@ OPT_PATH := $(abspath $(DOTHOME_PATH)/opt)
 
 VIVALDI_CF_SRC_PATH := $(DOTFILES_PATH)/.config/vivaldi/CustomUIModifications
 VIVALDI_CF_DEST_PATH := $(XDG_CONFIG_HOME_PATH)/vivaldi/CustomUIModifications
+ULAUNCHER_EXT_PATH := $(XDG_DATA_HOME_PATH)/ulauncher/extensions
 
 INSTALL =
 PATCH =
 UPDATE =
 CLEAN =
+SETUP =
+VERIFY =
+BACKUP =
 
 ARC_THEME_SOURCE ?= git
 
@@ -87,21 +94,22 @@ endef
 #
 
 # All rpm packages that are not directly referenced
-packages_rpm := dnf avahi avahi-tools redhat-lsb-core nano samba-client tree rpmconf pwgen htop fzf gh systemd
-packages_rpm += iwl*-firmware fwupd bluez bluez-utils bash bash-completion
-packages_rpm += hplip hplip-gui xsane ffmpeg feh
+packages_rpm := rpm dnf redhat-lsb redhat-lsb-core rpmconf pwgen systemd pam-u2f pamu2fcfg xdg-user-dirs
+packages_rpm += iwl*-firmware fwupd bluez bash bash-completion avahi avahi-tools samba-client tree
+packages_rpm += hplip hplip-gui xsane ffmpeg feh nano htop fzf
 packages_rpm += ImageMagick baobab gimp gparted diffuse gnome-terminal seahorse
 packages_rpm += libreoffice-core libreoffice-writer libreoffice-calc libreoffice-filters
 packages_rpm += gnome-pomodoro fd-find ydiff webp-pixbuf-loader
 packages_rpm += screenfetch usbutils pciutils acpi
 packages_rpm += gnupg2 pinentry-gtk pinentry-tty pinentry-gnome3
-packages_rpm += gvfs-mtp screen tio
+packages_rpm += gvfs-mtp screen tio dialog
 packages_rpm += restic rsync rclone micro
 packages_rpm += unrar lynx crudini sysstat p7zip nmap cabextract iotop qrencode uuid
-packages_rpm += git git-lfs git-extras git-credential-libsecret bat mc meld
-packages_rpm += snapd flatpak
+packages_rpm += git diffutils git-lfs git-extras git-credential-libsecret git-crypt bat mc meld gh perl-Image-ExifTool
+packages_rpm += snapd ulauncher
 packages_rpm += fedora-workstation-repositories
 packages_rpm += adwaita-icon-theme adwaita-cursor-theme dconf
+packages_rpm += python3-virtualenv
 
 # DNF plugins
 plugins_dnf := dnf-plugins-core dnf-plugin-diff python3-dnf-plugin-tracer
@@ -121,10 +129,15 @@ packages_fonts += liberation-sans-fonts liberation-serif-fonts jetbrains-mono-fo
 # GNOME Shell extensions
 packages_gshell := gnome-shell-extension-dash-to-dock gnome-shell-extension-appindicator
 packages_gshell += gnome-shell-extension-frippery-move-clock gnome-shell-extension-gsconnect
-packages_gshell += gnome-shell-extension-mediacontrols gnome-shell-extension-openweather
-packages_gshell += gnome-shell-extension-places-menu gnome-shell-extension-pop-shell
-packages_gshell += gnome-shell-extension-pop-shell-shortcut-overrides
-packages_gshell += gnome-shell-extension-sound-output-device-chooser gnome-shell-extension-window-list
+packages_gshell += gnome-shell-extension-sound-output-device-chooser gnome-shell-extension-freon
+packages_gshell += gnome-shell-extension-blur-my-shell gnome-shell-extension-user-theme
+packages_gshell += gnome-shell-extension-no-overview
+
+ext_gshell := https\://extensions.gnome.org/extension/1401/bluetooth-quick-connect
+ext_gshell += https\://extensions.gnome.org/extension/3780/ddterm
+ext_gshell += https\://extensions.gnome.org/extension/4451/logo-menu
+ext_gshell += https\://extensions.gnome.org/extension/4470/media-controls
+ext_gshell += https\://extensions.gnome.org/extension/1112/screenshot-tool
 
 # VSCode extensions
 ext_vscode := EditorConfig.EditorConfig jianbingfang.dupchecker mechatroner.rainbow-csv bierner.markdown-mermaid
@@ -133,6 +146,12 @@ ext_vscode += humao.rest-client jebbs.plantuml moshfeu.compare-folders ms-azuret
 ext_vscode += PKief.material-icon-theme redhat.java redhat.vscode-xml redhat.vscode-yaml
 ext_vscode += streetsidesoftware.code-spell-checker timonwong.shellcheck usernamehw.errorlens vscjava.vscode-maven
 ext_vscode += yzhang.markdown-all-in-one
+
+ext_ulauncher += ulauncher-emoji.git pass-ulauncher.git pass-for-ulauncher.git pass-otp-for-ulauncher.git
+ext_ulauncher += ulauncher-obsidian.git ulauncher-numconverter.git ulauncher-list-keywords.git
+
+ext_intellij := ru.adelf.idea.dotenv lermitage.intellij.battery.status Docker
+ext_intellij += name.kropp.intellij.makefile com.jetbrains.packagesearch.intellij-plugin
 
 vivaldi_conf_files := $(shell find .config/vivaldi/CustomUIModifications -type f -name '*.*')
 vivaldi_conf_dest_files := $(addprefix $(HOME)/, $(vivaldi_conf_files))
@@ -144,6 +163,12 @@ vivaldi_conf_dest_files := $(addprefix $(HOME)/, $(vivaldi_conf_files))
 
 INSTALL += dnf-plugins
 dnf-plugins: $(plugins_dnf)
+
+INSTALL += ecryptfs-utils
+ecryptfs-utils:
+	@$(call dnf, $@)
+	@sudo modprobe ecryptfs
+	@sudo usermod -aG ecryptfs '$(USER)'
 
 # Install fontconfig enhancements for better fonts rendering
 INSTALL += fonts_better
@@ -159,8 +184,10 @@ fonts_ms:
 INSTALL += fonts
 fonts: $(packages_fonts) fonts_better fonts_ms
 
-INSTALL += snap
-snap: | snapd /snap
+INSTALL += flatpak
+flatpak:
+	@$(call dnf, $@)
+	@flatpak remotes | grep 'flathub' > /dev/null || flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 
 INSTALL += nvm
 nvm: git
@@ -178,15 +205,14 @@ git-split-diffs: npm
 # Disable GNOME search engine
 INSTALL += disable-gnome-tracker
 disable-gnome-tracker: | gnome-desktop gnome-tracker-settings
-	@sudo systemctl --user mask \
+	-@sudo systemctl --user mask \
 		tracker-extract-3.service \
 		tracker-miner-fs-3.service \
 		tracker-miner-rss-3.service \
 		tracker-writeback-3.service \
 		tracker-xdg-portal-3.service \
 		tracker-miner-fs-control-3.service
-
-	-@tracker3 reset -s -r
+	-@tracker3 reset -s -r || true
 
 INSTALL += docker
 docker: /etc/yum.repos.d/docker-ce.repo | systemd
@@ -203,7 +229,7 @@ docker: /etc/yum.repos.d/docker-ce.repo | systemd
 	    docker-engine
 	@$(call dnf, docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin)
 	@sudo groupadd --force docker
-	@sudo usermod -aG docker "$(USER)"
+	@sudo usermod -aG docker '$(USER)'
 	@sudo systemctl enable --now docker
 
 INSTALL += ql700
@@ -251,36 +277,31 @@ keybase: gnome-desktop /etc/yum.repos.d/keybase.repo
 INSTALL += arduino
 arduino: flatpak
 	@flatpak -y install cc.arduino.arduinoide cc.arduino.IDE2
-	@sudo usermod -aG dialout,tty,lock "$(USER)"
+	@sudo usermod -aG dialout,tty,lock '$(USER)'
 
 INSTALL += $(ext_vscode)
-$(ext_vscode): com.vscodium.codium
+$(ext_vscode): | flatpak com.vscodium.codium
 	@flatpak run com.vscodium.codium --force --install-extension '$@'
 
 INSTALL += vscode
 vscode: | com.vscodium.codium $(ext_vscode)
 
 INSTALL += ddcutil
-ddcutil: | /etc/yum.repos.d/_copr\:copr.fedorainfracloud.org\:rockowitz\:ddcutil.repo \
-		/etc/udev/rules.d/60-ddcutil-i2c.rules
-	@$(call dnf, ddcutil)
+ddcutil: | /etc/yum.repos.d/_copr\:copr.fedorainfracloud.org\:rockowitz\:ddcutil.repo
+	@$(call dnf, $@)
 
-INSTALL += ulauncher-bin
-ulauncher-bin: gnome-desktop
-	@$(call dnf, ulauncher)
-
-INSTALL += ext_ulauncher
-ext_ulauncher:
-	# TODO: install extensions
-
-INSTALL += ulauncher
-ulauncher: | ulauncher-bin ext_ulauncher
+INSTALL += ulauncher-extensions
+ulauncher-extensions: ulauncher $(ext_ulauncher)
 
 INSTALL += gnome-themes
 gnome-themes: | gnome-desktop adwaita-icon-theme adwaita-cursor-theme arc-theme
 
+# GNOME shell extensions
 INSTALL += gnome-shell-extensions
-gnome-shell-extensions: | gnome-desktop $(packages_gshell)
+gnome-shell-extensions: | gnome-desktop $(packages_gshell) $(ext_gshell)
+	@gsettings set org.gnome.shell disable-user-extensions false
+	-@gnome-extensions disable 'window-list@gnome-shell-extensions.gcampax.github.com'
+	-@gnome-extensions disable 'places-menu@gnome-shell-extensions.gcampax.github.com'
 
 ifeq ($(ARC_THEME_SOURCE),git)
 # `arc-theme` package from the official repository doesn't have latest patches
@@ -304,7 +325,7 @@ arc-them-git-build:
 		cd $(OPT_PATH)/arc-theme && meson setup --reconfigure --prefix=$(HOME)/.local \
 			-Dvariants=dark,darker \
 			-Dthemes=gnome-shell,gtk2,gtk3,gtk4 \
-			 build
+			build
 		rebuild_theme=true
 	fi
 	@if [ $$rebuild_theme == true ] || [ ! z $$(cd $(OPT_PATH)/arc-theme && git diff --shortstat HEAD) ]; then
@@ -312,8 +333,8 @@ arc-them-git-build:
 		cd $(OPT_PATH)/arc-theme && SELF_CALL=true bash -c 'meson install -C build'
 		mkdir -p $(HOME)/.themes
 		for theme in Arc{,-Dark,-Darker,-Lighter}{,-solid}; do
-			if [ -d $(XDG_DATA_HOME_PATH)/themes/$$theme ]; then
-				ln -svfn $(XDG_DATA_HOME_PATH)/themes/$$theme $(HOME)/.themes/$$theme
+			if [ -d $(XDG_DATA_HOME_PATH)/themes/$${theme} ]; then
+				ln -svfn $(XDG_DATA_HOME_PATH)/themes/$${theme} $(HOME)/.themes/$${theme}
 			fi
 		done
 	fi
@@ -349,6 +370,25 @@ power-profiles-daemon:
 INSTALL += pass
 pass:
 	@$(call dnf, $@ pass-otp)
+
+INSTALL += authselect
+authselect: pam-u2f ecryptfs-utils
+	@# FIXME: add check if all settings are applied already
+	@$(call dnf, $@)
+	@authselect check \
+		&& sudo authselect select sssd with-ecryptfs with-fingerprint with-pam-u2f without-nullok -b \
+		|| echo 'Current authselect configuration is NOT valid. Aborting to avoid more damage.'
+
+INSTALL += gnome-shell-extensions-bin
+gnome-shell-extensions-bin: | gnome-desktop git
+	@if [ ! -d $(OPT_PATH)/install-gnome-extensions.git ]; then git clone 'https://github.com/obatiuk/install-gnome-extensions.git' $(OPT_PATH)/install-gnome-extensions.git; fi
+	@cd $(OPT_PATH)/install-gnome-extensions.git && git pull
+	@ln -snvf $(OPT_PATH)/install-gnome-extensions.git/install-gnome-extensions.sh $(HOMEBIN_PATH)/install-gnome-extensions
+	@chmod u+x $(HOMEBIN_PATH)/install-gnome-extensions
+
+UPDATE += gnome-shell-extensions-bin-update
+gnome-shell-extensions-bin-update:
+	@if [ -d $(OPT_PATH)/install-gnome-extensions.git ]; then cd $(OPT_PATH)/install-gnome-extensions.git && git pull; fi
 
 ########################################################################################################################
 #
@@ -388,7 +428,7 @@ gnome-key-binding-settings: | gnome-desktop $(HOMEBIN_PATH)/dell-kvm-switch-inpu
 
 # GNOME theme
 INSTALL += gnome-theme-settings
-gnome-theme-settings: | gnome-themes arc-theme gnome-shell-user-theme \
+gnome-theme-settings: | gnome-themes arc-theme gnome-shell-extension-user-theme \
 		$(HOME)/.gtkrc-2.0 \
 		$(XDG_CONFIG_HOME_PATH)/gtk-3.0/settings.ini $(XDG_CONFIG_HOME_PATH)/gtk-3.0/gtk.css \
 		$(XDG_CONFIG_HOME_PATH)/gtk-4.0/settings.ini
@@ -403,45 +443,6 @@ INSTALL += gnome-wallpaper
 gnome-wallpaper: $(DOTFILES_PATH)/.config/wallpaper/morphogenesis-l.svg | gnome-desktop
 	@gsettings set org.gnome.desktop.background picture-uri \
 		'file://$(XDG_CONFIG_HOME_PATH)/wallpaper/morphogenesis-l.svg'
-
-# GNOME shell extensions
-INSTALL += gnome-shell-extensions-settings
-gnome-shell-extensions-settings: | gnome-shell-extensions
-	@gsettings set org.gnome.shell.extensions.dash-to-dock apply-glossy-effect true
-	@gsettings set org.gnome.shell.extensions.dash-to-dock autohide true
-	@gsettings set org.gnome.shell.extensions.dash-to-dock autohide-in-fullscreen false
-	@gsettings set org.gnome.shell.extensions.dash-to-dock dock-position 'BOTTOM'
-	@gsettings set org.gnome.shell.extensions.dash-to-dock dash-max-icon-size 48
-	@gsettings set org.gnome.shell.extensions.dash-to-dock extend-height false
-	@gsettings set org.gnome.shell.extensions.dash-to-dock force-straight-corner true
-	@gsettings set org.gnome.shell.extensions.dash-to-dock unity-backlit-items false
-	@gsettings set org.gnome.shell.extensions.dash-to-dock dock-fixed false
-	@gsettings set org.gnome.shell.extensions.dash-to-dock transparency-mode 'FIXED'
-	@gsettings set org.gnome.shell.extensions.dash-to-dock background-opacity 0.28
-	@gsettings set org.gnome.shell.extensions.dash-to-dock hot-keys false
-	@gsettings set org.gnome.shell.extensions.dash-to-dock multi-monitor true
-	@gsettings set org.gnome.shell.extensions.dash-to-dock show-apps-at-top false
-	@gsettings set org.gnome.shell.extensions.dash-to-dock show-windows-preview true
-	@gsettings set org.gnome.shell.extensions.dash-to-dock show-trash true
-	@gsettings set org.gnome.shell.extensions.dash-to-dock show-mounts true
-	@gsettings set org.gnome.shell.extensions.dash-to-dock show-mounts-network true
-	@gsettings set org.gnome.shell.extensions.dash-to-dock show-mounts-only-mounted true
-	@gsettings set org.gnome.shell.extensions.dash-to-dock show-running true
-	@gsettings set org.gnome.shell.extensions.dash-to-dock show-delay 0.1
-	@gsettings set org.gnome.shell.extensions.dash-to-dock show-dock-urgent-notify true
-	@gsettings set org.gnome.shell.extensions.dash-to-dock show-favorites true
-	@gsettings set org.gnome.shell.extensions.dash-to-dock show-icons-emblems true
-	@gsettings set org.gnome.shell.extensions.dash-to-dock show-icons-notifications-counter true
-	@gsettings set org.gnome.shell.extensions.dash-to-dock icon-size-fixed true
-	@gsettings set org.gnome.shell.extensions.dash-to-dock intellihide false
-	@gsettings set org.gnome.shell.extensions.dash-to-dock intellihide-mode 'ALL_WINDOWS'
-	@gsettings set org.gnome.shell.extensions.dash-to-dock manualhide false
-
-# GNOME Shell user theme extension settings
-INSTALL += gnome-shell-extensions-settings
-gnome-shell-user-theme: | gnome-shell-extensions \
-		/usr/share/glib-2.0/schemas/org.gnome.shell.extensions.user-theme.gschema.xml
-	@gsettings set org.gnome.shell.extensions.user-theme name 'Arc-Dark'
 
 # GNOME keyboard settings
 INSTALL += gnome-keyboard-settings
@@ -481,7 +482,7 @@ gnome-desktop-settings: | gnome-desktop fonts
 	@gsettings set org.gnome.desktop.background show-desktop-icons false
 	@gsettings set org.gnome.desktop.datetime automatic-timezone true
 	@gsettings set org.gnome.desktop.screensaver lock-enabled true
-	@gsettings set org.gnome.desktop.screensaver lock-delay uint32 0
+	@gsettings set org.gnome.desktop.screensaver lock-delay 0
 	@gsettings set org.gnome.desktop.wm.preferences num-workspaces 1
 	@gsettings set org.gnome.mutter dynamic-workspaces false
 	@gsettings set org.gnome.mutter workspaces-only-on-primary false
@@ -496,37 +497,38 @@ gnome-desktop-settings: | gnome-desktop fonts
 	@gsettings set org.gnome.desktop.interface cursor-size 24
 	@gsettings set org.gnome.desktop.interface cursor-blink true
 
-	@gsettings set org.gnome.shell favorite-apps ['org.gnome.Nautilus.desktop', 'org.gnome.Terminal.desktop', 'intellij-idea-community_intellij-idea-community.desktop', 'com.vscodium.codium.desktop', 'vivaldi-stable.desktop', 'google-chrome.desktop', 'firefox.desktop', 'md.obsidian.Obsidian.desktop', 'xmind.desktop', 'org.gnome.gedit.desktop', 'chrome-cinhimbnkkaeohfgghhklpknlkffjgod-Profile_4.desktop', 'chrome-hpfldicfbfomlpcikngkocigghgafkph-Profile_4.desktop', 'org.gnome.Pomodoro.desktop', 'cc.arduino.IDE2.desktop', 'calibre-gui.desktop', 'com.valvesoftware.Steam.desktop']
+	@gsettings set org.gnome.shell favorite-apps "['org.gnome.Nautilus.desktop', 'org.gnome.Terminal.desktop', \
+ 		'intellij-idea-community_intellij-idea-community.desktop', 'com.vscodium.codium.desktop', \
+ 		 'vivaldi-stable.desktop', 'google-chrome.desktop', 'firefox.desktop', 'md.obsidian.Obsidian.desktop', \
+ 		 'xmind.desktop', 'org.gnome.gedit.desktop', 'chrome-cinhimbnkkaeohfgghhklpknlkffjgod-Profile_4.desktop', \
+ 		  'chrome-hpfldicfbfomlpcikngkocigghgafkph-Profile_4.desktop', 'org.gnome.Pomodoro.desktop', \
+ 		   'cc.arduino.IDE2.desktop', 'calibre-gui.desktop', 'com.valvesoftware.Steam.desktop']"
 
 
 # GNOME display settings
 INSTALL += gnome-display-settings
 gnome-display-settings: | gnome-desktop
-	@gsettings set org.gnome.mutter experimental-features "['x11-randr-fractional-scaling']"
 	@gsettings set org.gnome.mutter experimental-features "['scale-monitor-framebuffer']"
 
-	@gsettings set org.gnome.settings-daemon.plugins.color night-light-temperature uint32 4378
+	@gsettings set org.gnome.settings-daemon.plugins.color night-light-temperature 4378
 	@gsettings set org.gnome.settings-daemon.plugins.color night-light-enabled true
 	@gsettings set org.gnome.settings-daemon.plugins.color night-light-schedule-automatic true
 	@gsettings set org.gnome.settings-daemon.plugins.color night-light-schedule-to 6.0
 	@gsettings set org.gnome.settings-daemon.plugins.color night-light-schedule-from 20.0
-	@gsettings set org.gnome.settings-daemon.plugins.color recalibrate-display-threshold uint32 0
+	@gsettings set org.gnome.settings-daemon.plugins.color recalibrate-display-threshold 0
 
-# GNOME app settings
-INSTALL += gnome-app-settings
-gnome-app-settings:
-	@# Nautilus
+INSTALL += gnome-nautilus-settings
+gnome-nautilus-settings:
 	@gsettings set org.gnome.nautilus.preferences show-create-link true
 	@gsettings set org.gnome.nautilus.preferences default-folder-viewer 'icon-view'
-	@gsettings set org.gnome.nautilus.list-view default-visible-columns \
-		"['name', 'size', 'type', 'where', 'date_modified']"
-	@gsettings set org.gnome.nautilus.list-view default-zoom-level 'standard'
+	@gsettings set org.gnome.nautilus.list-view default-visible-columns "['name', 'size', 'type', 'where', 'date_modified']"
+	@gsettings set org.gnome.nautilus.list-view default-zoom-level 'small'
 	@gsettings set org.gnome.nautilus.preferences always-use-location-entry true
 	@gsettings set org.gnome.nautilus.preferences show-delete-permanently true
-	@gsettings set org.gnome.nautilus.preferences sort-directories-first true
 	@gsettings set org.gnome.nautilus.preferences show-hidden-files true
 
-	# File chooser
+INSTALL += gnome-file-chooser-settings
+gnome-file-chooser-settings:
 	@gsettings set org.gtk.Settings.FileChooser sort-column 'name'
 	@gsettings set org.gtk.Settings.FileChooser date-format 'regular'
 	@gsettings set org.gtk.Settings.FileChooser show-hidden true
@@ -539,34 +541,14 @@ gnome-app-settings:
 	@gsettings set org.gtk.Settings.FileChooser location-mode 'path-bar'
 	@gsettings set org.gtk.Settings.FileChooser sort-directories-first true
 
-	# gEdit
-	@gsettings set org.gnome.gedit.preferences.editor auto-save true
-	@gsettings set org.gnome.gedit.preferences.ui statusbar-visible true
-	@gsettings set org.gnome.gedit.preferences.ui toolbar-visible true
-	@gsettings set org.gnome.gedit.preferences.editor bracket-matching true
-	@gsettings set org.gnome.gedit.preferences.editor highlight-current-line true
-	@gsettings set org.gnome.gedit.preferences.editor display-line-numbers true
-	@gsettings set org.gnome.gedit.preferences.print print-header false
-	@gsettings set org.gnome.gedit.preferences.ui side-panel-visible true
-	@gsettings set org.gnome.gedit.plugins active-plugins "['docinfo', 'filebrowser', 'spell', 'modelines', 'time']"
-
-	# Screenshot
+INSTALL += gnome-screenshot-settings
+gnome-screenshot-settings:
 	@gsettings set org.gnome.gnome-screenshot auto-save-directory 'file://$(XDG_PICTURES_DIR_PATH)/Screenshots'
 	@gsettings set org.gnome.gnome-screenshot last-save-directory 'file://$(XDG_PICTURES_DIR_PATH)/Screenshots'
 	@gsettings set org.gnome.gnome-screenshot default-file-type 'png'
 	@gsettings set org.gnome.gnome-screenshot include-pointer false
 	@gsettings set org.gnome.gnome-screenshot delay 2
 	@gsettings set org.gnome.gnome-screenshot take-window-shot false
-
-# Disable GNOME Tracker3 service
-INSTALL += gnome-tracker-settings
-gnome-tracker-settings:
-	@gsettings set org.freedesktop.Tracker3.Miner.Files index-optical-discs false
-	@gsettings set org.freedesktop.Tracker3.Miner.Files enable-monitors false
-	@gsettings set org.freedesktop.Tracker3.Miner.Files index-on-battery-first-time false
-	@gsettings set org.freedesktop.Tracker3.Miner.Files index-on-battery false
-	@gsettings set org.freedesktop.Tracker3.Miner.Files index-applications false
-	@gsettings set org.freedesktop.Tracker3.Miner.Files index-removable-devices false
 
 INSTALL += gnome-power-settings
 gnome-power-settings:
@@ -588,43 +570,30 @@ gnome-privacy-settings:
 	@gsettings set org.gnome.desktop.notifications show-banners false
 	@gsettings set org.gnome.desktop.notifications show-in-lock-screen false
 	@gsettings set org.gnome.login-screen disable-user-list true
+	@gsettings set org.gnome.shell remember-mount-password false
+
+INSTALL += gnome-gedit-settings
+gnome-gedit-settings:
+	@dconf load '/' < $(INCLUDE)/gnome-gedit.ini
+
+# Disable GNOME Tracker3 service
+INSTALL += gnome-tracker-settings
+gnome-tracker-settings:
+	@dconf load '/' < $(INCLUDE)/gnome-tracker.ini
 
 INSTALL += gnome-terminal-settings
 gnome-terminal-settings: gnome-desktop gnome-terminal dconf
-	@gsettings set org.gnome.Terminal.Legacy.Settings shortcuts-enabled false
-	@gsettings set org.gnome.Terminal.Legacy.Settings menu-accelerator-enabled false
-	@gsettings set org.gnome.Terminal.Legacy.Settings shell-integration-enabled true
-	@gsettings set org.gnome.Terminal.Legacy.Settings confirm-close false
-	@gsettings set org.gnome.Terminal.Legacy.Settings theme-variant 'dark'
-	@gsettings set org.gnome.Terminal.Legacy.Settings new-terminal-mode 'window'
-	@gsettings set org.gnome.Terminal.Legacy.Settings default-show-menubar true
-	@gsettings set org.gnome.Terminal.Legacy.Settings always-check-default-terminal true
+	@dconf load '/' < $(INCLUDE)/gnome-terminal.ini
 
-
-	@dconf load /org/gnome/terminal/legacy/ <<< "
-	[profiles:]
-	default='21d40fb8-4721-4265-a563-5cef1638998d'
-	list=['21d40fb8-4721-4265-a563-5cef1638998d']
-
-	[profiles:/:21d40fb8-4721-4265-a563-5cef1638998d]
-	audible-bell=false
-	background-color='rgb(0,0,0)'
-	background-transparency-percent=5
-	bold-is-bright=false
-	font='JetBrainsMono Nerd Font Mono 10'
-	foreground-color='rgb(255,255,255)'
-	login-shell=true
-	palette=['rgb(0,0,0)', 'rgb(227,89,81)', 'rgb(35,180,126)', 'rgb(232,180,112)', 'rgb(83,125,177)', 'rgb(183,107,196)', 'rgb(74,178,170)', 'rgb(255,255,255)', 'rgb(255,255,255)', 'rgb(249,117,89)', 'rgb(62,207,142)', 'rgb(250,219,108)', 'rgb(25,151,198)', 'rgb(215,130,218)', 'rgb(125,214,207)', 'rgb(255,255,255)']
-	use-system-font=false
-	use-theme-colors=true
-	use-transparent-background=false
-	visible-name='My Profile'
-	"
+INSTALL += gnome-pomodoro-settings
+gnome-pomodoro-settings: | gnome-pomodoro
+	@dconf load '/' < $(INCLUDE)/gnome-pomodoro.ini
 
 ########################################################################################################################
 #
 # Balk installation rules
 #
+
 INSTALL += $(plugins_dnf)
 $(plugins_dnf):
 	@$(call dnf, $@)
@@ -638,16 +607,38 @@ $(packages_fonts):
 	@$(call dnf, $@)
 
 INSTALL += $(packages_gshell)
-$(packages_gshell):
+$(packages_gshell): gnome-desktop
 	@$(call dnf, $@)
+	@if [ -f $(INCLUDE)/$@.ini ]; then dconf load '/' < $(INCLUDE)/$@.ini; fi
 
 INSTALL += $(packages_snap)
-$(packages_snap): | gnome-desktop snap /snap
+$(packages_snap): | gnome-desktop snapd /snap
 	@sudo snap install $@
 
 INSTALL += $(packages_flatpak)
 $(packages_flatpak): | gnome-desktop flatpak
 	@flatpak install $@
+
+INSTALL += $(ext_ulauncher)
+$(ext_ulauncher): | git ulauncher
+	@mkdir -pv $(OPT_PATH)
+	@if [ ! -d $(OPT_PATH)/$@ ]; then git clone 'https://github.com/obatiuk/$@' $(OPT_PATH)/$@; fi
+	@cd $(OPT_PATH)/$@ && git pull
+	@mkdir -pv $(ULAUNCHER_EXT_PATH)
+	@ln -svfn $(OPT_PATH)/$@ $(ULAUNCHER_EXT_PATH)/$(subst .git,,$@)
+
+INSTALL += $(ext_gshell)
+$(ext_gshell): | gnome-desktop dconf gnome-shell-extensions-bin
+	@mkdir -pv $(OPT_PATH)
+	@$(eval __ext=$(subst $(slash),$(space),$(subst https://extensions.gnome.org/extension/,,$(strip $@))))
+	@$(eval __ext_id=$(word 1, $(__ext)))
+	@$(eval __ext_name=$(word 2, $(__ext)))
+	@if [ -f $(INCLUDE)/gnome-shell-extension-$(__ext_name).ini ]; then dconf load '/' < $(INCLUDE)/gnome-shell-extension-$(__ext_name).ini; fi
+	@$(HOMEBIN_PATH)/install-gnome-extensions --enable $(__ext_id)
+
+INSTALL += $(ext_intellij)
+$(ext_intellij): | intellij-idea-community $(HOMEBIN_PATH)/acpi-battery-status
+	@$$(command -v intellij-idea-community) installPlugins $@
 
 ########################################################################################################################
 #
@@ -726,17 +717,17 @@ FILES += /etc/yum.repos.d/_copr\:copr.fedorainfracloud.org\:rockowitz\:ddcutil.r
 
 FILES += $(BASHRCD_PATH)/.bashrc-nvm
 $(BASHRCD_PATH)/.bashrc-nvm: $(DOTFILES_PATH)/.home/.bashrc.d/.bashrc-nvm | nvm
-	@mkdir -pv "$(@D)"
+	@mkdir -pv $(@D)
 	@ln -svnf $< $@
 
 FILES += $(BASHRCD_PATH)/.bashrc-git
 $(BASHRCD_PATH)/.bashrc-git: $(DOTFILES_PATH)/.home/.bashrc.d/.bashrc-git | git
-	@mkdir -pv "$(@D)"
+	@mkdir -pv $(@D)
 	@ln -svnf $< $@
 
 FILES += $(BASHRCD_PATH)/.bashrc-base
 $(BASHRCD_PATH)/.bashrc-base: $(DOTFILES_PATH)/.home/.bashrc.d/.bashrc-base | git
-	@mkdir -pv "$(@D)"
+	@mkdir -pv $(@D)
 	@ln -svnf $< $@
 
 FILES += $(HOME)/.face.icon
@@ -744,8 +735,9 @@ $(HOME)/.face.icon: $(DOTFILES_PATH)/.face.icon
 	@ln -svnf $< $@
 
 FILES += $(XDG_CONFIG_HOME_PATH)/git/config
-$(XDG_CONFIG_HOME_PATH)/git/config: $(DOTFILES_PATH)/.config/git/config | git git-lfs git-credential-libsecret git-split-diffs bat meld
-	@mkdir -pv "$(@D)"
+$(XDG_CONFIG_HOME_PATH)/git/config: $(DOTFILES_PATH)/.config/git/config | git git-lfs git-credential-libsecret \
+		git-split-diffs bat meld perl-Image-ExifTool
+	@mkdir -pv $(@D)
 	@ln -svfn $< $@
 
 FILES += $(HOME)/.trackerignore
@@ -759,11 +751,6 @@ $(HOME)/.editorconfig : $(DOTFILES_PATH)/.editorconfig
 FILES += $(HOME)/.passgenrc
 $(HOME)/.passgenrc : $(DOTFILES_PATH)/.passgenrc | pass
 	@ln -svfn $< $@
-
-FILES += /etc/udev/rules.d/60-ddcutil-i2c.rules
-/etc/udev/rules.d/60-ddcutil-i2c.rules: /usr/share/ddcutil/data/60-ddcutil-i2c.rules
-	# TODO use copy (e.g. install)?
-	@sudo ln -svfn $< $@
 
 FILES += $(HOMEBIN_PATH)/dell-kvm-switch-input
 $(HOMEBIN_PATH)/dell-kvm-switch-input: $(DOTFILES_PATH)/.home/bin/dell-kvm-switch-input | ddcutil
@@ -783,12 +770,12 @@ $(HOME)/.gtkrc-2.0: $(DOTFILES_PATH)/.gtkrc-2.0 | gnome-desktop
 # GTK3 settings
 FILES += $(XDG_CONFIG_HOME_PATH)/gtk-3.0/settings.ini
 $(XDG_CONFIG_HOME_PATH)/gtk-3.0/settings.ini: $(DOTFILES_PATH)/.config/gtk-3.0/settings.ini | gnome-desktop
-	@mkdir -pv "$(@D)"
+	@mkdir -pv $(@D)
 	@ln -svfn $< $@
 
 FILES += $(XDG_CONFIG_HOME_PATH)/gtk-3.0/gtk.css
 $(XDG_CONFIG_HOME_PATH)/gtk-3.0/gtk.css: $(DOTFILES_PATH)/.config/gtk-3.0/gtk.css | gnome-desktop
-	@mkdir -pv "$(@D)"
+	@mkdir -pv $(@D)
 	@ln -svfn $< $@
 
 FILES += $(XDG_CONFIG_HOME_PATH)/gtk-3.0/bookmarks
@@ -808,25 +795,23 @@ $(XDG_CONFIG_HOME_PATH)/gtk-3.0/bookmarks: | gnome-desktop
 # GTK4 settings
 FILES += $(XDG_CONFIG_HOME_PATH)/gtk-4.0/settings.ini
 $(XDG_CONFIG_HOME_PATH)/gtk-4.0/settings.ini: $(DOTFILES_PATH)/.config/gtk-4.0/settings.ini | gnome-desktop
-	@mkdir -pv "$(@D)"
+	@mkdir -pv $(@D)
 	@ln -svfn $< $@
+
+FILES += $(XDG_CONFIG_HOME_PATH)/user-dirs.dirs
+$(XDG_CONFIG_HOME_PATH)/user-dirs.dirs: $(DOTFILES_PATH)/.config/user-dirs.dirs | xdg-user-dirs
+	@mkdir -pv $(@D)
+	@ln -svnf $< $@
 
 FILES += $(XDG_CONFIG_HOME_PATH)/mc/ini
 $(XDG_CONFIG_HOME_PATH)/mc/ini: $(DOTFILES_PATH)/.config/mc/ini | mc
-	@mkdir -pv "$(@D)"
+	@mkdir -pv $(@D)
 	@ln -svfn $< $@
 
 FILES += $(vivaldi_conf_dest_files)
 $(VIVALDI_CF_DEST_PATH)/% : $(VIVALDI_CF_SRC_PATH)/%
-	@mkdir -pv "$(@D)"
+	@mkdir -pv $(@D)
 	@ln -svfn $< $@
-
-# Manual fix for the `No such schema “org.gnome.shell.extensions.user-theme”` error
-FILES += /usr/share/glib-2.0/schemas/org.gnome.shell.extensions.user-theme.gschema.xml
-/usr/share/glib-2.0/schemas/org.gnome.shell.extensions.user-theme.gschema.xml: \
-		$(XDG_DATA_HOME_PATH)/gnome-shell/extensions/user-theme@gnome-shell-extensions.gcampax.github.com/schemas/org.gnome.shell.extensions.user-theme.gschema.xml
-	@sudo ln -svnf $< $@
-	@sudo glib-compile-schemas /usr/share/glib-2.0/schemas
 
 FILES += /etc/udev/rules.d/81-ppm.auto.rules
 /etc/udev/rules.d/81-ppm.auto.rules: | power-profiles-daemon
@@ -857,6 +842,30 @@ FILES += /etc/NetworkManager/conf.d/00-randomize-mac.conf
 	EOF
 	@sudo systemctl restart NetworkManager
 
+FILES += /etc/systemd/logind.conf.d/power.conf
+/etc/systemd/logind.conf.d/power.conf: | systemd
+	@sudo mkdir -pv $(@D)
+	@sudo tee $@ <<- EOF
+		#
+		# Created by dotfiles setup script on $$(date -I) by ${USER}
+		#
+		[Login]
+		HandlePowerKey=ignore
+		HandleLidSwitchExternalPower=ignore
+	EOF
+
+FILES += /etc/systemd/resolved.conf.d/dnssec.conf
+/etc/systemd/resolved.conf.d/dnssec.conf: | systemd
+	@sudo mkdir -pv $(@D)
+	@sudo tee $@ <<- EOF
+		#
+		# Created by dotfiles setup script on $$(date -I) by ${USER}
+		#
+		[Resolve]
+		DNSSEC=true
+	EOF
+	@sudo systemctl restart systemd-resolved
+
 ########################################################################################################################
 #
 # Patches
@@ -865,7 +874,7 @@ FILES += /etc/NetworkManager/conf.d/00-randomize-mac.conf
 # Make sure that the system is configured to maintain the RTC in universal time
 PATCH += local-rtc
 local-rtc:
-	@[[ $$(timedatectl show -p LocalRTC --value) == 'no' ]] || timedatectl set-local-rtc 0
+	@if [ "$$(timedatectl show -p LocalRTC --value)" == "yes" ]; then timedatectl set-local-rtc 0; fi
 
 ########################################################################################################################
 #
@@ -875,6 +884,11 @@ local-rtc:
 UPDATE += dnf-update
 dnf-update:
 	@sudo dnf update --refresh
+
+
+UPDATE += check-rpmconf
+check-rpmconf: | rpmconf
+	@sudo rpmconf -at > /dev/null || echo "There are unmerged system configuration files. use 'make verify-rpmconf' to review them"
 
 ########################################################################################################################
 #
@@ -893,6 +907,65 @@ journal-clean: | systemd
 CLEAN += docker-clean
 docker-clean: | docker
 	@docker system prune
+
+########################################################################################################################
+#
+# Setup rules
+#
+
+SETUP += setup-ecryptfs
+setup-private-home: ecryptfs-utils authselect
+	@ecryptfs-setup-private
+
+SETUP += setup-auth-keys
+setup-auth-keys: pam-u2f pamu2fcfg authselect
+	@# TODO: add implementation
+
+########################################################################################################################
+#
+# Verification rules
+#
+
+VERIFY += verify-rpmconf
+verify-rpmconf: | rpmconf meld
+	@sudo rpmconf -a -f meld
+
+VERIFY += verify-sys-configs
+verify-sys-configs: | rpm
+	@sudo rpm -Va
+
+########################################################################################################################
+#
+# Backup rules
+#
+
+BACKUP += backup-home
+backup-home: pass restic screenfetch redhat-lsb diffutils
+	@cd $(HOMEBIN_PATH) && ./backup-home-restic
+
+
+########################################################################################################################
+#
+# Aliases
+#
+
+.PHONY: snap
+snap: | snapd /snap
+
+.PHONY: ecryptfs
+ecryptfs: ecryptfs-utils
+
+.PHONY: gnome-settings
+gnome-settings: gnome-key-binding-settings gnome-theme-settings gnome-wallpaper gnome-shell-extensions \
+				gnome-keyboard-settings gnome-desktop-settings gnome-display-settings \
+				gnome-nautilus-settings gnome-file-chooser-settings gnome-gedit-settings gnome-screenshot-settings \
+				gnome-tracker-settings gnome-power-settings gnome-privacy-settings gnome-terminal-settings
+
+.PHONY: diff
+diff: diffutils ydiff git-split-diffs
+
+.PHONY: intellij
+intellij: | intellij-idea-community $(ext_intellij)
 
 ########################################################################################################################
 #
@@ -915,16 +988,24 @@ updateall: | update updatefw ## Update everything
 
 clean: $(CLEAN) ## Do a system cleanup
 
-all: files install patch update updatefw updateall clean ## Check, update and clean everything including system patches, packages and firmware
+setup: $(SETUP) ## Run setup scripts that require manual input
+
+verify: $(VERIFY) ## Verify system configuration
+
+backup: $(BACKUP) ## Backup everything
+
+all: files install patch updateall clean setup verify ## Check, update and clean everything including system patches, packages and firmware
 
 help: ## Display help
 	@awk 'BEGIN {FS = ":.*##"; printf "Usage:\033[36m\033[0m\n"} /^[a-zA-Z_-]+:.*?##/ \
 	{ printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' \
 	 $(MAKEFILE_LIST)
 
+# Debug
 printvars:
 	@$(foreach V,$(sort $(.VARIABLES)), \
 		$(if $(filter-out environment% default automatic, \
 			$(origin $V)),$(warning $V=$($V) ($(value $V)))))
 
-.PHONY: $(INSTALL) $(PATCH) $(UPDATE) install patch update updatefw updateall updateall all help printvars
+.PHONY: $(INSTALL) $(PATCH) $(UPDATE)$(CLEAN) $(SETUP) $(VERIFY) $(BACKUP) \
+	install patch update updatefw updateall updateall clean setup verify backup all help printvars
