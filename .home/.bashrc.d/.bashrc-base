@@ -1,5 +1,3 @@
-# .bashrc-base
-
 # Settings in this file are only for interactive shells.
 # I don't know why bash loads this file for scp etc.,
 # Return if that's the case.
@@ -9,9 +7,9 @@
 [[  -f /usr/share/bash-completion/bash_completion ]] && . /usr/share/bash-completion/bash_completion
 
 # User specific environment
-if ! [[ $PATH =~ $HOME/bin:$HOME/.home/bin ]]
+if ! [[ $PATH =~ $HOME/.home/bin ]]
 then
-    PATH="$HOME/bin:$HOME/.home/bin:$PATH"
+    PATH="$HOME/bin:$PATH"
 fi
 export PATH
 
@@ -176,7 +174,7 @@ function img64 {
 	[ $# -eq 0 ] && echo -e "\nError: file is not specified\n" && usage && return 1
 
 	# Check if file exists and is a regular file
-	[ ! -f $1 ] && echo -e "\nError: file not found\n" && usage && return 1
+	[ ! -f "$1" ] && echo -e "\nError: file not found\n" && usage && return 1
 
 	# Grab the image format
 	local fmt

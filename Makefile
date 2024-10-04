@@ -20,7 +20,7 @@ export NVM_DIR ?= $(XDG_DATA_HOME)/nvm
 
 top := $(shell pwd)
 now := $(shell date +%Y-%m-%d_%H:%M:%S)
-uid	:= $(shell id -u)
+uid := $(shell id -u)
 model := $(shell (if command -v hostnamectl > /dev/null 2>&1; \
 	then hostnamectl | grep 'Hardware Model:' | sed 's/^.*: //'; \
 	else sudo dmidecode -s system-product-name ; fi) | tr "[:upper:]" "[:lower:]")
@@ -37,7 +37,7 @@ NVM_CMD = . $(NVM_PATH)/nvm.sh && nvm
 MAKEFILE_NAME := $(abspath $(lastword $(MAKEFILE_LIST)))
 DOTFILES_PATH := $(abspath $(dir $(MAKEFILE_NAME)))
 DOTHOME_PATH := $(abspath $(HOME)/.home)
-BASHRCD_PATH := $(abspath $(DOTHOME_PATH)/.bashrc.d)
+BASHRCD_PATH := $(abspath $(HOME)/.bashrc.d)
 HOMEBIN_PATH := $(abspath $(DOTHOME_PATH)/bin)
 OPT_PATH := $(abspath $(DOTHOME_PATH)/opt)
 
@@ -96,7 +96,7 @@ endef
 # All rpm packages that are not directly referenced
 packages_rpm := rpm dnf redhat-lsb redhat-lsb-core rpmconf pwgen systemd pam-u2f pamu2fcfg xdg-user-dirs
 packages_rpm += iwl*-firmware fwupd bluez bash bash-completion avahi avahi-tools samba-client tree
-packages_rpm += hplip hplip-gui xsane ffmpeg feh nano htop fzf
+packages_rpm += hplip hplip-gui xsane ffmpeg feh nano htop fzf less xdg-utils
 packages_rpm += ImageMagick baobab gimp gparted diffuse gnome-terminal seahorse
 packages_rpm += libreoffice-core libreoffice-writer libreoffice-calc libreoffice-filters
 packages_rpm += gnome-pomodoro fd-find ydiff webp-pixbuf-loader
@@ -195,7 +195,7 @@ nvm: git
 	@PROFILE=/dev/null bash -c 'curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash'
 
 INSTALL += npm
-npm: nvm $(BASHRCD_PATH)/.bashrc-nvm
+npm: | nvm
 	@. $(NVM_PATH)/nvm.sh && nvm install --lts
 
 INSTALL +=git-split-diffs
@@ -271,7 +271,7 @@ opera: | gnome-desktop /etc/yum.repos.d/opera.repo
 	@$(call dnf, opera-stable)
 
 INSTALL += keybase
-keybase: gnome-desktop /etc/yum.repos.d/keybase.repo
+keybase: | gnome-desktop /etc/yum.repos.d/keybase.repo
 	@$(call dnf, $@)
 
 INSTALL += arduino
@@ -715,18 +715,44 @@ FILES += /etc/yum.repos.d/_copr\:copr.fedorainfracloud.org\:rockowitz\:ddcutil.r
 /etc/yum.repos.d/_copr\:copr.fedorainfracloud.org\:rockowitz\:ddcutil.repo:
 	@sudo dnf copr enable -y rockowitz/ddcutil
 
-FILES += $(BASHRCD_PATH)/.bashrc-nvm
-$(BASHRCD_PATH)/.bashrc-nvm: $(DOTFILES_PATH)/.home/.bashrc.d/.bashrc-nvm | nvm
+
+FILES += $(HOME)/.bashrc
+$(HOME)/.bashrc: $(DOTFILES_PATH)/.bashrc
 	@mkdir -pv $(@D)
 	@ln -svnf $< $@
 
-FILES += $(BASHRCD_PATH)/.bashrc-git
-$(BASHRCD_PATH)/.bashrc-git: $(DOTFILES_PATH)/.home/.bashrc.d/.bashrc-git | git
+FILES += $(HOME)/.bash_profile
+$(HOME)/.bash_profile: $(DOTFILES_PATH)/.bash_profile
 	@mkdir -pv $(@D)
 	@ln -svnf $< $@
 
-FILES += $(BASHRCD_PATH)/.bashrc-base
-$(BASHRCD_PATH)/.bashrc-base: $(DOTFILES_PATH)/.home/.bashrc.d/.bashrc-base | git
+FILES += $(HOME)/.bash_logout
+$(HOME)/.bash_logout: $(DOTFILES_PATH)/.bash_logout
+	@mkdir -pv $(@D)
+	@ln -svnf $< $@
+
+FILES += $(BASHRCD_PATH)/bashrc-nvm
+$(BASHRCD_PATH)/bashrc-nvm: $(DOTFILES_PATH)/.home/.bashrc.d/.bashrc-nvm | nvm
+	@mkdir -pv $(@D)
+	@ln -svnf $< $@
+
+FILES += $(BASHRCD_PATH)/bashrc-git
+$(BASHRCD_PATH)/bashrc-git: $(DOTFILES_PATH)/.home/.bashrc.d/.bashrc-git | git
+	@mkdir -pv $(@D)
+	@ln -svnf $< $@
+
+FILES += $(BASHRCD_PATH)/bashrc-base
+$(BASHRCD_PATH)/bashrc-base: $(DOTFILES_PATH)/.home/.bashrc.d/.bashrc-base | git
+	@mkdir -pv $(@D)
+	@ln -svnf $< $@
+
+FILES += $(BASHRCD_PATH)/bashrc-fonts
+$(BASHRCD_PATH)/bashrc-fonts: $(DOTFILES_PATH)/.home/.bashrc.d/.bashrc-fonts | fonts
+	@mkdir -pv $(@D)
+	@ln -svnf $< $@
+
+FILES += $(BASHRCD_PATH)/bashrc-xdg
+$(BASHRCD_PATH)/bashrc-xdg: $(DOTFILES_PATH)/.home/.bashrc.d/.bashrc-xdg | xdg-utils
 	@mkdir -pv $(@D)
 	@ln -svnf $< $@
 
