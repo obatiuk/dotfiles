@@ -562,7 +562,7 @@ gnome-power-settings:
 	@gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-ac-type 'suspend'
 	@gsettings set org.gnome.settings-daemon.plugins.power power-button-action 'nothing'
 
-INSTALL +=
+INSTALL += gnome-privacy-settings
 gnome-privacy-settings:
 	@gsettings set org.gnome.desktop.privacy old-files-age 10
 	@gsettings set org.gnome.desktop.privacy remove-old-temp-files true
