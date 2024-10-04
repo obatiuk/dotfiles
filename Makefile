@@ -23,7 +23,7 @@ now := $(shell date +%Y-%m-%d_%H:%M:%S)
 uid := $(shell id -u)
 model := $(shell (if command -v hostnamectl > /dev/null 2>&1; \
 	then hostnamectl | grep 'Hardware Model:' | sed 's/^.*: //'; \
-	else sudo dmidecode -s system-product-name ; fi) | tr "[:upper:]" "[:lower:]")
+    else sudo dmidecode -s system-product-name ; fi) | tr "[:upper:]" "[:lower:]")
 
 INCLUDE = ./include
 
@@ -101,7 +101,7 @@ packages_rpm += ImageMagick baobab gimp gparted diffuse gnome-terminal seahorse
 packages_rpm += libreoffice-core libreoffice-writer libreoffice-calc libreoffice-filters
 packages_rpm += gnome-pomodoro fd-find ydiff webp-pixbuf-loader
 packages_rpm += screenfetch usbutils pciutils acpi
-packages_rpm += gnupg2 pinentry-gtk pinentry-tty pinentry-gnome3
+packages_rpm += gnupg2 pinentry-gtk pinentry-tty pinentry-gnome3 gedit gedit-plugins gedit-plugin-editorconfig
 packages_rpm += gvfs-mtp screen tio dialog
 packages_rpm += restic rsync rclone micro
 packages_rpm += unrar lynx crudini sysstat p7zip nmap cabextract iotop qrencode uuid
@@ -518,7 +518,7 @@ gnome-display-settings: | gnome-desktop
 	@gsettings set org.gnome.settings-daemon.plugins.color recalibrate-display-threshold 0
 
 INSTALL += gnome-nautilus-settings
-gnome-nautilus-settings:
+gnome-nautilus-settings: | gnome-desktop
 	@gsettings set org.gnome.nautilus.preferences show-create-link true
 	@gsettings set org.gnome.nautilus.preferences default-folder-viewer 'icon-view'
 	@gsettings set org.gnome.nautilus.list-view default-visible-columns "['name', 'size', 'type', 'where', 'date_modified']"
@@ -528,7 +528,7 @@ gnome-nautilus-settings:
 	@gsettings set org.gnome.nautilus.preferences show-hidden-files true
 
 INSTALL += gnome-file-chooser-settings
-gnome-file-chooser-settings:
+gnome-file-chooser-settings: | gnome-desktop
 	@gsettings set org.gtk.Settings.FileChooser sort-column 'name'
 	@gsettings set org.gtk.Settings.FileChooser date-format 'regular'
 	@gsettings set org.gtk.Settings.FileChooser show-hidden true
@@ -542,7 +542,7 @@ gnome-file-chooser-settings:
 	@gsettings set org.gtk.Settings.FileChooser sort-directories-first true
 
 INSTALL += gnome-screenshot-settings
-gnome-screenshot-settings:
+gnome-screenshot-settings: | gnome-desktop
 	@gsettings set org.gnome.gnome-screenshot auto-save-directory 'file://$(XDG_PICTURES_DIR_PATH)/Screenshots'
 	@gsettings set org.gnome.gnome-screenshot last-save-directory 'file://$(XDG_PICTURES_DIR_PATH)/Screenshots'
 	@gsettings set org.gnome.gnome-screenshot default-file-type 'png'
@@ -551,7 +551,7 @@ gnome-screenshot-settings:
 	@gsettings set org.gnome.gnome-screenshot take-window-shot false
 
 INSTALL += gnome-power-settings
-gnome-power-settings:
+gnome-power-settings: | gnome-desktop
 	@gsettings set org.gnome.settings-daemon.plugins.power idle-dim true
 	@gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-battery-type 'suspend'
 	@gsettings set org.gnome.settings-daemon.plugins.power idle-brightness 30
@@ -563,7 +563,7 @@ gnome-power-settings:
 	@gsettings set org.gnome.settings-daemon.plugins.power power-button-action 'nothing'
 
 INSTALL += gnome-privacy-settings
-gnome-privacy-settings:
+gnome-privacy-settings: | gnome-desktop
 	@gsettings set org.gnome.desktop.privacy old-files-age 10
 	@gsettings set org.gnome.desktop.privacy remove-old-temp-files true
 	@gsettings set org.gnome.desktop.privacy remove-old-trash-files false
@@ -573,20 +573,20 @@ gnome-privacy-settings:
 	@gsettings set org.gnome.shell remember-mount-password false
 
 INSTALL += gnome-gedit-settings
-gnome-gedit-settings:
+gnome-gedit-settings: | gedit dconf
 	@dconf load '/' < $(INCLUDE)/gnome-gedit.ini
 
 # Disable GNOME Tracker3 service
 INSTALL += gnome-tracker-settings
-gnome-tracker-settings:
+gnome-tracker-settings: | dconf
 	@dconf load '/' < $(INCLUDE)/gnome-tracker.ini
 
 INSTALL += gnome-terminal-settings
-gnome-terminal-settings: gnome-desktop gnome-terminal dconf
+gnome-terminal-settings: | gnome-desktop gnome-terminal dconf
 	@dconf load '/' < $(INCLUDE)/gnome-terminal.ini
 
 INSTALL += gnome-pomodoro-settings
-gnome-pomodoro-settings: | gnome-pomodoro
+gnome-pomodoro-settings: | gnome-pomodoro dconf
 	@dconf load '/' < $(INCLUDE)/gnome-pomodoro.ini
 
 ########################################################################################################################
@@ -997,6 +997,7 @@ intellij: | intellij-idea-community $(ext_intellij)
 #
 # Main targets
 #
+
 files: | $(FILES) ## Check that all managed files are up-to-date
 
 install: | files $(INSTALL) ## Check all packages (except system patches) and managed files
