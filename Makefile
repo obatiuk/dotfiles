@@ -138,6 +138,7 @@ ext_gshell += https\://extensions.gnome.org/extension/3780/ddterm
 ext_gshell += https\://extensions.gnome.org/extension/4451/logo-menu
 ext_gshell += https\://extensions.gnome.org/extension/4470/media-controls
 ext_gshell += https\://extensions.gnome.org/extension/1112/screenshot-tool
+ext_gshell += https\://extensions.gnome.org/extension/277/impatience/
 
 # VSCode extensions
 ext_vscode := EditorConfig.EditorConfig jianbingfang.dupchecker mechatroner.rainbow-csv bierner.markdown-mermaid
