@@ -44,6 +44,8 @@ OPT_PATH := $(abspath $(DOTHOME_PATH)/opt)
 VIVALDI_CF_SRC_PATH := $(DOTFILES_PATH)/.config/vivaldi/CustomUIModifications
 VIVALDI_CF_DEST_PATH := $(XDG_CONFIG_HOME_PATH)/vivaldi/CustomUIModifications
 ULAUNCHER_EXT_PATH := $(XDG_DATA_HOME_PATH)/ulauncher/extensions
+STREAMDECK_CF_SRC_PATH := $(DOTFILES_PATH)/.config/streamdeck-ui
+STREAMDECK_CF_DEST_PATH := $(XDG_CONFIG_HOME_PATH)/streamdeck-ui
 
 INSTALL =
 PATCH =
@@ -109,7 +111,7 @@ packages_rpm += git diffutils git-lfs git-extras git-credential-libsecret git-cr
 packages_rpm += snapd ulauncher
 packages_rpm += fedora-workstation-repositories
 packages_rpm += adwaita-icon-theme adwaita-cursor-theme dconf
-packages_rpm += python3-virtualenv
+packages_rpm += python3 python3-pip python3-devel python3-virtualenv
 
 # DNF plugins
 plugins_dnf := dnf-plugins-core dnf-plugin-diff python3-dnf-plugin-tracer
@@ -156,6 +158,10 @@ ext_intellij += name.kropp.intellij.makefile com.jetbrains.packagesearch.intelli
 
 vivaldi_conf_files := $(shell find .config/vivaldi/CustomUIModifications -type f -name '*.*')
 vivaldi_conf_dest_files := $(addprefix $(HOME)/, $(vivaldi_conf_files))
+
+streamdeck_conf_files := $(shell find .config/streamdeck-ui -type f -name '*.*')
+streamdeck_conf_dest_files := $(addprefix $(HOME)/, $(streamdeck_conf_files))
+
 
 ########################################################################################################################
 #
@@ -590,6 +596,15 @@ INSTALL += gnome-pomodoro-settings
 gnome-pomodoro-settings: | gnome-pomodoro dconf
 	@dconf load '/' < $(INCLUDE)/gnome-pomodoro.ini
 
+INSTALL += pip
+pip: python3 python3-pip
+	@python -m pip install --upgrade pip
+
+INSTALL += streamdeck-ui
+streamdeck-ui: | python3-devel pip $(streamdeck_conf_dest_files)
+	@$(call dnf, hidapi)
+	@python -m pip install streamdeck-linux-gui --user
+
 ########################################################################################################################
 #
 # Balk installation rules
@@ -716,7 +731,6 @@ FILES += /etc/yum.repos.d/_copr\:copr.fedorainfracloud.org\:rockowitz\:ddcutil.r
 /etc/yum.repos.d/_copr\:copr.fedorainfracloud.org\:rockowitz\:ddcutil.repo:
 	@sudo dnf copr enable -y rockowitz/ddcutil
 
-
 FILES += $(HOME)/.bashrc
 $(HOME)/.bashrc: $(DOTFILES_PATH)/.bashrc
 	@mkdir -pv $(@D)
@@ -840,6 +854,11 @@ $(VIVALDI_CF_DEST_PATH)/% : $(VIVALDI_CF_SRC_PATH)/%
 	@mkdir -pv $(@D)
 	@ln -svfn $< $@
 
+FILES += $(streamdeck_conf_dest_files)
+$(STREAMDECK_CF_DEST_PATH)/% : $(STREAMDECK_CF_SRC_PATH)/%
+	@mkdir -pv $(@D)
+	@ln -svfn $< $@
+
 FILES += /etc/udev/rules.d/81-ppm.auto.rules
 /etc/udev/rules.d/81-ppm.auto.rules: | power-profiles-daemon
 	@sudo tee $@ <<- EOF
@@ -892,6 +911,42 @@ FILES += /etc/systemd/resolved.conf.d/dnssec.conf
 		DNSSEC=true
 	EOF
 	@sudo systemctl restart systemd-resolved
+
+FILES += $(XDG_CONFIG_HOME_PATH)/systemd/user/streamdeck.service
+$(XDG_CONFIG_HOME_PATH)/systemd/user/streamdeck.service: | systemd streamdeck-ui
+	@tee $@ <<- EOF
+	#
+	# Created by dotfiles setup script on $$(date -I) by ${USER}
+	#
+	[Unit]
+	Description=A Linux compatible UI for the Elgato Stream Deck.
+	[Service]
+	Type=simple
+	Environment="STREAMDECK_UI_LOG_FILE=/dev/null"
+	Environment="STREAMDECK_UI_CONFIG=$(HOME)/.config/streamdeck-ui/ui.json"
+	WorkingDirectory=$(HOME)
+	ExecStart=$(HOME)/.local/bin/streamdeck -n
+	Restart=on-failure
+
+	[Install]
+	WantedBy=default.target
+	EOF
+	@systemctl --user daemon-reload
+	@systemctl --user enable --now streamdeck
+
+FILES += /etc/udev/rules.d/60-streamdeck.rules
+/etc/udev/rules.d/60-streamdeck.rules: | streamdeck-ui
+	@sudo tee $@ <<- EOF
+		#
+		# Created by dotfiles setup script on $$(date -I) by ${USER}
+		#
+		# Custom udev rules to select power-profiles-daemon profile based on power status
+		#
+		SUBSYSTEM=="usb", ATTRS{idVendor}=="0fd9", ATTRS{idProduct}=="0063", TAG+="uaccess"
+		KERNEL=="uinput", SUBSYSTEM=="misc", OPTIONS+="static_node=uinput", TAG+="uaccess", GROUP="input", MODE="0660"
+	EOF
+	@sudo udevadm control --reload-rules && sudo udevadm trigger
+
 
 ########################################################################################################################
 #
