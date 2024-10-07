@@ -1,4 +1,7 @@
 .gitattributes !filter !diff
 include/gnome-shell-extension-gsconnect.ini filter=git-crypt diff=git-crypt
+include/gnome-clocks.ini filter=git-crypt diff=git-crypt
 .config/streamdeck-ui/ui.json filter=git-crypt diff=git-crypt
 *.png -text diff=exif
+*.webp -text diff=exif
+

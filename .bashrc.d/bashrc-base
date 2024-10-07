@@ -68,22 +68,6 @@ export YDIFF_OPTIONS='-s -w0 --pager=bat'
 GPG_TTY=$(tty)
 export GPG_TTY
 
-pw() {
-    export PASSWORD_STORE_CLIP_TIME=8
-    export PASSWORD_STORE_X_SELECTION=primary
-    pass -c2 $1; sleep 5; pass -c $1; sleep 5; pass otp -c $1; exit
-}
-
-
-# pass settings
-export PASSWORD_STORE_ENABLE_EXTENSIONS=true
-export PASSWORD_STORE_DIR=${HOME}/.password-store
-export PASSWORD_STORE_EXTENSIONS_DIR=${PASSWORD_STORE_DIR}/.extensions
-
-# Functions
-
-# Makes man more readable and it's not affecting `env` output
-
 function man {
 	env \
 		LESS_TERMCAP_mb=$(tput bold; tput setaf 2) \
@@ -106,7 +90,6 @@ function man {
 function fcount {
 	find . -maxdepth 1 -type d | sort | while read -r dir; do n=$(find "$dir" -type f | wc -l); printf "%4d : %s\n" $n "$dir"; done
 }
-
 
 # Source: https://github.com/xvoland/Extract/blob/master/extract.sh
 
@@ -150,15 +133,6 @@ function extract {
 
 function ff {
 	grep -r "$1" .;
-}
-
-function pg {
-	if [ -z "$1" ]; then
-		# display usage if no parameters given
-		echo "Usage: pg <password-key>"
-   	else
-   		pass-gen | sed '/^Reading.*/d;q' | pass add -e "$@"
-   	fi
 }
 
 exists() { [[ ${1:0:1} == "/" ]] && { test -f $1 || test -d $1; } || command -v $1 >/dev/null 2>&1; }

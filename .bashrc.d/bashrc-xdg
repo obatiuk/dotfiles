@@ -1,0 +1,36 @@
+: "${XDG_CONFIG_HOME:=${HOME}/.config}"
+: "${XDG_DATA_HOME:=${HOME}/.local/share}"
+: "${XDG_STATE_HOME:=${HOME}/.local/state}"
+: "${XDG_CACHE_HOME:=${HOME}/.cache}"
+
+# Move `docker` from $HOME folder
+export DOCKER_CONFIG="${XDG_CONFIG_HOME}/docker"
+
+# Move `.icons` from $HOME folder (should work by default)
+export XCURSOR_PATH="/usr/share/icons:${XDG_DATA_HOME}/icons"
+
+# Move `.android` from $HOME folder
+export ANDROID_USER_HOME="${XDG_DATA_HOME}/android"
+
+# Move `.bash_history` from $HOME folder
+export HISTFILE="${XDG_STATE_HOME}/bash/history"
+
+# Move `.nv` from $HOME folder
+export CUDA_CACHE_PATH="${XDG_CACHE_HOME}/nv"
+
+# Move `.gnupg` from $HOME folder
+export GNUPGHOME="${XDG_DATA_HOME}/gnupg"
+
+# Move `.gradle` from the $HOME folder
+export GRADLE_USER_HOME="${XDG_DATA_HOME}/gradle"
+
+# Move `.w3m` from the $HOME folder
+export W3M_DIR="${XDG_DATA_HOME}/w3m"
+
+# Move `.opam` from the $HOME folder
+export OPAMROOT="${XDG_DATA_HOME}/opam"
+
+# Move `.wgetrc` from the $HOME folder
+export WGETRC="${XDG_CONFIG_HOME}/wget/wgetrc"
+
+export GTK2_RC_FILES="${XDG_CONFIG_HOME}/gtk-2.0/gtkrc"

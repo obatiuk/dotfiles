@@ -8,8 +8,8 @@
 # If the function __git_ps1 is NOT defined, create a dummy
 type __git_ps1 > /dev/null 2>&1
 if [ $? != "0" ] ; then
-    # define a dummy function so that it can be safely used in PS1 below.
-    __git_ps1() { echo ; }
+	# define a dummy function so that it can be safely used in PS1 below.
+	__git_ps1() { echo ; }
 fi
 
 export GIT_PS1_SHOWCOLORHINTS=1

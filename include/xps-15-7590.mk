@@ -1,6 +1,7 @@
 # DELL XPS 15 7590 model patches
 
-# TODO: add Nvidia drivers!
+# TODO: add Nvidia drivers
+# TODO: add command-configure utility
 
 grubby:
 	@sudo dnf install grubby

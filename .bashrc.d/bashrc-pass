@@ -1,0 +1,18 @@
+export PASSWORD_STORE_ENABLE_EXTENSIONS=true
+export PASSWORD_STORE_DIR="${HOME}/.password-store"
+export PASSWORD_STORE_EXTENSIONS_DIR="${PASSWORD_STORE_DIR}/.extensions"
+
+pw() {
+	export PASSWORD_STORE_CLIP_TIME=8
+	export PASSWORD_STORE_X_SELECTION=primary
+	pass -c2 "$1"; sleep 5; pass -c "$1"; sleep 5; pass otp -c "$1"; exit
+}
+
+function pg {
+	if [ -z "$1" ]; then
+		# display usage if no parameters given
+		echo "Usage: pg <password-key>"
+	else
+		pass-gen | sed '/^Reading.*/d;q' | pass add -e "$@"
+	fi
+}

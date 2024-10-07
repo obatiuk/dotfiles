@@ -10,7 +10,7 @@
 [user]
 	name = Oleksii Batiuk
 	email = oleksii.batiuk@gmail.com
-	signingkey = E41FBCFDF8C2DB5C\\!
+	signingkey = E41FBCFDF8C2DB5C!
 [commit]
 	gpgsign = true
 [init]
