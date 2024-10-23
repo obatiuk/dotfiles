@@ -3,8 +3,11 @@
 # Return if that's the case.
 [ "$PS1" ] || return
 
-# Use bash-completion, if available
-[[  -f /usr/share/bash-completion/bash_completion ]] && . /usr/share/bash-completion/bash_completion
+# Load user bash-completion files manually,
+# for some reason on-demand loading doesn't work (at least for pass-xxxx files)
+for bcfile in "${HOME}"/.local/share/bash-completion/completions/* ; do
+  [ -f "${bcfile}" ] && . "${bcfile}"
+done
 
 # User specific environment
 if ! [[ $PATH =~ $HOME/.home/bin ]]

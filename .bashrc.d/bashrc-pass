@@ -2,7 +2,7 @@ export PASSWORD_STORE_ENABLE_EXTENSIONS=true
 export PASSWORD_STORE_DIR="${HOME}/.password-store"
 export PASSWORD_STORE_EXTENSIONS_DIR="${PASSWORD_STORE_DIR}/.extensions"
 
-pw() {
+function pw {
 	export PASSWORD_STORE_CLIP_TIME=8
 	export PASSWORD_STORE_X_SELECTION=primary
 	pass -c2 "$1"; sleep 5; pass -c "$1"; sleep 5; pass otp -c "$1"; exit
