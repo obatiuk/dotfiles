@@ -98,7 +98,7 @@ define clone
 endef
 
 define log
-	echo "$(1)$(2)$(END_COLOR)"
+	echo -e "$(1)$(2)$(END_COLOR)"
 endef
 
 ########################################################################################################################
@@ -107,7 +107,7 @@ endef
 #
 
 # All rpm packages that are not directly referenced
-packages_rpm := rpm dnf redhat-lsb redhat-lsb-core rpmconf pwgen systemd pam-u2f pamu2fcfg xdg-user-dirs audit golang
+packages_rpm := rpm dnf redhat-lsb rpmconf pwgen systemd pam-u2f pamu2fcfg xdg-user-dirs audit golang
 packages_rpm += iwl*-firmware fwupd bluez bash bash-completion avahi avahi-tools samba-client tree brightnessctl
 packages_rpm += hplip hplip-gui xsane ffmpeg feh nano htop btop fzf less xdg-utils httpie lynis cheat tldr
 packages_rpm += ImageMagick baobab gimp gparted gnome-terminal seahorse cups duf ssh-audit coreutils
@@ -191,7 +191,7 @@ INSTALL += dnf-plugins
 dnf-plugins: $(plugins_dnf)
 
 INSTALL += dnf-settings
-dnf-settings:
+dnf-settings: | crudini
 	@sudo crudini --ini-options=nospace --set /etc/dnf/dnf.conf main fastestmirror 1
 	@sudo crudini --ini-options=nospace --set /etc/dnf/dnf.conf main max_parallel_downloads 10
 	@sudo crudini --ini-options=nospace --set /etc/dnf/dnf.conf main deltarpm true
@@ -215,7 +215,7 @@ INSTALL += fonts
 fonts: $(packages_fonts) fonts_better fonts_ms
 
 INSTALL += flatpak
-flatpak:
+flatpak: gnome-desktop
 	@$(call dnf,$@)
 	@flatpak remotes | grep 'flathub' > /dev/null || flatpak remote-add --if-not-exists \
 		flathub https://flathub.org/repo/flathub.flatpakrepo
@@ -370,7 +370,7 @@ arc-them-git-build:
 			build
 		rebuild_theme=true
 	fi
-	@if [ $$rebuild_theme == true ] || [ ! z $$(cd $(OPT_PATH)/arc-theme && git diff --shortstat HEAD) ]; then
+	@if [ $$rebuild_theme == true ] || [ ! z $$(cd $(HOME_OPT)/arc-theme && git diff --shortstat HEAD) ]; then
 		cd $(HOME_OPT)/arc-theme && git pull
 		cd $(HOME_OPT)/arc-theme && SELF_CALL=true bash -c 'meson install -C build'
 		mkdir -p $(HOME)/.themes
@@ -488,13 +488,21 @@ logrotate:
 	}
 	EOF
 
-INSTALL += browserpass
-browserpass: | git coreutils golang pass pass-extensions $(PASS_HOME)/.browserpass.json vivaldi google-chrome firefox
+INSTALL += browserpass-bin
+browserpass-bin:
 	@$(call clone,browserpass-native.git)
 	@cd $(HOME_OPT)/browserpass-native.git && make browserpass configure
 	@cd $(HOME_OPT)/browserpass-native.git && sudo make install
-	@cd $(HOME_OPT)/browserpass-native.git && make hosts-chrome-user hosts-firefox-user hosts-vivaldi-user policies-chrome-user policies-vivaldi-user
+	@cd $(HOME_OPT)/browserpass-native.git && make hosts-chrome-user hosts-firefox-user hosts-vivaldi-user \
+		policies-chrome-user policies-vivaldi-user
+
+CLEAN += browserpass-clean
+browserpass-clean:
 	@cd $(HOME_OPT)/browserpass-native.git && make clean
+
+INSTALL += browserpass
+browserpass: | git coreutils golang pass pass-extensions $(PASS_HOME)/.browserpass.json vivaldi google-chrome firefox \
+	browserpass-bin browserpass-clean
 
 ########################################################################################################################
 #
@@ -1189,19 +1197,28 @@ PATCH += /etc/sysconfig/lm_sensors
 
 UPDATE += update-dnf
 update-dnf:
+	@echo -e "\n*******************************************************************************************************"
+	@echo -e "\nUpdating system package using 'dnf' ... \n"
 	@sudo dnf update --refresh
 
 UPDATE += update-check-rpmconf
 update-check-rpmconf: | rpmconf update-dnf
-	@sudo rpmconf -at > /dev/null || $(call log,$(WARN),"There are unmerged system configuration files. use 'make check-rpmconf' to review them")
+	@echo -e "\n*******************************************************************************************************"
+	@echo -e "\nChecking unmerged configuration files ...\n"
+	@sudo rpmconf -at > /dev/null || $(call log,$(WARN),"There are unmerged system configuration files. \
+														use 'make check-rpmconf' to review them\n")
 
 UPDATE += update-flatpak
 update-flatpak: | flatpak
+	@echo -e "\n*******************************************************************************************************"
+	@echo -e "\nUpdating 'flatpak' packages ...\n"
 	@flatpak update
 	@flatpak update --user
 
 UPDATE += update-firmware
 update-firmware: | fwupd
+	@echo -e "\n*******************************************************************************************************"
+	@echo -e "\nUpdating firmware ...\n"
 	@fwupdmgr get-updates --force
 	@fwupdmgr update
 
@@ -1235,7 +1252,7 @@ clean-flatpak: | flatpak
 
 CLEAN += clean-snap
 clean-snap: | snap
-	-@LANG=C snap list --all | awk '/disabled/{print $1" --revision "$3}' | xargs -rn3 sudo snap remove
+	-@LANG=C snap list --all | awk '/disabled/{print $$1" --revision "$$3}' | xargs -rn3 sudo snap remove
 
 ########################################################################################################################
 #
