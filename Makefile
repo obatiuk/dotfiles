@@ -13,6 +13,7 @@ COLOR_BLUE := \033[0;34m
 COLOR_YELLOW := \033[0;33m
 END_COLOR := \033[0m
 
+INFO := $(COLOR_GREEN)
 WARN := $(COLOR_YELLOW)
 ERR := $(COLOR_RED)
 
@@ -1198,27 +1199,27 @@ PATCH += /etc/sysconfig/lm_sensors
 UPDATE += update-dnf
 update-dnf:
 	@echo -e "\n*******************************************************************************************************"
-	@echo -e "\nUpdating system package using 'dnf' ... \n"
+	@$(call log,$(INFO),"\\nUpdating system packages using 'dnf' ... \\n")
 	@sudo dnf update --refresh
 
 UPDATE += update-check-rpmconf
 update-check-rpmconf: | rpmconf update-dnf
 	@echo -e "\n*******************************************************************************************************"
-	@echo -e "\nChecking unmerged configuration files ...\n"
-	@sudo rpmconf -at > /dev/null || $(call log,$(WARN),"There are unmerged system configuration files. \
-														use 'make check-rpmconf' to review them\n")
+	@$(call log,$(INFO),"\\nChecking for unmerged configuration files ...\\n")
+	@sudo rpmconf -at > /dev/null || $(call log,$(WARN),"Warning: There are unmerged system configuration files. \
+														use 'make check-rpmconf' to review them\\n")
 
 UPDATE += update-flatpak
 update-flatpak: | flatpak
 	@echo -e "\n*******************************************************************************************************"
-	@echo -e "\nUpdating 'flatpak' packages ...\n"
+	@$(call log,$(INFO),"\\nUpdating 'flatpak' packages ...\\n")
 	@flatpak update
 	@flatpak update --user
 
 UPDATE += update-firmware
 update-firmware: | fwupd
 	@echo -e "\n*******************************************************************************************************"
-	@echo -e "\nUpdating firmware ...\n"
+	@$(call log,$(INFO), "\\nUpdating firmware ...\\n")
 	@fwupdmgr get-updates --force
 	@fwupdmgr update
 
@@ -1274,11 +1275,11 @@ setup-auth-keys: pam-u2f pamu2fcfg authselect
 
 CHECK += check-security-updates
 check-security-updates:
-	@sudo dnf -q check-update --security || $(call log,$(WARN),'There are security updates available!');
+	@sudo dnf -q check-update --security || $(call log,$(WARN),'Warning: There are security updates available!');
 
 CHECK += check-dnf-autoremove
 check-dnf-autoremove:
-	@if [ $$(sudo dnf list -q --autoremove | wc -l) -ge 0 ]; then $(call log,$(WARN),'There are candidate rpm packages for autoremoval'); fi
+	@if [ $$(sudo dnf list -q --autoremove | wc -l) -ge 0 ]; then $(call log,$(WARN),'Warning: There are candidate rpm packages for autoremoval'); fi
 
 CHECK += check-rpmconf
 check-rpmconf: | rpmconf meld
