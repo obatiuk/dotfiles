@@ -1207,7 +1207,7 @@ update-check-rpmconf: | rpmconf update-dnf
 	@echo -e "\n*******************************************************************************************************"
 	@$(call log,$(INFO),"\\nChecking for unmerged configuration files ...\\n")
 	@sudo rpmconf -at > /dev/null || $(call log,$(WARN),"Warning: There are unmerged system configuration files. \
-														use 'make check-rpmconf' to review them\\n")
+		use 'make check-rpmconf' to review them\\n")
 
 UPDATE += update-flatpak
 update-flatpak: | flatpak
@@ -1335,9 +1335,9 @@ ecryptfs: ecryptfs-utils
 
 .PHONY: gnome-settings
 gnome-settings: gnome-key-binding-settings gnome-theme-settings gnome-wallpaper gnome-shell-extensions \
-				gnome-input-settings gnome-desktop-settings gnome-display-settings \
-				gnome-nautilus-settings gnome-file-chooser-settings gnome-gedit-settings gnome-screenshot-settings \
-				gnome-tracker-settings gnome-power-settings gnome-privacy-settings gnome-terminal-settings
+		gnome-input-settings gnome-desktop-settings gnome-display-settings \
+		gnome-nautilus-settings gnome-file-chooser-settings gnome-gedit-settings gnome-screenshot-settings \
+		gnome-tracker-settings gnome-power-settings gnome-privacy-settings gnome-terminal-settings
 
 .PHONY: diff
 diff: diffutils ydiff git-split-diffs
