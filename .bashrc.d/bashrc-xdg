@@ -34,3 +34,7 @@ export OPAMROOT="${XDG_DATA_HOME}/opam"
 export WGETRC="${XDG_CONFIG_HOME}/wget/wgetrc"
 
 export GTK2_RC_FILES="${XDG_CONFIG_HOME}/gtk-2.0/gtkrc"
+
+# Move `/go` from the $HOME folder
+export GOPATH="{$XDG_DATA_HOME}"/go
+export GOMODCACHE="${XDG_CACHE_HOME}"/go/mod
