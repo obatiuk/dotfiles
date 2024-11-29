@@ -35,6 +35,7 @@ uid := $(shell id -u)
 model := $(shell (if command -v hostnamectl > /dev/null 2>&1; \
 	then hostnamectl | grep 'Hardware Model:' | sed 's/^.*: //'; \
 	else sudo dmidecode -s system-product-name ; fi) | tr "[:upper:]" "[:lower:]")
+OS_RELEASE_EOL=$(shell grep -o 'SUPPORT_END=.*' /etc/os-release | sed 's/SUPPORT_END=//' )
 
 INCLUDE = ./include
 
@@ -1197,7 +1198,7 @@ PATCH += /etc/sysconfig/lm_sensors
 #
 
 UPDATE += update-dnf
-update-dnf:
+update-dnf: check-release-eol
 	@echo -e "\n*******************************************************************************************************"
 	@$(call log,$(INFO),"\\nUpdating system packages using 'dnf' ... \\n")
 	@sudo dnf update --refresh
@@ -1223,8 +1224,6 @@ update-firmware: | fwupd
 	@fwupdmgr get-updates --force
 	@fwupdmgr update
 
-# TODO: check `/etc/os-release` for the SUPPORT_END and display warning during update
-
 ########################################################################################################################
 #
 # Cleaning
@@ -1235,8 +1234,9 @@ clean-dnf:
 	@sudo dnf clean all
 
 CLEAN += clean-packages
-clean-package:
+clean-package: | dnf-plugins
 	@sudo dnf autoremove
+	@sudo remove-retired-packages
 
 CLEAN += clean-journal
 clean-journal: | systemd
@@ -1275,11 +1275,11 @@ setup-auth-keys: pam-u2f pamu2fcfg authselect
 
 CHECK += check-security-updates
 check-security-updates:
-	@sudo dnf -q check-update --security || $(call log,$(WARN),'Warning: There are security updates available!');
+	@sudo dnf -q check-update --security || $(call log,$(WARN),"Warning: There are security updates available!");
 
 CHECK += check-dnf-autoremove
 check-dnf-autoremove:
-	@if [ $$(sudo dnf list -q --autoremove | wc -l) -ge 0 ]; then $(call log,$(WARN),'Warning: There are candidate rpm packages for autoremoval'); fi
+	@if [ $$(sudo dnf list -q --autoremove | wc -l) -gt 0 ]; then $(call log,$(WARN),"Warning: There are candidate rpm packages for autoremoval"); fi
 
 CHECK += check-rpmconf
 check-rpmconf: | rpmconf meld
@@ -1295,11 +1295,19 @@ check-disk-space: | duf
 
 CHECK += check-ssh
 check-ssh: | ssh-audit
-	@ssh-audit localhost
+	-@ssh-audit localhost
 
 CHECK += check-cpu-vulnerabilities
 check-cpu-vulnerabilities:
 	@grep -r . /sys/devices/system/cpu/vulnerabilities/
+
+CHECK += check-release-eol
+check-release-eol: /etc/os-release
+	@[ "$(OS_RELEASE_EOL)" \< "$$(date +%Y-%m-%d)" ] \
+	 && $(call log,$(ERR),"\\n\\n\\nCritical: Current date $$(date +%Y-%m-%d) is AFTER the support end date: \
+	 $(OS_RELEASE_EOL). Update your OS ASAP!\\n\\n")
+
+#TODO: add rasdaemon checks
 
 ########################################################################################################################
 #
