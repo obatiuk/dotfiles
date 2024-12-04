@@ -3,6 +3,8 @@
 [core]
 	autocrlf = input
 	pager = git-split-diffs --color | less -RFX
+	fsmonitor = true
+	untrackedcache = true
 [push]
 	default = simple
 [credential]
