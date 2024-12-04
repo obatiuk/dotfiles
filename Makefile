@@ -958,11 +958,6 @@ $(XDG_CONFIG_HOME)/gtk-3.0/bookmarks: | gnome-desktop
 		file://$(HOME)/Private/Sync
 		file://$(HOME)/Projects
 		file://$(HOME)/Temp
-		file://$(HOME)/Documents
-		file://$(HOME)/Music
-		file://$(HOME)/Pictures
-		file://$(HOME)/Videos
-		file://$(HOME)/Downloads
 		file://$(HOME)/Documents/Private/Notes/Default/Files
 	EOF
 
