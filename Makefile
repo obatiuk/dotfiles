@@ -114,7 +114,7 @@ packages_rpm += iwl*-firmware fwupd bluez bash bash-completion avahi avahi-tools
 packages_rpm += hplip hplip-gui xsane ffmpeg feh nano htop btop fzf less xdg-utils httpie lynis cheat tldr
 packages_rpm += ImageMagick baobab gimp gparted gnome-terminal seahorse cups duf ssh-audit coreutils
 packages_rpm += libreoffice-core libreoffice-writer libreoffice-calc libreoffice-filters minder firefox
-packages_rpm += gnome-pomodoro gnome-clocks fd-find ydiff webp-pixbuf-loader
+packages_rpm += gnome-pomodoro gnome-clocks fd-find ydiff webp-pixbuf-loader usbguard
 packages_rpm += fastfetch bc usbutils pciutils acpi policycoreutils-devel pass-otp pass-audit
 packages_rpm += gnupg2 pinentry-gtk pinentry-tty pinentry-gnome3 gedit gedit-plugins gedit-plugin-editorconfig
 packages_rpm += gvfs-mtp screen tio dialog catimg cifs-utils sharutils binutils
@@ -694,6 +694,7 @@ gnome-privacy-settings: | gnome-desktop
 	@gsettings set org.gnome.desktop.privacy old-files-age 10
 	@gsettings set org.gnome.desktop.privacy remove-old-temp-files true
 	@gsettings set org.gnome.desktop.privacy remove-old-trash-files false
+	@gsettings set org.gnome.desktop.privacy usb-protection-level 'lockscreen'
 
 	@gsettings set org.gnome.desktop.notifications show-banners false
 	@gsettings set org.gnome.desktop.notifications show-in-lock-screen false
@@ -1165,6 +1166,12 @@ FILES += /usr/local/bin/pass-gen
 /usr/local/bin/pass-gen: | git pass .passgenrc
 	@$(call clone,pass-gen.git)
 	@cd $(HOME_OPT)/pass-gen.git && sudo make install
+
+FILES += /etc/usbguard/rules.conf
+/etc/usbguard/rules.conf: | usbguard
+	@sudo sh -c 'usbguard generate-policy > /etc/usbguard/rules.conf'
+	@sudo chmod 0600 /etc/usbguard/rules.conf
+	@sudo systemctl enable --now usbguard
 
 ########################################################################################################################
 #
