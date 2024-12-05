@@ -872,11 +872,6 @@ $(HOME)/.bash_logout: $(DOTFILES)/.bash_logout
 	@mkdir -pv $(@D)
 	@ln -svnf $< $@
 
-FILES += $(BASHRCD)/bashrc-nvm
-$(BASHRCD)/bashrc-nvm: $(DOTFILES)/.bashrc.d/bashrc-nvm | nvm
-	@mkdir -pv $(@D)
-	@ln -svnf $< $@
-
 FILES += $(BASHRCD)/bashrc-git
 $(BASHRCD)/bashrc-git: $(DOTFILES)/.bashrc.d/bashrc-git | git
 	@mkdir -pv $(@D)
