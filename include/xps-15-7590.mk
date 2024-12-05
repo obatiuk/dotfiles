@@ -1,10 +1,9 @@
 # DELL XPS 15 7590 model patches
 
-# TODO: add Nvidia drivers
 # TODO: add command-configure utility
 
 grubby:
-	@sudo dnf install grubby
+	@sudo dnf -y install grubby
 
 # Fix known suspend issues
 fix_dell_deep_sleep: grubby
@@ -14,6 +13,12 @@ fix_dell_deep_sleep: grubby
 fix_dell_camera:
 	@sudo dnf install v4l-utils
 	@v4l2-ctl -c saturation=42
+
+install_nvidia_drivers: | /etc/yum.repos.d/rpmfusion-nonfree.repo akmods grubby
+	@sudo dnf -y install akmod-nvidia xorg-x11-drv-nvidia-cuda vulkan nvidia-vaapi-driver libva-utils vdpauinfo
+	@sudo grubby --update-kernel=ALL --args='rd.driver.blacklist=nouveau modprobe.blacklist=nouveau'
+	@sudo akmods --force
+	@sudo dracut --force
 
 # Headphones are not automatically recognized by the system
 /etc/modprobe.d/dell.conf:
@@ -51,5 +56,5 @@ fix_dell_camera:
 	EOF
 
 PATCH += patch_dell_xps
-patch_dell_xps: | fix_dell_deep_sleep fix_dell_camera \
+patch_dell_xps: | fix_dell_deep_sleep fix_dell_camera install_nvidia_drivers \
 	/etc/modprobe.d/dell.conf /etc/modprobe.d/btusb.conf /etc/sysctl.d/97-swappiness.conf
