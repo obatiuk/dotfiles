@@ -109,10 +109,10 @@ endef
 #
 
 # All rpm packages that are not directly referenced
-packages_rpm := rpm dnf redhat-lsb rpmconf pwgen systemd pam-u2f pamu2fcfg xdg-user-dirs audit golang
+packages_rpm := rpm dnf redhat-lsb rpmconf pwgen systemd pam-u2f pamu2fcfg xdg-user-dirs audit golang akmods mokutil
 packages_rpm += iwl*-firmware fwupd bluez bash bash-completion avahi avahi-tools samba-client tree brightnessctl
 packages_rpm += hplip hplip-gui xsane ffmpeg feh nano htop btop fzf less xdg-utils httpie lynis cheat tldr
-packages_rpm += ImageMagick baobab gimp gparted gnome-terminal seahorse cups duf ssh-audit coreutils
+packages_rpm += ImageMagick baobab gimp gparted gnome-terminal seahorse cups duf ssh-audit coreutils openssl
 packages_rpm += libreoffice-core libreoffice-writer libreoffice-calc libreoffice-filters minder firefox
 packages_rpm += gnome-pomodoro gnome-clocks fd-find ydiff webp-pixbuf-loader usbguard
 packages_rpm += fastfetch bc usbutils pciutils acpi policycoreutils-devel pass-otp pass-audit
@@ -1173,6 +1173,10 @@ FILES += /etc/usbguard/rules.conf
 	@sudo chmod 0600 /etc/usbguard/rules.conf
 	@sudo systemctl enable --now usbguard
 
+FILES += /etc/pki/akmods/certs/public_key.der
+/etc/pki/akmods/certs/public_key.der: | akmods mokutil openssl
+	@sudo kmodgenca -a
+
 ########################################################################################################################
 #
 # Patches
@@ -1269,6 +1273,15 @@ setup-private-home: ecryptfs-utils authselect
 SETUP += setup-auth-keys
 setup-auth-keys: pam-u2f pamu2fcfg authselect
 	@# TODO: add implementation
+
+SETUP += setup-mok-keys
+setup-mok-keys: /etc/pki/akmods/certs/public_key.der
+	@if [[ "$$(sudo mokutil --test-key $< 2>&1)" =~ "is not enrolled" ]]; then \
+		sudo mokutil --import $<; \
+		sudo mokutil --list-new; \
+		sudo akmods --force; \
+		$(call log,$(WARN),"Warning: You must restart ASAP to run MOK manager"); \
+	fi
 
 ########################################################################################################################
 #
