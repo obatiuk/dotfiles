@@ -506,6 +506,13 @@ INSTALL += browserpass
 browserpass: | git coreutils golang pass pass-extensions $(PASS_HOME)/.browserpass.json vivaldi google-chrome firefox \
 	browserpass-bin browserpass-clean
 
+INSTALL += geoclue2
+geoclue2: | crudini
+	@$(call dnf, $@)
+	@sudo crudini --ini-options=nospace --set /etc/geoclue/geoclue.conf wifi enable true
+	@sudo crudini --ini-options=nospace --set /etc/geoclue/geoclue.conf wifi url 'https://beacondb.net/v1/geolocate'
+	@sudo systemctl restart geoclue
+
 ########################################################################################################################
 #
 # GNOME settings
@@ -1362,6 +1369,9 @@ diff: diffutils ydiff git-split-diffs
 
 .PHONY: intellij
 intellij: | intellij-idea-community $(ext_intellij)
+
+.PHONY: geoclue
+geoclue: geoclue2
 
 ########################################################################################################################
 #
