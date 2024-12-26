@@ -414,6 +414,7 @@ power-profiles-daemon:
 INSTALL += pass
 pass: | git
 	@$(call dnf,$@)
+	@mkdir -pv "$(HOME)/.password-store"
 
 INSTALL += pass-extensions
 pass-extensions: | pass pass-otp pass-audit $(ext_pass_dest_files)
@@ -512,6 +513,13 @@ geoclue2: | crudini
 	@sudo crudini --ini-options=nospace --set /etc/geoclue/geoclue.conf wifi enable true
 	@sudo crudini --ini-options=nospace --set /etc/geoclue/geoclue.conf wifi url 'https://beacondb.net/v1/geolocate'
 	@sudo systemctl restart geoclue
+
+INSTALL += proton-mail-bridge
+proton-mail-bridge: | pass
+	@sudo dnf -y install https://proton.me/download/bridge/protonmail-bridge-3.13.0-1.x86_64.rpm
+	@if ! grep -q "protonmail-credentials" "$(HOME)/.password-store/.gitignore"; then \
+		echo "protonmail-credentials" >> "$(HOME)/.password-store/.gitignore"; \
+		echo "docker-credential-helpers" >> "$(HOME)/.password-store/.gitignore"; fi
 
 ########################################################################################################################
 #
