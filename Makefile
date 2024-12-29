@@ -548,6 +548,7 @@ gnome-key-binding-settings: | gnome-desktop $(HOME_BIN)/dell-kvm-switch-input ul
 
 	@gsettings set org.gnome.settings-daemon.plugins.media-keys home "['<Super>h']"
 	@gsettings set org.gnome.settings-daemon.plugins.media-keys screensaver "['<Super>l']"
+	@gsettings set org.gnome.settings-daemon.plugins.media-keys control-center "['<Super>s']"
 
 	# Possible fix for a sporadic flight-mode toggle
 	@gsettings set org.gnome.settings-daemon.plugins.media-keys rfkill []
