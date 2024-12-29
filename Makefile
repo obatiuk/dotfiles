@@ -1332,6 +1332,10 @@ check-release-eol: /etc/os-release
 	 && $(call log,$(ERR),"\\n\\n\\nCritical: Current date $$(date +%Y-%m-%d) is AFTER the support end date: \
 	 $(OS_RELEASE_EOL). Update your OS ASAP!\\n\\n")
 
+CHECK += check-fwupd-security
+check-fwupd-security: | fwupd
+	@sudo fwupdmgr security
+
 #TODO: add rasdaemon checks
 
 ########################################################################################################################
