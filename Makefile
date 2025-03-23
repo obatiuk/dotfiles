@@ -128,7 +128,7 @@ packages_rpm += python3 python3-pip python3-devel python3-virtualenv
 
 # DNF plugins
 plugins_dnf := dnf-plugins-core dnf-plugin-diff python3-dnf-plugin-tracer dnf-plugin-system-upgrade
-plugins_dnf += remove-retired-packages
+plugins_dnf += remove-retired-packages dracut-config-rescue
 
 # All `snap` packages that are not directly referenced
 packages_snap := chromium-ffmpeg brave intellij-idea-community
