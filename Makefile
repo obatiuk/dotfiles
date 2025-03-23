@@ -746,7 +746,7 @@ gnome-clocks-settings: | gnome-clocks dconf
 
 ########################################################################################################################
 #
-# Balk installation rules
+# Bulk installation rules
 #
 
 INSTALL += $(plugins_dnf)
