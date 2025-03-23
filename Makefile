@@ -923,6 +923,11 @@ $(BASHRCD)/bashrc-pass: $(DOTFILES)/.bashrc.d/bashrc-pass | pass pass-extensions
 	@mkdir -pv $(@D)
 	@ln -svnf $< $@
 
+FILES += $(BASHRCD)/bashrc-steam
+$(BASHRCD)/bashrc-steam: $(DOTFILES)/.bashrc.d/bashrc-steam
+	@mkdir -pv $(@D)
+	@ln -svnf $< $@
+
 FILES += $(HOME)/.face.icon
 $(HOME)/.face.icon: $(DOTFILES)/.face.icon
 	@ln -svnf $< $@
