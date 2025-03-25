@@ -1339,7 +1339,7 @@ check-cpu-vulnerabilities:
 
 CHECK += check-release-eol
 check-release-eol: /etc/os-release
-	-@[ "$(OS_RELEASE_EOL)" \> "$$(date +%Y-%m-%d)" ] \
+	-@[ "$(OS_RELEASE_EOL)" \< "$$(date +%Y-%m-%d)" ] \
 	 && $(call log,$(ERR),"\\n\\n\\nCritical: Current date $$(date +%Y-%m-%d) is AFTER the support end date: \
 	 $(OS_RELEASE_EOL). Update your OS ASAP\x21\\n\\n")
 
