@@ -100,7 +100,7 @@ define clone
 endef
 
 define log
-	echo -e "$(1)$(2)$(END_COLOR)"
+	echo -e "$(subst ",,$(1))$(subst ",,$(2))$(END_COLOR)"
 endef
 
 ########################################################################################################################
@@ -128,7 +128,7 @@ packages_rpm += python3 python3-pip python3-devel python3-virtualenv
 
 # DNF plugins
 plugins_dnf := dnf-plugins-core dnf-plugin-diff python3-dnf-plugin-tracer dnf-plugin-system-upgrade
-plugins_dnf += remove-retired-packages dracut-config-rescue
+plugins_dnf += remove-retired-packages dracut-config-rescue clean-rpm-gpg-pubkey
 
 # All `snap` packages that are not directly referenced
 packages_snap := chromium-ffmpeg brave intellij-idea-community
@@ -290,7 +290,7 @@ gnome-desktop:
 	@# Force group installation if -B flag is present
 	@$(if $(findstring B,$(firstword -$(MAKEFLAGS))), \
 		@sudo dnf -y group install $@, \
-		@sudo dnf group list installed -v | grep $@ > /dev/null || dnf -y group install $@)
+		@sudo dnf group list --installed --hidden | grep $@ > /dev/null || sudo dnf -y group install $@)
 
 INSTALL += google-chrome
 google-chrome: | gnome-desktop /etc/yum.repos.d/google-chrome.repo
@@ -1339,9 +1339,9 @@ check-cpu-vulnerabilities:
 
 CHECK += check-release-eol
 check-release-eol: /etc/os-release
-	@[ "$(OS_RELEASE_EOL)" \< "$$(date +%Y-%m-%d)" ] \
+	-@[ "$(OS_RELEASE_EOL)" \> "$$(date +%Y-%m-%d)" ] \
 	 && $(call log,$(ERR),"\\n\\n\\nCritical: Current date $$(date +%Y-%m-%d) is AFTER the support end date: \
-	 $(OS_RELEASE_EOL). Update your OS ASAP!\\n\\n")
+	 $(OS_RELEASE_EOL). Update your OS ASAP\x21\\n\\n")
 
 CHECK += check-fwupd-security
 check-fwupd-security: | fwupd
