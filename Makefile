@@ -128,7 +128,8 @@ packages_rpm += python3 python3-pip python3-devel python3-virtualenv
 
 # DNF plugins
 plugins_dnf := dnf-plugins-core dnf-plugin-diff python3-dnf-plugin-tracer dnf-plugin-system-upgrade
-plugins_dnf += remove-retired-packages dracut-config-rescue clean-rpm-gpg-pubkey
+plugins_dnf += remove-retired-packages dracut-config-rescue clean-rpm-gpg-pubkey python3-dnf-plugin-show-leaves
+plugins_dnf += python3-dnf-plugin-rpmconf
 
 # All `snap` packages that are not directly referenced
 packages_snap := chromium-ffmpeg brave intellij-idea-community
@@ -205,16 +206,16 @@ ecryptfs-utils:
 	@sudo modprobe ecryptfs
 	@sudo usermod -aG ecryptfs '$(USER)'
 
-INSTALL += fonts_better
-fonts_better: /etc/yum.repos.d/_copr\:copr.fedorainfracloud.org\:chriscowleyunix\:better_fonts.repo
+INSTALL += fonts-better
+fonts-better: /etc/yum.repos.d/_copr\:copr.fedorainfracloud.org\:gombosg\:better_fonts.repo
 	@$(call dnf,fontconfig-enhanced-defaults fontconfig-font-replacements)
 
 INSTALL += fonts_ms
-fonts_ms:
+fonts-ms:
 	@$(call dnf,http://sourceforge.net/projects/mscorefonts2/files/rpms/msttcore-fonts-installer-2.6-1.noarch.rpm)
 
 INSTALL += fonts
-fonts: $(packages_fonts) fonts_better fonts_ms
+fonts: $(packages_fonts) fonts-better fonts-ms
 
 INSTALL += flatpak
 flatpak: gnome-desktop
@@ -810,9 +811,11 @@ FILES += /snap
 /snap: /var/lib/snapd/snap | snapd
 	@sudo ln -svnf $< $@
 
-FILES += /etc/yum.repos.d/_copr\:copr.fedorainfracloud.org\:chriscowleyunix\:better_fonts.repo
-/etc/yum.repos.d/_copr\:copr.fedorainfracloud.org\:chriscowleyunix\:better_fonts.repo:
-	@sudo dnf copr enable -y chriscowleyunix/better_fonts
+FILES += /etc/yum.repos.d/_copr\:copr.fedorainfracloud.org\:gombosg\:better_fonts.repo
+/etc/yum.repos.d/_copr\:copr.fedorainfracloud.org\:gombosg\:better_fonts.repo:
+	@sudo dnf copr enable gombosg/better_fonts
+	# Delete previously used copr repository (if available)
+	-@sudo rm -fv /etc/yum.repos.d/_copr\:copr.fedorainfracloud.org\:chriscowleyunix\:better_fonts.repo
 
 FILES += /etc/yum.repos.d/docker-ce.repo
 /etc/yum.repos.d/docker-ce.repo: | dnf-plugins
