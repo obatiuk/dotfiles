@@ -114,7 +114,7 @@ packages_rpm += iwl*-firmware fwupd bluez bash bash-completion avahi avahi-tools
 packages_rpm += hplip hplip-gui xsane ffmpeg feh nano htop btop fzf less xdg-utils httpie lynis cheat tldr
 packages_rpm += ImageMagick baobab gimp gparted gnome-terminal seahorse cups duf ssh-audit coreutils openssl
 packages_rpm += libreoffice-core libreoffice-writer libreoffice-calc libreoffice-filters minder firefox
-packages_rpm += gnome-pomodoro gnome-clocks fd-find ydiff webp-pixbuf-loader usbguard
+packages_rpm += gnome-pomodoro gnome-clocks fd-find ydiff webp-pixbuf-loader usbguard tuned
 packages_rpm += fastfetch bc usbutils pciutils acpi policycoreutils-devel pass-otp pass-audit
 packages_rpm += gnupg2 pinentry-gtk pinentry-tty pinentry-gnome3 gedit gedit-plugins gedit-plugin-editorconfig
 packages_rpm += gvfs-mtp screen tio dialog catimg cifs-utils sharutils binutils
@@ -132,7 +132,7 @@ plugins_dnf += remove-retired-packages dracut-config-rescue clean-rpm-gpg-pubkey
 plugins_dnf += python3-dnf-plugin-rpmconf
 
 # All `snap` packages that are not directly referenced
-packages_snap := chromium-ffmpeg brave intellij-idea-community
+packages_snap := chromium-ffmpeg brave intellij-idea-community slack
 
 # All **user** `flatpak` packages that are not directly referenced
 packages_flatpak := com.vscodium.codium org.gnupg.GPA org.gtk.Gtk3theme.Arc-Darker eu.betterbird.Betterbird
@@ -280,11 +280,12 @@ ql700: | cups
 	@sudo setsebool -P cups_execmem 1
 	@sudo setsebool mmap_low_allowed 1
 
-INSTALL += codecs
-codecs: | /etc/yum.repos.d/rpmfusion-free.repo /etc/yum.repos.d/rpmfusion-nonfree.repo /etc/yum.repos.d/fedora-cisco-openh264.repo
+INSTALL += video-codecs
+video-codecs: | /etc/yum.repos.d/rpmfusion-free.repo /etc/yum.repos.d/rpmfusion-nonfree.repo /etc/yum.repos.d/fedora-cisco-openh264.repo
 	@sudo dnf -y --setopt=strict=0 install \
 		gstreamer{1,}-{ffmpeg,libav,vaapi,plugins-{good,ugly,bad{,-free,-nonfree,-freeworld,-extras}}}
 	@sudo dnf -y install *openh264
+	@sudo dnf -y group install multimedia
 
 INSTALL += gnome-desktop
 gnome-desktop:
@@ -361,9 +362,9 @@ arc-theme-git-install:
 		gtk3-devel gtk4-devel autoconf automake)
 
 # Using SELF_CALL=xxx to avoid `inkscape` segfaults during build (https://gitlab.com/inkscape/inkscape/-/issues/4716)
-arc-them-git-build:
+arc-theme-git-build:
 	@mkdir -pv $(HOME_OPT)
-	@rebuild_theme=false
+	@rebuild_theme=true
 	@if [ ! -d $(HOME_OPT)/arc-theme ]; then
 		cd $(HOME_OPT) && git clone https://github.com/obatiuk/arc-theme --depth 1
 		cd $(HOME_OPT)/arc-theme && git pull
@@ -385,10 +386,10 @@ arc-them-git-build:
 	fi
 
 UPDATE += arc-theme-git-update
-arc-theme-git-update: | git arc-them-git-build
+arc-theme-git-update: | git arc-theme-git-build
 
-CLEAN += arch-theme-git-clean
-arch-theme-git-clean:
+CLEAN += arc-theme-git-clean
+arc-theme-git-clean:
 	@cd $(HOME_OPT)/arc-theme && meson compile --clean -C build
 
 else
@@ -407,10 +408,12 @@ plymouth:
 	@sudo plymouth-set-default-theme bgrt -R
 	@sudo grub2-mkconfig -o /etc/grub2.cfg
 
-INSTALL += power-profiles-daemon
-power-profiles-daemon:
+INSTALL += tuned-ppd
+tuned-ppd: | tuned
 	@$(call dnf,$@)
-	@sudo systemctl enable --now power-profiles-daemon
+	@sudo systemctl enable --now tuned
+	@sudo systemctl enable --now tuned-ppd
+	@sudo tuned-adm profile $(shell tuned-adm recommend)
 
 INSTALL += pass
 pass: | git
@@ -625,6 +628,7 @@ gnome-desktop-settings: | gnome-desktop fonts
 	@gsettings set org.gnome.desktop.interface clock-show-date true
 	@gsettings set org.gnome.desktop.interface clock-show-weekday true
 	@gsettings set org.gnome.desktop.interface text-scaling-factor '1.0'
+	@gsettings set org.gnome.desktop.interface toolkit-accessibility false
 	@gsettings set org.gnome.desktop.background show-desktop-icons false
 	@gsettings set org.gnome.desktop.datetime automatic-timezone true
 	@gsettings set org.gnome.desktop.screensaver lock-enabled true
@@ -1011,19 +1015,6 @@ $(STREAMDECK_CF_DEST)/%: $(STREAMDECK_CF_SRC)/%
 	@mkdir -pv $(@D)
 	@ln -svfn $< $@
 
-FILES += /etc/udev/rules.d/81-ppm.auto.rules
-/etc/udev/rules.d/81-ppm.auto.rules: | power-profiles-daemon
-	@sudo tee $@ <<- EOF
-		#
-		# Created by dotfiles setup script on $$(date -I) by ${USER}
-		#
-		# Custom udev rules to select power-profiles-daemon profile based on power status
-		#
-		ACTION=="change", SUBSYSTEM=="power_supply", ATTR{type}=="Mains", ATTR{online}=="1", RUN+="/usr/bin/powerprofilesctl set balanced"
-		ACTION=="change", SUBSYSTEM=="power_supply", ATTR{type}=="Mains", ATTR{online}=="0", RUN+="/usr/bin/powerprofilesctl set power-saver"
-	EOF
-	@sudo udevadm control --reload-rules && sudo udevadm trigger
-
 FILES += /etc/NetworkManager/conf.d/00-randomize-mac.conf
 /etc/NetworkManager/conf.d/00-randomize-mac.conf: | gnome-desktop
 	@sudo tee $@ <<- EOF
@@ -1096,8 +1087,6 @@ FILES += /etc/udev/rules.d/60-streamdeck.rules
 	@sudo tee $@ <<- EOF
 		#
 		# Created by dotfiles setup script on $$(date -I) by ${USER}
-		#
-		# Custom udev rules to select power-profiles-daemon profile based on power status
 		#
 		SUBSYSTEM=="usb", ATTRS{idVendor}=="0fd9", ATTRS{idProduct}=="0063", TAG+="uaccess"
 		KERNEL=="uinput", SUBSYSTEM=="misc", OPTIONS+="static_node=uinput", TAG+="uaccess", GROUP="input", MODE="0660"
