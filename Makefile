@@ -364,7 +364,7 @@ arc-theme-git-install:
 # Using SELF_CALL=xxx to avoid `inkscape` segfaults during build (https://gitlab.com/inkscape/inkscape/-/issues/4716)
 arc-theme-git-build:
 	@mkdir -pv $(HOME_OPT)
-	@rebuild_theme=true
+	@rebuild_theme=false
 	@if [ ! -d $(HOME_OPT)/arc-theme ]; then
 		cd $(HOME_OPT) && git clone https://github.com/obatiuk/arc-theme --depth 1
 		cd $(HOME_OPT)/arc-theme && git pull
