@@ -113,7 +113,7 @@ packages_rpm := rpm dnf redhat-lsb rpmconf pwgen systemd pam-u2f pamu2fcfg xdg-u
 packages_rpm += iwl*-firmware fwupd bluez bash bash-completion avahi avahi-tools samba-client tree brightnessctl
 packages_rpm += hplip hplip-gui xsane ffmpeg feh nano htop btop fzf less xdg-utils httpie lynis cheat tldr
 packages_rpm += ImageMagick baobab gimp gparted gnome-terminal seahorse cups duf ssh-audit coreutils openssl
-packages_rpm += libreoffice-core libreoffice-writer libreoffice-calc libreoffice-filters minder firefox
+packages_rpm += libreoffice-core libreoffice-writer libreoffice-calc libreoffice-filters minder firefox vlc
 packages_rpm += gnome-pomodoro gnome-clocks fd-find ydiff webp-pixbuf-loader usbguard tuned
 packages_rpm += fastfetch bc usbutils pciutils acpi policycoreutils-devel pass-otp pass-audit
 packages_rpm += gnupg2 pinentry-gtk pinentry-tty pinentry-gnome3 gedit gedit-plugins gedit-plugin-editorconfig
@@ -220,10 +220,12 @@ fonts: $(packages_fonts) fonts-better fonts-ms
 INSTALL += flatpak
 flatpak: gnome-desktop
 	@$(call dnf,$@)
-	@flatpak remotes | grep 'flathub' > /dev/null || flatpak remote-add --if-not-exists \
+	@sudo flatpak --system remotes | grep 'flathub' > /dev/null || sudo flatpak --system remote-add --if-not-exists \
 		flathub https://flathub.org/repo/flathub.flatpakrepo
 	@flatpak --user remotes | grep 'flathub' > /dev/null || flatpak --user remote-add --if-not-exists \
 		flathub https://flathub.org/repo/flathub.flatpakrepo
+	@sudo flatpak --system remote-modify --no-filter --enable flathub
+	@flatpak --user remote-modify --no-filter --enable flathub
 	@flatpak install --system org.gtk.Gtk3theme.Arc-Darker
 
 INSTALL += nvm
@@ -285,7 +287,8 @@ video-codecs: | /etc/yum.repos.d/rpmfusion-free.repo /etc/yum.repos.d/rpmfusion-
 	@sudo dnf -y --setopt=strict=0 install \
 		gstreamer{1,}-{ffmpeg,libav,vaapi,plugins-{good,ugly,bad{,-free,-nonfree,-freeworld,-extras}}}
 	@sudo dnf -y install *openh264
-	@sudo dnf -y group install multimedia
+	@sudo dnf -y swap ffmpeg-free ffmpeg
+	@sudo dnf -y install @multimedia --setopt="install_weak_deps=False" --exclude=PackageKit-gstreamer-plugin
 
 INSTALL += gnome-desktop
 gnome-desktop:
@@ -564,6 +567,7 @@ gnome-key-binding-settings: | gnome-desktop $(HOME_BIN)/dell-kvm-switch-input ul
 	@gsettings set org.gnome.settings-daemon.plugins.media-keys rfkill-bluetooth []
 	@gsettings set org.gnome.settings-daemon.plugins.media-keys rfkill-bluetooth-static []
 	@gsettings set org.gnome.settings-daemon.plugins.media-keys rfkill-static []
+	@systemctl --user mask --now org.gnome.SettingsDaemon.Rfkill.service
 
 INSTALL += gnome-theme-settings
 gnome-theme-settings: | gnome-themes arc-theme gnome-shell-extension-user-theme \
@@ -1190,6 +1194,11 @@ FILES += /etc/pki/akmods/certs/public_key.der
 /etc/pki/akmods/certs/public_key.der: | akmods mokutil openssl
 	@sudo kmodgenca -a
 
+FILES += $(XDG_DATA_HOME)/python/history
+$(XDG_DATA_HOME)/python/history: $(BASHRCD)/bashrc-xdg
+	@mkdir -pv $(@D)
+	@touch $@
+
 ########################################################################################################################
 #
 # Patches
@@ -1286,6 +1295,10 @@ setup-private-home: ecryptfs-utils authselect
 SETUP += setup-auth-keys
 setup-auth-keys: pam-u2f pamu2fcfg authselect
 	@# TODO: add implementation
+	# Fix for the journal warning:
+	# "Permissions 0664 for '/home/user/.config/Yubico/u2f_keys' are too open. Please change the file mode bits to
+	# 0644 or more restrictive. This may become an error in the future!"
+	@chmod 0644 $(HOME)/.config/Yubico/u2f_keys
 
 SETUP += setup-mok-keys
 setup-mok-keys: /etc/pki/akmods/certs/public_key.der
