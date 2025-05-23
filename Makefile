@@ -355,7 +355,7 @@ ifeq ($(ARC_THEME_SOURCE),git)
 # `arc-theme` package from the official repository doesn't have latest patches
 # Use patched Arc themes version from git: https://github.com/jnsh/arc-theme/blob/master/INSTALL.md
 INSTALL += arc-theme
-arc-theme: | gnome-desktop git arc-theme-git-install arc-them-git-build
+arc-theme: | gnome-desktop git arc-theme-git-install arc-theme-git-build
 
 arc-theme-git-install:
 	@sudo dnf -y remove arc-theme
