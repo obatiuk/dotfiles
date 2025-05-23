@@ -151,10 +151,10 @@ packages_gshell += gnome-shell-extension-no-overview
 
 ext_gshell := https\://extensions.gnome.org/extension/1401/bluetooth-quick-connect
 ext_gshell += https\://extensions.gnome.org/extension/3780/ddterm
-ext_gshell += https://extensions.gnome.org/extension/7065/tiling-shell
+ext_gshell += https\://extensions.gnome.org/extension/7065/tiling-shell
 ext_gshell += https\://extensions.gnome.org/extension/4470/media-controls
 ext_gshell += https\://extensions.gnome.org/extension/277/impatience
-ext_gshell += https://extensions.gnome.org/extension/4099/no-overview
+ext_gshell += https\://extensions.gnome.org/extension/4099/no-overview
 
 # VSCode extensions
 ext_vscode := EditorConfig.EditorConfig jianbingfang.dupchecker mechatroner.rainbow-csv bierner.markdown-mermaid
