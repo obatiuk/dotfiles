@@ -7,6 +7,10 @@ SHELL = /bin/bash
 MAKEFLAGS += --warn-undefined-variables
 MAKEFLAGS += --no-builtin-rules
 
+ifeq ($(shell id -u), 0)
+    $(error This Makefile MUST NOT be executed as root.)
+endif
+
 COLOR_GREEN := \033[0;32m
 COLOR_RED := \033[0;31m
 COLOR_BLUE := \033[0;34m
@@ -118,7 +122,7 @@ packages_rpm += fastfetch bc usbutils pciutils acpi policycoreutils-devel pass-o
 packages_rpm += gnupg2 pinentry-gtk pinentry-tty pinentry-gnome3 gedit gedit-plugins gedit-plugin-editorconfig
 packages_rpm += gvfs-mtp screen progress pv tio dialog catimg cifs-utils sharutils binutils
 packages_rpm += restic rsync rclone micro wget xsensors lm_sensors curl jq
-packages_rpm += unrar lynx crudini sysstat p7zip nmap cabextract iotop qrencode uuid
+packages_rpm += unrar lynx crudini sysstat p7zip nmap cabextract iotop qrencode uuid tcpdump
 packages_rpm += git diffutils git-lfs git-extras git-credential-libsecret git-crypt bat mc gh perl-Image-ExifTool
 packages_rpm += snapd calibre clamav clamav-freshclam
 packages_rpm += fedora-workstation-repositories
@@ -155,6 +159,7 @@ ext_gshell += https\://extensions.gnome.org/extension/7065/tiling-shell
 ext_gshell += https\://extensions.gnome.org/extension/4470/media-controls
 ext_gshell += https\://extensions.gnome.org/extension/277/impatience
 ext_gshell += https\://extensions.gnome.org/extension/4099/no-overview
+ext_gshell += https\://extensions.gnome.org/extension/517/caffeine
 
 # VSCode extensions
 ext_vscode := EditorConfig.EditorConfig jianbingfang.dupchecker mechatroner.rainbow-csv bierner.markdown-mermaid
@@ -615,7 +620,8 @@ gnome-input-settings: | gnome-desktop
 	@gsettings set org.gnome.desktop.input-sources xkb-options "['lv3:ralt_switch']"
 
 	@gsettings set org.gnome.desktop.peripherals.keyboard numlock-state false
-	@gsettings set org.gnome.desktop.peripherals.keyboard delay 180
+	@gsettings set org.gnome.desktop.peripherals.keyboard repeat true
+	@gsettings set org.gnome.desktop.peripherals.keyboard delay 250
 	@gsettings set org.gnome.desktop.peripherals.keyboard repeat-interval 15
 	@gsettings set org.gnome.desktop.peripherals.mouse speed -0.44
 
@@ -1219,6 +1225,18 @@ PATCH += /etc/sysconfig/lm_sensors
 /etc/sysconfig/lm_sensors: | lm_sensors
 	@sudo sensors-detect
 
+# Possible fix for mouse lagging (e.g. disable autosuspend for Dell Universal Receiver)
+PATCH += /etc/udev/rules.d/50-usb_power_save.rules
+/etc/udev/rules.d/50-usb_power_save.rules:
+	@sudo mkdir -pv $(@D)
+	@sudo tee $@ <<- EOF
+	#
+	# Created by dotfiles setup script on $$(date -I) by ${USER}
+	#
+	ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="413c", ATTR{idProduct}=="2514", TEST=="power/autosuspend", ATTR{power/autosuspend}="-1"
+	EOF
+	@sudo udevadm control --reload-rules && sudo udevadm trigger
+
 ########################################################################################################################
 #
 # Updates
@@ -1358,17 +1376,41 @@ check-fwupd-security: | fwupd
 # Backup rules
 #
 
-BACKUP += backup-home
-backup-home: pass restic fastfetch redhat-lsb diffutils
-	@cd $(HOME_BIN) && ./backup-home-restic
+BACKUP += backup-home-primary
+backup-home-primary: pass restic fastfetch redhat-lsb diffutils
+	@$(HOME_BIN)/backup-home-restic --env-file "$${HOME}/.home/.backup/.env.backup.primary"
 
-BACKUP += backup-system
-backup-system: pass restic fastfetch redhat-lsb diffutils
-	@cd $(HOME_BIN) && ./backup-system-restic
+BACKUP += backup-home-secondary
+backup-home-secondary: pass restic fastfetch redhat-lsb diffutils
+	@$(HOME_BIN)/backup-home-restic --env-file "$${HOME}/.home/.backup/.env.backup.secondary"
 
-BACKUP += backup-router
-backup-router: pass restic curl jq
-	@cd $(HOME_BIN) && ./backup-router-restic
+BACKUP += backup-home-cloud
+backup-home-cloud: pass restic fastfetch redhat-lsb diffutils
+	@$(HOME_BIN)/backup-home-restic --env-file "$${HOME}/.home/.backup/.env.backup.cloud"
+
+BACKUP += backup-router-primary
+backup-router-primary: pass restic curl jq
+	@$(HOME_BIN)/backup-router-restic --env-file "$${HOME}/.home/.backup/.env.backup.primary"
+
+BACKUP += backup-router-secondary
+backup-router-secondary: pass restic curl jq
+	@$(HOME_BIN)/backup-router-restic --env-file "$${HOME}/.home/.backup/.env.backup.secondary"
+
+BACKUP += backup-router-cloud
+backup-router-cloud: pass restic curl jq
+	@$(HOME_BIN)/backup-router-restic --env-file "$${HOME}/.home/.backup/.env.backup.cloud"
+
+BACKUP += backup-system-primary
+backup-system-primary: pass restic fastfetch redhat-lsb diffutils
+	@$(HOME_BIN)/backup-system-restic --env-file "$${HOME}/.home/.backup/.env.backup.primary"
+
+BACKUP += backup-system-secondary
+backup-system-secondary: pass restic fastfetch redhat-lsb diffutils
+	@$(HOME_BIN)/backup-system-restic --env-file "$${HOME}/.home/.backup/.env.backup.secondary"
+
+BACKUP += backup-system-cloud
+backup-system-cloud: pass restic fastfetch redhat-lsb diffutils
+	@$(HOME_BIN)/backup-system-restic --env-file "$${HOME}/.home/.backup/.env.backup.cloud"
 
 BACKUP += backup-pass
 backup-pass: git pass pass-extensions
@@ -1399,6 +1441,15 @@ intellij: | intellij-idea-community $(ext_intellij)
 
 .PHONY: geoclue
 geoclue: geoclue2
+
+.PHONY: backup-home
+backup-home: backup-home-primary backup-home-secondary backup-home-cloud
+
+.PHONY: backup-router
+backup-router: backup-router-primary backup-router-secondary backup-router-cloud
+
+.PHONY: backup-system
+backup-system: backup-system-primary backup-system-secondary backup-system-cloud
 
 ########################################################################################################################
 #
