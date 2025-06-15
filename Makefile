@@ -1,11 +1,14 @@
 #!/usr/bin/env make -f
 .ONESHELL:
 .DEFAULT_GOAL := help
+.DELETE_ON_ERROR:
+.SUFFIXES:
 
 SHELL = /bin/bash
-# .SHELLFLAGS := -eu -o pipefail -c # Useful debug options
-MAKEFLAGS += --warn-undefined-variables
-MAKEFLAGS += --no-builtin-rules
+MAKEFLAGS += --no-builtin-rules --no-builtin-variables --warn-undefined-variables
+
+# Useful debug options
+# .SHELLFLAGS := -eu -o pipefail -c
 
 ifeq ($(shell id -u), 0)
     $(error This Makefile MUST NOT be executed as root.)
