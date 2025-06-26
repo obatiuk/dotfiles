@@ -41,7 +41,7 @@ now := $(shell date +%Y-%m-%d_%H:%M:%S)
 uid := $(shell id -u)
 model := $(shell (if command -v hostnamectl > /dev/null 2>&1; \
 	then hostnamectl | grep 'Hardware Model:' | sed 's/^.*: //'; \
-	else sudo dmidecode -s system-product-name ; fi) | tr "[:upper:]" "[:lower:]")
+	else sudo dmidecode -s system-product-name ; fi) | tr "[:upper:]" "[:lower:]" | sed 's/ /-/g')
 OS_RELEASE_EOL=$(shell grep -o 'SUPPORT_END=.*' /etc/os-release | sed 's/SUPPORT_END=//' )
 
 NVM_PATH = $(NVM_DIR)
@@ -56,6 +56,7 @@ HOME_OPT := $(abspath $(DOTHOME)/opt)
 PASS_HOME := $(abspath $(HOME)/.password-store)
 PASS_EXT := $(abspath $(PASS_HOME)/.extensions)
 INCLUDE = ./include
+DEVICE = ./device
 
 VIVALDI_CF_SRC := $(DOTFILES)/.config/vivaldi/CustomUIModifications
 VIVALDI_CF_DEST := $(XDG_CONFIG_HOME)/vivaldi/CustomUIModifications
@@ -73,13 +74,15 @@ BACKUP =
 
 ARC_THEME_SOURCE ?= git
 
+EDITOR_BIN := /usr/bin/editor
+
 ########################################################################################################################
 #
 # Includes
 #
 
 # Include model-specific patches
--include $(INCLUDE)/$(subst $(space),$(dash),$(model)).mk
+-include $(DEVICE)/$(model)/$(model).mk
 
 ########################################################################################################################
 #
@@ -191,6 +194,8 @@ STREAMDECK_CONF_DEST_FILES := $(addprefix $(HOME)/, $(STREAMDECK_CONF_FILES))
 
 EXT_PASS := symlink.bash age.bash ln.bash file.bash update.bash tessen.bash meta.bash
 EXT_PASS_DEST_FILES := $(addprefix $(PASS_EXT)/,$(EXT_PASS))
+
+EDITORS := /usr/bin/vi /usr/bin/nano /usr/bin/micro
 
 ########################################################################################################################
 #
@@ -534,6 +539,11 @@ proton-mail-bridge: | pass
 	@if ! grep -q "protonmail-credentials" "$(HOME)/.password-store/.gitignore"; then \
 		echo "protonmail-credentials" >> "$(HOME)/.password-store/.gitignore"; \
 		echo "docker-credential-helpers" >> "$(HOME)/.password-store/.gitignore"; fi
+
+INSTALL += editor-alternatives
+editor-alternatives: micro
+	@$(foreach EDITOR, $(EDITORS), sudo alternatives --install '$(EDITOR_BIN)' editor '$(EDITOR)' 0;)
+	@sudo alternatives --set editor '/usr/bin/micro'
 
 ########################################################################################################################
 #

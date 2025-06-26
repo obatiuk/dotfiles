@@ -7,7 +7,7 @@ grubby:
 
 # Fix known suspend issues
 fix_dell_deep_sleep: grubby
-	@sudo grubby --args="mem_sleep_default=deep" --update-kernel=ALL
+	@sudo grubby --args='mem_sleep_default=deep' --update-kernel=ALL
 
 # Remove redness from video stream
 fix_dell_camera:
