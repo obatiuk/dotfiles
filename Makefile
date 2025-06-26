@@ -115,82 +115,82 @@ endef
 #
 
 # All rpm packages that are not directly referenced
-packages_rpm := rpm dnf redhat-lsb rpmconf pwgen systemd pam-u2f pamu2fcfg xdg-user-dirs audit golang akmods mokutil
-packages_rpm += iwl*-firmware fwupd bluez bash bash-completion avahi avahi-tools samba-client tree brightnessctl
-packages_rpm += hplip hplip-gui xsane ffmpeg feh nano htop btop fzf less xdg-utils httpie lynis cheat tldr
-packages_rpm += ImageMagick baobab gimp gparted gnome-terminal seahorse cups duf ssh-audit coreutils openssl
-packages_rpm += libreoffice-core libreoffice-writer libreoffice-calc libreoffice-filters minder firefox vlc
-packages_rpm += gnome-pomodoro gnome-clocks fd-find ydiff webp-pixbuf-loader usbguard tuned
-packages_rpm += fastfetch bc usbutils pciutils acpi policycoreutils-devel pass-otp pass-audit
-packages_rpm += gnupg2 pinentry-gtk pinentry-tty pinentry-gnome3 gedit gedit-plugins gedit-plugin-editorconfig
-packages_rpm += gvfs-mtp screen progress pv tio dialog catimg cifs-utils sharutils binutils
-packages_rpm += restic rsync rclone micro wget xsensors lm_sensors curl jq
-packages_rpm += unrar lynx crudini sysstat p7zip nmap cabextract iotop qrencode uuid tcpdump
-packages_rpm += git diffutils git-lfs git-extras git-credential-libsecret git-crypt bat mc gh perl-Image-ExifTool
-packages_rpm += snapd calibre clamav clamav-freshclam
-packages_rpm += fedora-workstation-repositories
-packages_rpm += adwaita-icon-theme adwaita-cursor-theme dconf
-packages_rpm += python3 python3-pip python3-devel python3-virtualenv
+PACKAGES_RPM := rpm dnf redhat-lsb rpmconf pwgen systemd pam-u2f pamu2fcfg xdg-user-dirs audit golang akmods mokutil
+PACKAGES_RPM += iwl*-firmware fwupd bluez bash bash-completion avahi avahi-tools samba-client tree brightnessctl
+PACKAGES_RPM += hplip hplip-gui xsane ffmpeg feh nano htop btop fzf less xdg-utils httpie lynis cheat tldr
+PACKAGES_RPM += ImageMagick baobab gimp gparted gnome-terminal seahorse cups duf ssh-audit coreutils openssl
+PACKAGES_RPM += libreoffice-core libreoffice-writer libreoffice-calc libreoffice-filters minder firefox vlc
+PACKAGES_RPM += gnome-pomodoro gnome-clocks fd-find ydiff webp-pixbuf-loader usbguard tuned
+PACKAGES_RPM += fastfetch bc usbutils pciutils acpi policycoreutils-devel pass-otp pass-audit
+PACKAGES_RPM += gnupg2 pinentry-gtk pinentry-tty pinentry-gnome3 gedit gedit-plugins gedit-plugin-editorconfig
+PACKAGES_RPM += gvfs-mtp screen progress pv tio dialog catimg cifs-utils sharutils binutils
+PACKAGES_RPM += restic rsync rclone micro wget xsensors lm_sensors curl jq
+PACKAGES_RPM += unrar lynx crudini sysstat p7zip nmap cabextract iotop qrencode uuid tcpdump
+PACKAGES_RPM += git diffutils git-lfs git-extras git-credential-libsecret git-crypt bat mc gh perl-Image-ExifTool
+PACKAGES_RPM += snapd calibre clamav clamav-freshclam mdns-scan
+PACKAGES_RPM += fedora-workstation-repositories
+PACKAGES_RPM += adwaita-icon-theme adwaita-cursor-theme dconf
+PACKAGES_RPM += python3 python3-pip python3-devel python3-virtualenv
 
 # DNF plugins
-plugins_dnf := dnf-plugins-core dnf-plugin-diff python3-dnf-plugin-tracer dnf-plugin-system-upgrade
-plugins_dnf += remove-retired-packages dracut-config-rescue clean-rpm-gpg-pubkey python3-dnf-plugin-show-leaves
-plugins_dnf += python3-dnf-plugin-rpmconf
+PLUGINS_DNF := dnf-plugins-core dnf-plugin-diff python3-dnf-plugin-tracer dnf-plugin-system-upgrade
+PLUGINS_DNF += remove-retired-packages dracut-config-rescue clean-rpm-gpg-pubkey python3-dnf-plugin-show-leaves
+PLUGINS_DNF += python3-dnf-plugin-rpmconf needs-restarting
 
 # All `snap` packages that are not directly referenced
-packages_snap := chromium-ffmpeg brave intellij-idea-community slack
+PACKAGES_SNAP := chromium-ffmpeg brave intellij-idea-community slack
 
 # All **user** `flatpak` packages that are not directly referenced
-packages_flatpak := com.vscodium.codium org.gnupg.GPA org.gtk.Gtk3theme.Arc-Darker eu.betterbird.Betterbird
+PACKAGES_FLATPAK := com.vscodium.codium org.gnupg.GPA org.gtk.Gtk3theme.Arc-Darker eu.betterbird.Betterbird
 
 # Font packages
-packages_fonts := google-droid-sans-fonts google-droid-serif-fonts google-droid-sans-mono-fonts
-packages_fonts += google-roboto-fonts adobe-source-code-pro-fonts dejavu-sans-fonts dejavu-sans-mono-fonts
-packages_fonts += dejavu-serif-fonts liberation-fonts-common liberation-mono-fonts liberation-narrow-fonts
-packages_fonts += liberation-sans-fonts liberation-serif-fonts jetbrains-mono-fonts-all fontawesome4-fonts
+PACKAGES_FONTS := google-droid-sans-fonts google-droid-serif-fonts google-droid-sans-mono-fonts
+PACKAGES_FONTS += google-roboto-fonts adobe-source-code-pro-fonts dejavu-sans-fonts dejavu-sans-mono-fonts
+PACKAGES_FONTS += dejavu-serif-fonts liberation-fonts-common liberation-mono-fonts liberation-narrow-fonts
+PACKAGES_FONTS += liberation-sans-fonts liberation-serif-fonts jetbrains-mono-fonts-all fontawesome4-fonts
 
 # GNOME Shell extensions
-packages_gshell := gnome-shell-extension-dash-to-dock gnome-shell-extension-appindicator
-packages_gshell += gnome-shell-extension-frippery-move-clock gnome-shell-extension-gsconnect
-packages_gshell += gnome-shell-extension-sound-output-device-chooser gnome-shell-extension-freon
-packages_gshell += gnome-shell-extension-blur-my-shell gnome-shell-extension-user-theme
-packages_gshell += gnome-shell-extension-no-overview
+PACKAGES_GSHELL := gnome-shell-extension-dash-to-dock gnome-shell-extension-appindicator
+PACKAGES_GSHELL += gnome-shell-extension-frippery-move-clock gnome-shell-extension-gsconnect
+PACKAGES_GSHELL += gnome-shell-extension-sound-output-device-chooser gnome-shell-extension-freon
+PACKAGES_GSHELL += gnome-shell-extension-blur-my-shell gnome-shell-extension-user-theme
+PACKAGES_GSHELL += gnome-shell-extension-no-overview
 
-ext_gshell := https\://extensions.gnome.org/extension/1401/bluetooth-quick-connect
-ext_gshell += https\://extensions.gnome.org/extension/3780/ddterm
-ext_gshell += https\://extensions.gnome.org/extension/7065/tiling-shell
-ext_gshell += https\://extensions.gnome.org/extension/4470/media-controls
-ext_gshell += https\://extensions.gnome.org/extension/277/impatience
-ext_gshell += https\://extensions.gnome.org/extension/4099/no-overview
-ext_gshell += https\://extensions.gnome.org/extension/517/caffeine
+EXT_GSHELL := https\://extensions.gnome.org/extension/1401/bluetooth-quick-connect
+EXT_GSHELL += https\://extensions.gnome.org/extension/3780/ddterm
+EXT_GSHELL += https\://extensions.gnome.org/extension/7065/tiling-shell
+EXT_GSHELL += https\://extensions.gnome.org/extension/4470/media-controls
+EXT_GSHELL += https\://extensions.gnome.org/extension/277/impatience
+EXT_GSHELL += https\://extensions.gnome.org/extension/4099/no-overview
+EXT_GSHELL += https\://extensions.gnome.org/extension/517/caffeine
 
 # VSCode extensions
-ext_vscode := EditorConfig.EditorConfig jianbingfang.dupchecker mechatroner.rainbow-csv bierner.markdown-mermaid
-ext_vscode += bpruitt-goddard.mermaid-markdown-syntax-highlighting eamodio.gitlens ecmel.vscode-html-css
-ext_vscode += humao.rest-client jebbs.plantuml moshfeu.compare-folders ms-azuretools.vscode-docker ph-hawkins.arc-plus
-ext_vscode += PKief.material-icon-theme redhat.java redhat.vscode-xml redhat.vscode-yaml
-ext_vscode += streetsidesoftware.code-spell-checker timonwong.shellcheck usernamehw.errorlens vscjava.vscode-maven
-ext_vscode += yzhang.markdown-all-in-one
+EXT_VSCODE := EditorConfig.EditorConfig jianbingfang.dupchecker mechatroner.rainbow-csv bierner.markdown-mermaid
+EXT_VSCODE += bpruitt-goddard.mermaid-markdown-syntax-highlighting eamodio.gitlens ecmel.vscode-html-css
+EXT_VSCODE += humao.rest-client jebbs.plantuml moshfeu.compare-folders ms-azuretools.vscode-docker ph-hawkins.arc-plus
+EXT_VSCODE += PKief.material-icon-theme redhat.java redhat.vscode-xml redhat.vscode-yaml
+EXT_VSCODE += streetsidesoftware.code-spell-checker timonwong.shellcheck usernamehw.errorlens vscjava.vscode-maven
+EXT_VSCODE += yzhang.markdown-all-in-one
 
 # Ulauncher extensions
-ext_ulauncher += ulauncher-emoji.git pass-ulauncher.git pass-for-ulauncher.git pass-otp-for-ulauncher.git
-ext_ulauncher += ulauncher-obsidian.git ulauncher-numconverter.git ulauncher-list-keywords.git
+EXT_ULAUNCHER := ulauncher-emoji.git pass-ulauncher.git pass-for-ulauncher.git pass-otp-for-ulauncher.git
+EXT_ULAUNCHER += ulauncher-obsidian.git ulauncher-numconverter.git ulauncher-list-keywords.git
 
 # IntelliJ extensions
-ext_intellij := ru.adelf.idea.dotenv lermitage.intellij.battery.status Docker name.kropp.intellij.makefile
-ext_intellij += com.jetbrains.packagesearch.intellij-plugin com.jetbrains.plugins.ini4idea
+EXT_INTELLIJ := ru.adelf.idea.dotenv lermitage.intellij.battery.status Docker name.kropp.intellij.makefile
+EXT_INTELLIJ += com.jetbrains.packagesearch.intellij-plugin com.jetbrains.plugins.ini4idea
 
 # micro extensions
-ext_micro += $(addprefix micro_,editorconfig fzf filemanager)
+EXT_MICRO += $(addprefix micro_,editorconfig fzf filemanager)
 
-vivaldi_conf_files := $(shell find .config/vivaldi/CustomUIModifications -type f -name '*.*')
-vivaldi_conf_dest_files := $(addprefix $(HOME)/, $(vivaldi_conf_files))
+VIVALDI_CONF_FILES := $(shell find .config/vivaldi/CustomUIModifications -type f -name '*.*')
+VIVALDI_CONF_DEST_FILES := $(addprefix $(HOME)/, $(VIVALDI_CONF_FILES))
 
-streamdeck_conf_files := $(shell find .config/streamdeck-ui -type f -name '*.*')
-streamdeck_conf_dest_files := $(addprefix $(HOME)/, $(streamdeck_conf_files))
+STREAMDECK_CONF_FILES := $(shell find .config/streamdeck-ui -type f -name '*.*')
+STREAMDECK_CONF_DEST_FILES := $(addprefix $(HOME)/, $(STREAMDECK_CONF_FILES))
 
-ext_pass_dest_files = $(addprefix $(PASS_EXT)/,symlink.bash age.bash ln.bash file.bash update.bash tessen.bash \
-	meta.bash)
+EXT_PASS := symlink.bash age.bash ln.bash file.bash update.bash tessen.bash meta.bash
+EXT_PASS_DEST_FILES := $(addprefix $(PASS_EXT)/,$(EXT_PASS))
 
 ########################################################################################################################
 #
@@ -198,7 +198,7 @@ ext_pass_dest_files = $(addprefix $(PASS_EXT)/,symlink.bash age.bash ln.bash fil
 #
 
 INSTALL += dnf-plugins
-dnf-plugins: $(plugins_dnf)
+dnf-plugins: $(PLUGINS_DNF)
 
 INSTALL += dnf-settings
 dnf-settings: | crudini
@@ -222,7 +222,7 @@ fonts-ms:
 	@$(call dnf,http://sourceforge.net/projects/mscorefonts2/files/rpms/msttcore-fonts-installer-2.6-1.noarch.rpm)
 
 INSTALL += fonts
-fonts: $(packages_fonts) fonts-better fonts-ms
+fonts: $(PACKAGES_FONTS) fonts-better fonts-ms
 
 INSTALL += flatpak
 flatpak: gnome-desktop
@@ -313,7 +313,7 @@ vivaldi-bin: | gnome-desktop /etc/yum.repos.d/vivaldi-fedora.repo
 	@$(call dnf,vivaldi-stable)
 
 INSTALL += vivaldi
-vivaldi: | vivaldi-bin $(vivaldi_conf_dest_files)
+vivaldi: | vivaldi-bin $(VIVALDI_CONF_DEST_FILES)
 
 INSTALL += opera
 opera: | gnome-desktop /etc/yum.repos.d/opera.repo
@@ -329,7 +329,7 @@ arduino: flatpak
 	@sudo usermod -aG dialout,tty,lock '$(USER)'
 
 INSTALL += vscode
-vscode: | com.vscodium.codium $(ext_vscode)
+vscode: | com.vscodium.codium $(EXT_VSCODE)
 
 INSTALL += ddcutil
 ddcutil: | /etc/yum.repos.d/_copr\:copr.fedorainfracloud.org\:rockowitz\:ddcutil.repo
@@ -347,14 +347,14 @@ ulauncher:
 	@systemctl --user enable --now ulauncher.service
 
 INSTALL += ulauncher-extensions
-ulauncher-extensions: ulauncher $(ext_ulauncher)
+ulauncher-extensions: ulauncher $(EXT_ULAUNCHER)
 	-@systemctl --user restart ulauncher.service
 
 INSTALL += gnome-themes
 gnome-themes: | gnome-desktop adwaita-icon-theme adwaita-cursor-theme morewaita-icon-theme arc-theme
 
 INSTALL += gnome-shell-extensions
-gnome-shell-extensions: | gnome-desktop $(packages_gshell) $(ext_gshell)
+gnome-shell-extensions: | gnome-desktop $(PACKAGES_GSHELL) $(EXT_GSHELL)
 	@gsettings set org.gnome.shell disable-user-extensions false
 	-@gnome-extensions disable 'window-list@gnome-shell-extensions.gcampax.github.com'
 	-@gnome-extensions disable 'places-menu@gnome-shell-extensions.gcampax.github.com'
@@ -431,7 +431,7 @@ pass: | git
 	@mkdir -pv "$(HOME)/.password-store"
 
 INSTALL += pass-extensions
-pass-extensions: | pass pass-otp pass-audit $(ext_pass_dest_files)
+pass-extensions: | pass pass-otp pass-audit $(EXT_PASS_DEST_FILES)
 
 INSTALL += authselect
 authselect: | pam-u2f ecryptfs-utils
@@ -456,7 +456,7 @@ pip: | python3 python3-pip
 	@python -m pip install --upgrade pip
 
 INSTALL += streamdeck-ui
-streamdeck-ui: | python3-devel pip $(streamdeck_conf_dest_files)
+streamdeck-ui: | python3-devel pip $(STREAMDECK_CONF_DEST_FILES)
 	@$(call dnf,hidapi)
 	@python -m pip install streamdeck-linux-gui --user
 
@@ -766,39 +766,39 @@ gnome-clocks-settings: | gnome-clocks dconf
 # Bulk installation rules
 #
 
-INSTALL += $(plugins_dnf)
-$(plugins_dnf):
+INSTALL += $(PLUGINS_DNF)
+$(PLUGINS_DNF):
 	@$(call dnf,$@)
 
-INSTALL += $(packages_rpm)
-$(packages_rpm): | gnome-desktop
+INSTALL += $(PACKAGES_RPM)
+$(PACKAGES_RPM): | gnome-desktop
 	@$(call dnf,$@)
 
-INSTALL += $(packages_fonts)
-$(packages_fonts):
+INSTALL += $(PACKAGES_FONTS)
+$(PACKAGES_FONTS):
 	@$(call dnf,$@)
 
-INSTALL += $(packages_gshell)
-$(packages_gshell): | gnome-desktop
+INSTALL += $(PACKAGES_GSHELL)
+$(PACKAGES_GSHELL): | gnome-desktop
 	@$(call dnf,$@)
 	@if [ -f $(INCLUDE)/$@.ini ]; then dconf load '/' < $(INCLUDE)/$@.ini; fi
 
-INSTALL += $(packages_snap)
-$(packages_snap): | gnome-desktop snapd /snap
+INSTALL += $(PACKAGES_SNAP)
+$(PACKAGES_SNAP): | gnome-desktop snapd /snap
 	@sudo snap install $@
 
-INSTALL += $(packages_flatpak)
-$(packages_flatpak): | gnome-desktop flatpak
+INSTALL += $(PACKAGES_FLATPAK)
+$(PACKAGES_FLATPAK): | gnome-desktop flatpak
 	@flatpak install --user $@
 
-INSTALL += $(ext_ulauncher)
-$(ext_ulauncher): | git ulauncher
+INSTALL += $(EXT_ULAUNCHER)
+$(EXT_ULAUNCHER): | git ulauncher
 	@$(call clone,$@)
 	@mkdir -pv $(ULAUNCHER_EXT)
 	@ln -svfn $(HOME_OPT)/$@ $(ULAUNCHER_EXT)/$(subst .git,,$@)
 
-INSTALL += $(ext_gshell)
-$(ext_gshell): | gnome-desktop dconf gnome-shell-extensions-bin
+INSTALL += $(EXT_GSHELL)
+$(EXT_GSHELL): | gnome-desktop dconf gnome-shell-extensions-bin
 	@mkdir -pv $(HOME_OPT)
 	@$(eval __ext=$(subst $(slash),$(space),$(subst https://extensions.gnome.org/extension/,,$(strip $@))))
 	@$(eval __ext_id=$(word 1, $(__ext)))
@@ -806,16 +806,16 @@ $(ext_gshell): | gnome-desktop dconf gnome-shell-extensions-bin
 	@if [ -f $(INCLUDE)/gnome-shell-extension-$(__ext_name).ini ]; then dconf load '/' < $(INCLUDE)/gnome-shell-extension-$(__ext_name).ini; fi
 	@$(HOME_BIN)/install-gnome-extensions --enable $(__ext_id)
 
-INSTALL += $(ext_vscode)
-$(ext_vscode): | flatpak com.vscodium.codium
+INSTALL += $(EXT_VSCODE)
+$(EXT_VSCODE): | flatpak com.vscodium.codium
 	@flatpak run --user com.vscodium.codium --force --install-extension '$@'
 
-INSTALL += $(ext_intellij)
-$(ext_intellij): | intellij-idea-community $(HOME_BIN)/acpi-battery-status
+INSTALL += $(EXT_INTELLIJ)
+$(EXT_INTELLIJ): | intellij-idea-community $(HOME_BIN)/acpi-battery-status
 	@$$(command -v intellij-idea-community) installPlugins $@
 
-INSTALL += $(ext_micro)
-$(ext_micro): | micro fzf
+INSTALL += $(EXT_MICRO)
+$(EXT_MICRO): | micro fzf
 	@$$(command -v micro) -plugin install $(subst micro_,,$@)
 
 ########################################################################################################################
@@ -1017,12 +1017,12 @@ $(XDG_CONFIG_HOME)/mc/ini: $(DOTFILES)/.config/mc/ini | mc
 	@mkdir -pv $(@D)
 	@ln -svfn $< $@
 
-FILES += $(vivaldi_conf_dest_files)
+FILES += $(VIVALDI_CONF_DEST_FILES)
 $(VIVALDI_CF_DEST)/%: $(VIVALDI_CF_SRC)/%
 	@mkdir -pv $(@D)
 	@ln -svfn $< $@
 
-FILES += $(streamdeck_conf_dest_files)
+FILES += $(STREAMDECK_CONF_DEST_FILES)
 $(STREAMDECK_CF_DEST)/%: $(STREAMDECK_CF_SRC)/%
 	@mkdir -pv $(@D)
 	@ln -svfn $< $@
@@ -1198,6 +1198,7 @@ FILES += /etc/usbguard/rules.conf
 	@sudo chmod 0600 /etc/usbguard/rules.conf
 	@sudo systemctl enable --now usbguard
 
+# FIXME: permission denied, should be rewritten
 FILES += /etc/pki/akmods/certs/public_key.der
 /etc/pki/akmods/certs/public_key.der: | akmods mokutil openssl
 	@sudo kmodgenca -a
@@ -1342,6 +1343,10 @@ CHECK += check-dnf-autoremove
 check-dnf-autoremove:
 	@if [ $$(sudo dnf list -q --autoremove | wc -l) -gt 0 ]; then $(call log,$(WARN),"Warning: There are candidate rpm packages for autoremoval"); fi
 
+CHECK += check-dnf-needs-restarting
+check-dnf-needs-restarting:
+	@sudo dnf needs-restarting
+
 CHECK += check-rpmconf
 check-rpmconf: | rpmconf meld
 	@sudo rpmconf -a -f meld
@@ -1440,7 +1445,7 @@ gnome-settings: gnome-key-binding-settings gnome-theme-settings gnome-wallpaper 
 diff: diffutils ydiff git-split-diffs
 
 .PHONY: intellij
-intellij: | intellij-idea-community $(ext_intellij)
+intellij: | intellij-idea-community $(EXT_INTELLIJ)
 
 .PHONY: geoclue
 geoclue: geoclue2
