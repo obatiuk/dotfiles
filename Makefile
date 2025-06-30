@@ -1404,39 +1404,39 @@ check-fwupd-security: | fwupd
 
 BACKUP += backup-home-primary
 backup-home-primary: pass restic fastfetch redhat-lsb diffutils
-	@$(HOME_BIN)/backup-home-restic --env-file "$${HOME}/.home/.backup/.env.backup.primary"
+	@$(HOME_BIN)/backup-home-restic --env-file "$(HOME)/.home/.backup/.env.backup.primary"
 
 BACKUP += backup-home-secondary
 backup-home-secondary: pass restic fastfetch redhat-lsb diffutils
-	@$(HOME_BIN)/backup-home-restic --env-file "$${HOME}/.home/.backup/.env.backup.secondary"
+	@$(HOME_BIN)/backup-home-restic --env-file "$(HOME)/.home/.backup/.env.backup.secondary"
 
 BACKUP += backup-home-cloud
 backup-home-cloud: pass restic fastfetch redhat-lsb diffutils
-	@$(HOME_BIN)/backup-home-restic --env-file "$${HOME}/.home/.backup/.env.backup.cloud"
+	@$(HOME_BIN)/backup-home-restic --env-file "$(HOME)/.home/.backup/.env.backup.cloud"
 
 BACKUP += backup-router-primary
 backup-router-primary: pass restic curl jq
-	@$(HOME_BIN)/backup-router-restic --env-file "$${HOME}/.home/.backup/.env.backup.primary"
+	@$(HOME_BIN)/backup-router-restic --env-file "$(HOME)/.home/.backup/.env.backup.primary"
 
 BACKUP += backup-router-secondary
 backup-router-secondary: pass restic curl jq
-	@$(HOME_BIN)/backup-router-restic --env-file "$${HOME}/.home/.backup/.env.backup.secondary"
+	@$(HOME_BIN)/backup-router-restic --env-file "$(HOME)/.home/.backup/.env.backup.secondary"
 
 BACKUP += backup-router-cloud
 backup-router-cloud: pass restic curl jq
-	@$(HOME_BIN)/backup-router-restic --env-file "$${HOME}/.home/.backup/.env.backup.cloud"
+	@$(HOME_BIN)/backup-router-restic --env-file "$(HOME)/.home/.backup/.env.backup.cloud"
 
 BACKUP += backup-system-primary
 backup-system-primary: pass restic fastfetch redhat-lsb diffutils
-	@$(HOME_BIN)/backup-system-restic --env-file "$${HOME}/.home/.backup/.env.backup.primary"
+	@$(HOME_BIN)/backup-system-restic --env-file "$(HOME)/.home/.backup/.env.backup.primary"
 
 BACKUP += backup-system-secondary
 backup-system-secondary: pass restic fastfetch redhat-lsb diffutils
-	@$(HOME_BIN)/backup-system-restic --env-file "$${HOME}/.home/.backup/.env.backup.secondary"
+	@$(HOME_BIN)/backup-system-restic --env-file "$(HOME)/.home/.backup/.env.backup.secondary"
 
 BACKUP += backup-system-cloud
 backup-system-cloud: pass restic fastfetch redhat-lsb diffutils
-	@$(HOME_BIN)/backup-system-restic --env-file "$${HOME}/.home/.backup/.env.backup.cloud"
+	@$(HOME_BIN)/backup-system-restic --env-file "$(HOME)/.home/.backup/.env.backup.cloud"
 
 BACKUP += backup-pass
 backup-pass: git pass pass-extensions
