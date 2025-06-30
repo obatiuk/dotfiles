@@ -11,7 +11,7 @@ MAKEFLAGS += --no-builtin-rules --no-builtin-variables --warn-undefined-variable
 # .SHELLFLAGS := -eu -o pipefail -c
 
 ifeq ($(shell id -u), 0)
-    $(error This Makefile MUST NOT be executed as root.)
+$(error This Makefile MUST NOT be executed as root.)
 endif
 
 COLOR_GREEN := \033[0;32m
@@ -36,10 +36,8 @@ export XDG_CACHE_HOME ?= $(HOME)/.cache
 export XDG_PICTURES_DIR ?= $(HOME)/Private/Pictures
 export NVM_DIR ?= $(XDG_DATA_HOME)/nvm
 
-top := $(shell pwd)
-now := $(shell date +%Y-%m-%d_%H:%M:%S)
-uid := $(shell id -u)
-model := $(shell (if command -v hostnamectl > /dev/null 2>&1; \
+NOW := $(shell date +%Y-%m-%d_%H:%M:%S)
+MODEL := $(shell (if command -v hostnamectl > /dev/null 2>&1; \
 	then hostnamectl | grep 'Hardware Model:' | sed 's/^.*: //'; \
 	else sudo dmidecode -s system-product-name ; fi) | tr "[:upper:]" "[:lower:]" | sed 's/ /-/g')
 OS_RELEASE_EOL=$(shell grep -o 'SUPPORT_END=.*' /etc/os-release | sed 's/SUPPORT_END=//' )
@@ -55,8 +53,8 @@ HOME_BIN := $(abspath $(DOTHOME)/bin)
 HOME_OPT := $(abspath $(DOTHOME)/opt)
 PASS_HOME := $(abspath $(HOME)/.password-store)
 PASS_EXT := $(abspath $(PASS_HOME)/.extensions)
-INCLUDE = ./include
-DEVICE = ./device
+INCLUDE = $(DOTFILES)/include
+DEVICE = $(DOTFILES)/device
 
 VIVALDI_CF_SRC := $(DOTFILES)/.config/vivaldi/CustomUIModifications
 VIVALDI_CF_DEST := $(XDG_CONFIG_HOME)/vivaldi/CustomUIModifications
@@ -82,7 +80,7 @@ EDITOR_BIN := /usr/bin/editor
 #
 
 # Include model-specific patches
--include $(DEVICE)/$(model)/$(model).mk
+-include $(DEVICE)/$(MODEL)/$(MODEL).mk
 
 ########################################################################################################################
 #
@@ -771,6 +769,12 @@ INSTALL += gnome-clocks-settings
 gnome-clocks-settings: | gnome-clocks dconf
 	@dconf load '/' < $(INCLUDE)/gnome-clocks.ini
 
+INSTALL += firewall-profiles
+firewall-profiles:
+# TODO:
+# - public and home profiles
+# - find a way to assign firewall profile to an interface
+
 ########################################################################################################################
 #
 # Bulk installation rules
@@ -1368,6 +1372,10 @@ check-sys-configs: | rpm
 CHECK += check-disk-space
 check-disk-space: | duf
 	@duf -all -warnings
+
+CHECK += check-docker-disk-usage
+check-docker-disk-usage:
+	-@docker system df
 
 CHECK += check-ssh
 check-ssh: | ssh-audit
