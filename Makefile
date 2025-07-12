@@ -101,7 +101,7 @@ define dnf
 endef
 
 define clone
-	mkdir -pv $(HOME_OPT)
+	install -d $(HOME_OPT)
 	if [ ! -d $(HOME_OPT)/$(1) ]; then git clone 'https://github.com/obatiuk/$(1)' $(HOME_OPT)/$(1); fi
 	cd $(HOME_OPT)/$(1) && git pull
 endef
@@ -240,7 +240,7 @@ flatpak: gnome-desktop
 
 INSTALL += nvm
 nvm: | git
-	@mkdir -pv $(NVM_PATH)
+	@install -d $(NVM_PATH)
 	@PROFILE=/dev/null bash -c 'curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash'
 
 INSTALL += npm
@@ -376,7 +376,8 @@ arc-theme-git-install:
 
 # Using SELF_CALL=xxx to avoid `inkscape` segfaults during build (https://gitlab.com/inkscape/inkscape/-/issues/4716)
 arc-theme-git-build:
-	@mkdir -pv $(HOME_OPT)
+	@install -d $(HOME_OPT)
+	# FIXME: replace cd with -C argument (and similar for meson)
 	@rebuild_theme=false
 	@if [ ! -d $(HOME_OPT)/arc-theme ]; then
 		cd $(HOME_OPT) && git clone https://github.com/obatiuk/arc-theme --depth 1
@@ -431,7 +432,7 @@ tuned-ppd: | tuned
 INSTALL += pass
 pass: | git
 	@$(call dnf,$@)
-	@mkdir -pv "$(HOME)/.password-store"
+	@install -m 644 -d "$(HOME)/.password-store"
 
 INSTALL += pass-extensions
 pass-extensions: | pass pass-otp pass-audit $(EXT_PASS_DEST_FILES)
@@ -495,7 +496,7 @@ logrotate:
 	@$(call dnf,$@)
 	@sudo systemctl enable --now logrotate.timer
 	# Add missing logrotate rules (F39)
-	@sudo tee /etc/logrotate.d/dnf <<- EOF
+	@sudo install -DC /dev/stdin /etc/logrotate.d/dnf <<- EOF
 	#
 	# Updated by dotfiles setup script on $$(date -I) by ${USER}
 	#
@@ -540,7 +541,7 @@ proton-mail-bridge: | pass
 
 INSTALL += editor-alternatives
 editor-alternatives: micro
-	@$(foreach EDITOR, $(EDITORS), sudo alternatives --install '$(EDITOR_BIN)' editor '$(EDITOR)' 0;)
+	@$(foreach editor, $(EDITORS), sudo alternatives --install '$(EDITOR_BIN)' editor '$(editor)' 0;)
 	@sudo alternatives --set editor '/usr/bin/micro'
 
 ########################################################################################################################
@@ -808,12 +809,12 @@ $(PACKAGES_FLATPAK): | gnome-desktop flatpak
 INSTALL += $(EXT_ULAUNCHER)
 $(EXT_ULAUNCHER): | git ulauncher
 	@$(call clone,$@)
-	@mkdir -pv $(ULAUNCHER_EXT)
+	@install -d $(ULAUNCHER_EXT)
 	@ln -svfn $(HOME_OPT)/$@ $(ULAUNCHER_EXT)/$(subst .git,,$@)
 
 INSTALL += $(EXT_GSHELL)
 $(EXT_GSHELL): | gnome-desktop dconf gnome-shell-extensions-bin
-	@mkdir -pv $(HOME_OPT)
+	@install -d $(HOME_OPT)
 	@$(eval __ext=$(subst $(slash),$(space),$(subst https://extensions.gnome.org/extension/,,$(strip $@))))
 	@$(eval __ext_id=$(word 1, $(__ext)))
 	@$(eval __ext_name=$(word 2, $(__ext)))
@@ -862,7 +863,7 @@ FILES += /etc/yum.repos.d/vivaldi-fedora.repo
 FILES += /etc/yum.repos.d/opera.repo
 /etc/yum.repos.d/opera.repo:
 	-@sudo rpm --import https://rpm.opera.com/rpmrepo.key
-	@sudo tee $@ <<- EOF
+	@sudo install -m 644 -D /dev/stdin $@ <<- EOF
 		#
 		# Created by dotfiles setup script on $$(date -I) by ${USER}
 		#
@@ -877,7 +878,7 @@ FILES += /etc/yum.repos.d/opera.repo
 
 FILES += /etc/yum.repos.d/keybase.repo
 /etc/yum.repos.d/keybase.repo:
-	@sudo tee $@ <<- EOF
+	@sudo install -m 644 -D /dev/stdin $@ <<- EOF
 		#
 		# Created by dotfiles setup script on $$(date -I) by ${USER}
 		#
@@ -913,52 +914,52 @@ FILES += /etc/yum.repos.d/_copr\:copr.fedorainfracloud.org\:dusansimic\:themes.r
 
 FILES += $(HOME)/.bashrc
 $(HOME)/.bashrc: $(DOTFILES)/.bashrc
-	@mkdir -pv $(@D)
+	@install -d $(@D)
 	@ln -svnf $< $@
 
 FILES += $(HOME)/.bash_profile
 $(HOME)/.bash_profile: $(DOTFILES)/.bash_profile
-	@mkdir -pv $(@D)
+	@install -d $(@D)
 	@ln -svnf $< $@
 
 FILES += $(HOME)/.bash_logout
 $(HOME)/.bash_logout: $(DOTFILES)/.bash_logout
-	@mkdir -pv $(@D)
+	@install -d $(@D)
 	@ln -svnf $< $@
 
 FILES += $(BASHRCD)/bashrc-git
 $(BASHRCD)/bashrc-git: $(DOTFILES)/.bashrc.d/bashrc-git | git
-	@mkdir -pv $(@D)
+	@install -d $(@D)
 	@ln -svnf $< $@
 
 FILES += $(BASHRCD)/bashrc-base
 $(BASHRCD)/bashrc-base: $(DOTFILES)/.bashrc.d/bashrc-base | git
-	@mkdir -pv $(@D)
+	@install -d $(@D)
 	@ln -svnf $< $@
 
 FILES += $(BASHRCD)/bashrc-fonts
 $(BASHRCD)/bashrc-fonts: $(DOTFILES)/.bashrc.d/bashrc-fonts | fonts
-	@mkdir -pv $(@D)
+	@install -d $(@D)
 	@ln -svnf $< $@
 
 FILES += $(BASHRCD)/bashrc-xdg
 $(BASHRCD)/bashrc-xdg: $(DOTFILES)/.bashrc.d/bashrc-xdg | xdg-utils
-	@mkdir -pv $(@D)
+	@install -d $(@D)
 	@ln -svnf $< $@
 
 FILES += $(BASHRCD)/bashrc-dev
 $(BASHRCD)/bashrc-dev: $(DOTFILES)/.bashrc.d/bashrc-dev
-	@mkdir -pv $(@D)
+	@install -d $(@D)
 	@ln -svnf $< $@
 
 FILES += $(BASHRCD)/bashrc-pass
 $(BASHRCD)/bashrc-pass: $(DOTFILES)/.bashrc.d/bashrc-pass | pass pass-extensions
-	@mkdir -pv $(@D)
+	@install -d $(@D)
 	@ln -svnf $< $@
 
 FILES += $(BASHRCD)/bashrc-steam
 $(BASHRCD)/bashrc-steam: $(DOTFILES)/.bashrc.d/bashrc-steam
-	@mkdir -pv $(@D)
+	@install -d $(@D)
 	@ln -svnf $< $@
 
 FILES += $(HOME)/.face.icon
@@ -968,7 +969,7 @@ $(HOME)/.face.icon: $(DOTFILES)/.face.icon
 FILES += $(XDG_CONFIG_HOME)/git/config
 $(XDG_CONFIG_HOME)/git/config: $(DOTFILES)/.config/git/config | git git-lfs git-credential-libsecret \
 		git-split-diffs bat meld perl-Image-ExifTool
-	@mkdir -pv $(@D)
+	@install -d $(@D)
 	@ln -svfn $< $@
 
 FILES += $(HOME)/.trackerignore
@@ -999,17 +1000,17 @@ $(XDG_CONFIG_HOME)/gtk-2.0/gtkrc: $(DOTFILES)/.config/gtk-2.0/gtkrc | gnome-desk
 
 FILES += $(XDG_CONFIG_HOME)/gtk-3.0/settings.ini
 $(XDG_CONFIG_HOME)/gtk-3.0/settings.ini: $(DOTFILES)/.config/gtk-3.0/settings.ini | gnome-desktop
-	@mkdir -pv $(@D)
+	@install -d $(@D)
 	@ln -svfn $< $@
 
 FILES += $(XDG_CONFIG_HOME)/gtk-3.0/gtk.css
 $(XDG_CONFIG_HOME)/gtk-3.0/gtk.css: $(DOTFILES)/.config/gtk-3.0/gtk.css | gnome-desktop
-	@mkdir -pv $(@D)
+	@install -d $(@D)
 	@ln -svfn $< $@
 
 FILES += $(XDG_CONFIG_HOME)/gtk-3.0/bookmarks
 $(XDG_CONFIG_HOME)/gtk-3.0/bookmarks: | gnome-desktop
-	@tee $@ <<- EOF
+	@install -D /dev/stdin $@ <<- EOF
 		file://$(HOME)/Private/Sync
 		file://$(HOME)/Projects
 		file://$(HOME)/Temp
@@ -1018,32 +1019,32 @@ $(XDG_CONFIG_HOME)/gtk-3.0/bookmarks: | gnome-desktop
 
 FILES += $(XDG_CONFIG_HOME)/gtk-4.0/settings.ini
 $(XDG_CONFIG_HOME)/gtk-4.0/settings.ini: $(DOTFILES)/.config/gtk-4.0/settings.ini | gnome-desktop
-	@mkdir -pv $(@D)
+	@install -d $(@D)
 	@ln -svfn $< $@
 
 FILES += $(XDG_CONFIG_HOME)/user-dirs.dirs
 $(XDG_CONFIG_HOME)/user-dirs.dirs: $(DOTFILES)/.config/user-dirs.dirs | xdg-user-dirs
-	@mkdir -pv $(@D)
+	@install -d $(@D)
 	@ln -svnf $< $@
 
 FILES += $(XDG_CONFIG_HOME)/mc/ini
 $(XDG_CONFIG_HOME)/mc/ini: $(DOTFILES)/.config/mc/ini | mc
-	@mkdir -pv $(@D)
+	@install -d $(@D)
 	@ln -svfn $< $@
 
 FILES += $(VIVALDI_CONF_DEST_FILES)
 $(VIVALDI_CF_DEST)/%: $(VIVALDI_CF_SRC)/%
-	@mkdir -pv $(@D)
+	@install -d $(@D)
 	@ln -svfn $< $@
 
 FILES += $(STREAMDECK_CONF_DEST_FILES)
 $(STREAMDECK_CF_DEST)/%: $(STREAMDECK_CF_SRC)/%
-	@mkdir -pv $(@D)
+	@install -d $(@D)
 	@ln -svfn $< $@
 
 FILES += /etc/NetworkManager/conf.d/00-randomize-mac.conf
 /etc/NetworkManager/conf.d/00-randomize-mac.conf: | gnome-desktop
-	@sudo tee $@ <<- EOF
+	@install -D /dev/stdin $@ <<- EOF
 		#
 		# Created by dotfiles setup script on $$(date -I) by ${USER}
 		#
@@ -1059,8 +1060,7 @@ FILES += /etc/NetworkManager/conf.d/00-randomize-mac.conf
 
 FILES += /etc/systemd/logind.conf.d/power.conf
 /etc/systemd/logind.conf.d/power.conf: | systemd
-	@sudo mkdir -pv $(@D)
-	@sudo tee $@ <<- EOF
+	@sudo install -D /dev/stdin $@ <<- EOF
 		#
 		# Created by dotfiles setup script on $$(date -I) by ${USER}
 		#
@@ -1071,8 +1071,7 @@ FILES += /etc/systemd/logind.conf.d/power.conf
 
 FILES += /etc/systemd/resolved.conf.d/dnssec.conf
 /etc/systemd/resolved.conf.d/dnssec.conf: | systemd
-	@sudo mkdir -pv $(@D)
-	@sudo tee $@ <<- EOF
+	@sudo install -D /dev/stdin $@ <<- EOF
 		#
 		# Created by dotfiles setup script on $$(date -I) by ${USER}
 		#
@@ -1083,8 +1082,7 @@ FILES += /etc/systemd/resolved.conf.d/dnssec.conf
 
 FILES += $(XDG_CONFIG_HOME)/systemd/user/streamdeck.service
 $(XDG_CONFIG_HOME)/systemd/user/streamdeck.service: | systemd streamdeck-ui
-	@mkdir -pv $(@D)
-	@tee $@ <<- EOF
+	@sudo install -D /dev/stdin $@ <<- EOF
 		#
 		# Created by dotfiles setup script on $$(date -I) by ${USER}
 		#
@@ -1109,8 +1107,7 @@ $(XDG_CONFIG_HOME)/systemd/user/streamdeck.service: | systemd streamdeck-ui
 
 FILES += /etc/udev/rules.d/60-streamdeck.rules
 /etc/udev/rules.d/60-streamdeck.rules: | streamdeck-ui
-	@sudo mkdir -pv $(@D)
-	@sudo tee $@ <<- EOF
+	@sudo install -D /dev/stdin $@ <<- EOF
 		#
 		# Created by dotfiles setup script on $$(date -I) by ${USER}
 		#
@@ -1121,83 +1118,82 @@ FILES += /etc/udev/rules.d/60-streamdeck.rules
 
 FILES += $(XDG_CONFIG_HOME)/wget/wgetrc
 $(XDG_CONFIG_HOME)/wget/wgetrc: | wget $(BASHRCD)/bashrc-xdg
-	@mkdir -pv $(@D)
-	@mkdir -pv $(XDG_CACHE_HOME)/wget
+	@install -d $(@D)
+	@install -d $(XDG_CACHE_HOME)/wget
 	@echo -e "#\n# Created by dotfiles setup script on $$(date -I) by ${USER} \n#\n--hsts-file=$(XDG_CACHE_HOME)/wget/hsts" > $@
 
 FILES += $(XDG_DATA_HOME)/backgrounds/current
 $(XDG_DATA_HOME)/backgrounds/current: $(DOTFILES)/.local/share/backgrounds/morphogenesis-d.svg
-	@mkdir -pv $(@D)
+	@install -d $(@D)
 	@ln -svfn $< $@
 
 FILES += $(PASS_HOME)/.gpg-id
 $(PASS_HOME)/.gpg-id: | pass
-	@mkdir -pv $(@D)
+	@install -d $(@D)
 	@pass init 8D49EF72
 
 FILES += $(PASS_HOME)/.gitattributes
 $(PASS_HOME)/.gitattributes: | pass git
-	@mkdir -pv $(@D)
+	@install -d $(@D)
 	@pass git init
 	@pass git config log.showsignature false
 
 FILES += $(PASS_HOME)/.gitignore
 $(PASS_HOME)/.gitignore: $(DOTFILES)/.password-store/.gitignore | pass
-	@mkdir -pv $(@D)
-	@\cp -vf $< $@
+	@install -D $< $@
 
 FILES += $(PASS_HOME)/.browserpass.json
 $(PASS_HOME)/.browserpass.json: $(DOTFILES)/.password-store/.browserpass.json | pass
-	@mkdir -pv $(@D)
+	@install -d $(@D)
 	@ln -svfn $< $@
 
 FILES += $(PASS_EXT)/symlink.bash
 $(PASS_EXT)/symlink.bash: | git pass
 	@$(call clone,pass-symlink.git)
-	@mkdir -pv $(@D)
+	@install -d $(@D)
 	@ln -svfn $(HOME_OPT)/pass-symlink.git/src/symlink.bash $@
 
 FILES += $(PASS_EXT)/age.bash
 $(PASS_EXT)/age.bash: | git pass
 	@$(call clone,pass-age.git)
-	@mkdir -pv $(@D)
+	@install -d $(@D)
 	@ln -svfn $(HOME_OPT)/pass-age.git/age.bash $@
 
 FILES += $(PASS_EXT)/file.bash
 $(PASS_EXT)/file.bash: | git pass
 	@$(call clone,pass-file.git)
-	@mkdir -pv $(@D)
+	@install -d $(@D)
 	@ln -svfn $(HOME_OPT)/pass-file.git/file.bash $@
 
 FILES += $(PASS_EXT)/ln.bash
 $(PASS_EXT)/ln.bash: | git pass
 	@$(call clone,pass-ln.git)
-	@mkdir -pv $(@D)
-	@mkdir -pv $(XDG_DATA_HOME)/bash-completion/completions
+	@install -d $(@D)
+	@install -d $(XDG_DATA_HOME)/bash-completion/completions
 	@ln -svfn $(HOME_OPT)/pass-ln.git/pass-ln.bash $@
 	@ln -svfn $(HOME_OPT)/pass-ln.git/pass-ln.bash.completion $(XDG_DATA_HOME)/bash-completion/completions/pass-ln
 
 FILES += $(PASS_EXT)/update.bash
 $(PASS_EXT)/update.bash: | git pass
 	@$(call clone,pass-update.git)
-	@mkdir -pv $(@D)
-	@mkdir -pv $(XDG_DATA_HOME)/bash-completion/completions
+	@install -d $(@D)
+	@install -d $(XDG_DATA_HOME)/bash-completion/completions
 	@ln -svfn $(HOME_OPT)/pass-update.git/update.bash $@
 	@ln -svfn $(HOME_OPT)/pass-update.git/share/bash-completion/completions/pass-update $(XDG_DATA_HOME)/bash-completion/completions/pass-update
 
 FILES += $(PASS_EXT)/tessen.bash
 $(PASS_EXT)/tessen.bash: | git pass
 	@$(call clone,pass-tessen.git)
-	@mkdir -pv $(@D)
-	@mkdir -pv $(XDG_DATA_HOME)/bash-completion/completions
+	@install -d $(@D)
+	@install -d $(XDG_DATA_HOME)/bash-completion/completions
 	@ln -svfn $(HOME_OPT)/pass-tessen.git/tessen.bash $@
 	@ln -svfn $(HOME_OPT)/pass-tessen.git/completion/pass-tessen.bash-completion $(XDG_DATA_HOME)/bash-completion/completions/pass-tessen
 
 FILES += $(PASS_EXT)/meta.bash
 $(PASS_EXT)/meta.bash: | git pass
 	@$(call clone,pass-extension-meta.git)
-	@mkdir -pv $(@D)
-	@mkdir -pv $(XDG_DATA_HOME)/bash-completion/completions
+	@install -d $(@D)
+	@install -d $(XDG_DATA_HOME)/bash-completion/completions
 	@ln -svfn $(HOME_OPT)/pass-extension-meta.git/src/meta.bash $@
 	@ln -svfn $(HOME_OPT)/pass-extension-meta.git/completion/pass-meta.bash.completion $(XDG_DATA_HOME)/bash-completion/completions/pass-meta
 
@@ -1219,7 +1215,7 @@ FILES += /etc/pki/akmods/certs/public_key.der
 
 FILES += $(XDG_DATA_HOME)/python/history
 $(XDG_DATA_HOME)/python/history: $(BASHRCD)/bashrc-xdg
-	@mkdir -pv $(@D)
+	@install -d $(@D)
 	@touch $@
 
 ########################################################################################################################
@@ -1246,13 +1242,12 @@ PATCH += /etc/sysconfig/lm_sensors
 # Possible fix for mouse lagging (e.g. disable autosuspend for Dell Universal Receiver)
 PATCH += /etc/udev/rules.d/50-usb_power_save.rules
 /etc/udev/rules.d/50-usb_power_save.rules:
-	@sudo mkdir -pv $(@D)
-	@sudo tee $@ <<- EOF
-	#
-	# Created by dotfiles setup script on $$(date -I) by ${USER}
-	#
-	ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="413c", ATTR{idProduct}=="2514", TEST=="power/autosuspend", ATTR{power/autosuspend}="-1"
-	EOF
+	@sudo install -D /dev/stdin $@ <<- EOF
+		#
+		# Created by dotfiles setup script on $$(date -I) by ${USER}
+		#
+		ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="413c", ATTR{idProduct}=="2514", TEST=="power/autosuspend", ATTR{power/autosuspend}="-1"
+		EOF
 	@sudo udevadm control --reload-rules && sudo udevadm trigger
 
 ########################################################################################################################
@@ -1482,9 +1477,9 @@ backup-system: backup-system-primary backup-system-secondary backup-system-cloud
 # Main targets
 #
 
-files: | $(FILES) ## Check that all managed files are up-to-date
-
 install: | files $(INSTALL) ## Check all packages and managed files (except system patches)
+
+files: | $(FILES) ## Check that all managed files are up-to-date
 
 patch: | $(PATCH) ## Check system patches
 
@@ -1507,9 +1502,9 @@ help: ## Display help
 
 # Debug
 printvars:
-	@$(foreach V,$(sort $(.VARIABLES)), \
+	@$(foreach v,$(sort $(.VARIABLES)), \
 		$(if $(filter-out environment% default automatic, \
-			$(origin $V)),$(warning $V=$($V) ($(value $V)))))
+			$(origin $v)),$(warning $v=$($v) ($(value $v)))))
 
-.PHONY: $(INSTALL) $(PATCH) $(UPDATE)$(CLEAN) $(SETUP) $(CHECK) $(BACKUP) \
+.PHONY: $(INSTALL) $(PATCH) $(UPDATE) $(CLEAN) $(SETUP) $(CHECK) $(BACKUP) \
 	files install patch update clean setup check backup all help printvars

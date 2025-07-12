@@ -27,7 +27,7 @@ install_nvidia_drivers: | /etc/yum.repos.d/rpmfusion-nonfree.repo akmods grubby
 # Headphones are not automatically recognized by the system
 .PHONY:
 /etc/modprobe.d/dell.conf:
-	@sudo tee $@ <<- EOF
+	@sudo install -D /dev/stdin $@ <<- EOF
 		#
 		# Created manually on $$(date -I) by ${USER}
 		#
@@ -39,7 +39,7 @@ install_nvidia_drivers: | /etc/yum.repos.d/rpmfusion-nonfree.repo akmods grubby
 # Disable bluetooth auto-suspend
 .PHONY:
 /etc/modprobe.d/btusb.conf:
-	@sudo tee $@ <<- EOF
+	@sudo install -D /dev/stdin $@ <<- EOF
 		#
 		# Created manually on $$(date -I) by ${USER}
 		#
@@ -54,7 +54,7 @@ install_nvidia_drivers: | /etc/yum.repos.d/rpmfusion-nonfree.repo akmods grubby
 	# - http://www.akitaonrails.com/2017/01/17/optimizing-linux-for-slow-computers
 	# - https://help.ubuntu.com/community/SwapFaq
 	# - https://wiki.archlinux.org/index.php/Solid_State_Drives
-	@sudo tee $@ <<- EOF
+	@sudo install -D /dev/stdin $@ <<- EOF
 		#
 		# Created manually on $$(date -I) by ${USER}
 		#
