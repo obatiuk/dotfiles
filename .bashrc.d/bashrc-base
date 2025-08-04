@@ -12,7 +12,7 @@ done
 # User specific environment
 if ! [[ $PATH =~ $HOME/.home/bin ]]
 then
-    PATH="$HOME/bin:$PATH"
+    PATH="$HOME/.home/bin:$PATH"
 fi
 export PATH
 
