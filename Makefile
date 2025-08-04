@@ -103,7 +103,7 @@ endef
 define clone
 	install -d $(HOME_OPT)
 	if [ ! -d $(HOME_OPT)/$(1) ]; then git clone 'https://github.com/obatiuk/$(1)' $(HOME_OPT)/$(1); fi
-	cd $(HOME_OPT)/$(1) && git pull
+	git -C $(HOME_OPT)/$(1) pull
 endef
 
 define log
@@ -128,7 +128,7 @@ PACKAGES_RPM += gvfs-mtp screen progress pv tio dialog catimg cifs-utils sharuti
 PACKAGES_RPM += restic rsync rclone micro wget xsensors lm_sensors curl jq
 PACKAGES_RPM += unrar lynx crudini sysstat p7zip nmap cabextract iotop qrencode uuid tcpdump
 PACKAGES_RPM += git diffutils git-lfs git-extras git-credential-libsecret git-crypt bat mc gh perl-Image-ExifTool
-PACKAGES_RPM += snapd calibre clamav clamav-freshclam mdns-scan
+PACKAGES_RPM += snapd calibre ebook-tools clamav clamav-freshclam mdns-scan
 PACKAGES_RPM += fedora-workstation-repositories
 PACKAGES_RPM += adwaita-icon-theme adwaita-cursor-theme dconf
 PACKAGES_RPM += python3 python3-pip python3-devel python3-virtualenv
@@ -142,7 +142,7 @@ PLUGINS_DNF += python3-dnf-plugin-rpmconf needs-restarting
 PACKAGES_SNAP := chromium-ffmpeg brave intellij-idea-community slack
 
 # All **user** `flatpak` packages that are not directly referenced
-PACKAGES_FLATPAK := com.vscodium.codium org.gnupg.GPA org.gtk.Gtk3theme.Arc-Darker eu.betterbird.Betterbird
+PACKAGES_FLATPAK := org.gnupg.GPA org.gtk.Gtk3theme.Arc-Darker be.alexandervanhee.gradia
 
 # Font packages
 PACKAGES_FONTS := google-droid-sans-fonts google-droid-serif-fonts google-droid-sans-mono-fonts
@@ -171,7 +171,8 @@ EXT_VSCODE += bpruitt-goddard.mermaid-markdown-syntax-highlighting eamodio.gitle
 EXT_VSCODE += humao.rest-client jebbs.plantuml moshfeu.compare-folders ms-azuretools.vscode-docker ph-hawkins.arc-plus
 EXT_VSCODE += PKief.material-icon-theme redhat.java redhat.vscode-xml redhat.vscode-yaml
 EXT_VSCODE += streetsidesoftware.code-spell-checker timonwong.shellcheck usernamehw.errorlens vscjava.vscode-maven
-EXT_VSCODE += yzhang.markdown-all-in-one
+EXT_VSCODE += yzhang.markdown-all-in-one ms-python.python lintangwisesa.arduino ms-vscode.makefile-tools
+EXT_VSCODE += keesschollaart.vscode-home-assistant
 
 # Ulauncher extensions
 EXT_ULAUNCHER := ulauncher-emoji.git pass-ulauncher.git pass-for-ulauncher.git pass-otp-for-ulauncher.git
@@ -331,8 +332,11 @@ arduino: flatpak
 	@flatpak -y --user install cc.arduino.arduinoide cc.arduino.IDE2
 	@sudo usermod -aG dialout,tty,lock '$(USER)'
 
+code: snap
+	@snap install $@ --classic
+
 INSTALL += vscode
-vscode: | com.vscodium.codium $(EXT_VSCODE)
+vscode: | code $(EXT_VSCODE)
 
 INSTALL += ddcutil
 ddcutil: | /etc/yum.repos.d/_copr\:copr.fedorainfracloud.org\:rockowitz\:ddcutil.repo
@@ -453,7 +457,7 @@ gnome-shell-extensions-bin: | gnome-desktop git
 
 UPDATE += gnome-shell-extensions-bin-update
 gnome-shell-extensions-bin-update:
-	@if [ -d $(HOME_OPT)/install-gnome-extensions.git ]; then cd $(HOME_OPT)/install-gnome-extensions.git && git pull; fi
+	@if [ -d $(HOME_OPT)/install-gnome-extensions.git ]; then git -C $(HOME_OPT)/install-gnome-extensions.git pull; fi
 
 INSTALL += pip
 pip: | python3 python3-pip
@@ -535,14 +539,26 @@ geoclue2: | crudini
 INSTALL += proton-mail-bridge
 proton-mail-bridge: | pass
 	@sudo dnf -y install https://proton.me/download/bridge/protonmail-bridge-3.13.0-1.x86_64.rpm
-	@if ! grep -q "protonmail-credentials" "$(HOME)/.password-store/.gitignore"; then \
-		echo "protonmail-credentials" >> "$(HOME)/.password-store/.gitignore"; \
-		echo "docker-credential-helpers" >> "$(HOME)/.password-store/.gitignore"; fi
+	@if ! grep -q 'protonmail-credentials' '$(HOME)/.password-store/.gitignore'; then \
+		echo 'protonmail-credentials' >> '$(HOME)/.password-store/.gitignore'; \
+		echo 'docker-credential-helpers' >> '$(HOME)/.password-store/.gitignore'; fi
 
 INSTALL += editor-alternatives
 editor-alternatives: micro
 	@$(foreach editor, $(EDITORS), sudo alternatives --install '$(EDITOR_BIN)' editor '$(editor)' 0;)
 	@sudo alternatives --set editor '/usr/bin/micro'
+
+INSTALL += firewall-profiles
+firewall-profiles:
+# TODO:
+# - public and home profiles
+# - find a way to assign firewall profile to an interface
+
+INSTALL += backup-services
+backup-services: restic $(XDG_CONFIG_HOME)/systemd/user/restic@.service $(XDG_CONFIG_HOME)/systemd/user/restic-daily@.timer
+	@systemctl --user enable --now 'restic-daily@backup-home-primary.timer'
+	@systemctl --user enable --now 'restic-daily@backup-home-secondary.timer'
+	@systemctl --user enable --now 'restic-daily@backup-home-cloud.timer'
 
 ########################################################################################################################
 #
@@ -672,11 +688,12 @@ gnome-desktop-settings: | gnome-desktop fonts
 	@gsettings set org.gnome.desktop.interface cursor-blink true
 
 	@gsettings set org.gnome.shell favorite-apps "['org.gnome.Nautilus.desktop', 'org.gnome.Terminal.desktop', \
-		'intellij-idea-community_intellij-idea-community.desktop', 'com.vscodium.codium.desktop', \
+		'intellij-idea-community_intellij-idea-community.desktop', 'code_code.desktop', \
 		'vivaldi-stable.desktop', 'google-chrome.desktop', 'firefox.desktop', 'md.obsidian.Obsidian.desktop', \
 		'xmind.desktop', 'org.gnome.gedit.desktop', 'chrome-cinhimbnkkaeohfgghhklpknlkffjgod-Profile_4.desktop', \
 		'chrome-hpfldicfbfomlpcikngkocigghgafkph-Profile_4.desktop', 'org.gnome.Pomodoro.desktop', \
-		'cc.arduino.IDE2.desktop', 'calibre-gui.desktop', 'com.valvesoftware.Steam.desktop']"
+		'cc.arduino.IDE2.desktop', 'calibre-gui.desktop', 'com.valvesoftware.Steam.desktop', 'slack_slack.desktop', \
+		 'wine-Programs-reMarkable-reMarkable.desktop']"
 
 
 # GNOME display settings
@@ -770,12 +787,6 @@ INSTALL += gnome-clocks-settings
 gnome-clocks-settings: | gnome-clocks dconf
 	@dconf load '/' < $(INCLUDE)/gnome-clocks.ini
 
-INSTALL += firewall-profiles
-firewall-profiles:
-# TODO:
-# - public and home profiles
-# - find a way to assign firewall profile to an interface
-
 ########################################################################################################################
 #
 # Bulk installation rules
@@ -822,8 +833,8 @@ $(EXT_GSHELL): | gnome-desktop dconf gnome-shell-extensions-bin
 	@$(HOME_BIN)/install-gnome-extensions --enable $(__ext_id)
 
 INSTALL += $(EXT_VSCODE)
-$(EXT_VSCODE): | flatpak com.vscodium.codium
-	@flatpak run --user com.vscodium.codium --force --install-extension '$@'
+$(EXT_VSCODE): | snap code
+	@snap run code --force --install-extension '$@'
 
 INSTALL += $(EXT_INTELLIJ)
 $(EXT_INTELLIJ): | intellij-idea-community $(HOME_BIN)/acpi-battery-status
@@ -841,6 +852,11 @@ $(EXT_MICRO): | micro fzf
 FILES += /snap
 /snap: /var/lib/snapd/snap | snapd
 	@sudo ln -svnf $< $@
+	# A manual fix for the broken snap in F41 if `/usr/lib/snapd` link exists
+	# (see https://discussion.fedoraproject.org/t/snap-stopped-working-on-f41/161371 and
+	# https://github.com/canonical/snapd/commit/858801cf47fe5e8dc6307e4cf02191b7157fc0c2)
+	@sudo [ -L '/usr/lib/snapd' ] && sudo rm -rfi '/usr/lib/snapd'
+	@sudo systemctl restart snapd
 
 FILES += /etc/yum.repos.d/_copr\:copr.fedorainfracloud.org\:gombosg\:better_fonts.repo
 /etc/yum.repos.d/_copr\:copr.fedorainfracloud.org\:gombosg\:better_fonts.repo:
@@ -1010,7 +1026,7 @@ $(XDG_CONFIG_HOME)/gtk-3.0/gtk.css: $(DOTFILES)/.config/gtk-3.0/gtk.css | gnome-
 
 FILES += $(XDG_CONFIG_HOME)/gtk-3.0/bookmarks
 $(XDG_CONFIG_HOME)/gtk-3.0/bookmarks: | gnome-desktop
-	@install -D /dev/stdin $@ <<- EOF
+	@install -m 644 -D /dev/stdin $@ <<- EOF
 		file://$(HOME)/Private/Sync
 		file://$(HOME)/Projects
 		file://$(HOME)/Temp
@@ -1044,7 +1060,7 @@ $(STREAMDECK_CF_DEST)/%: $(STREAMDECK_CF_SRC)/%
 
 FILES += /etc/NetworkManager/conf.d/00-randomize-mac.conf
 /etc/NetworkManager/conf.d/00-randomize-mac.conf: | gnome-desktop
-	@install -D /dev/stdin $@ <<- EOF
+	@install -m 644 -D /dev/stdin $@ <<- EOF
 		#
 		# Created by dotfiles setup script on $$(date -I) by ${USER}
 		#
@@ -1082,7 +1098,7 @@ FILES += /etc/systemd/resolved.conf.d/dnssec.conf
 
 FILES += $(XDG_CONFIG_HOME)/systemd/user/streamdeck.service
 $(XDG_CONFIG_HOME)/systemd/user/streamdeck.service: | systemd streamdeck-ui
-	@sudo install -D /dev/stdin $@ <<- EOF
+	@sudo install -m 644 -D /dev/stdin $@ <<- EOF
 		#
 		# Created by dotfiles setup script on $$(date -I) by ${USER}
 		#
@@ -1107,7 +1123,7 @@ $(XDG_CONFIG_HOME)/systemd/user/streamdeck.service: | systemd streamdeck-ui
 
 FILES += /etc/udev/rules.d/60-streamdeck.rules
 /etc/udev/rules.d/60-streamdeck.rules: | streamdeck-ui
-	@sudo install -D /dev/stdin $@ <<- EOF
+	@sudo install -m 644 -D /dev/stdin $@ <<- EOF
 		#
 		# Created by dotfiles setup script on $$(date -I) by ${USER}
 		#
@@ -1218,6 +1234,51 @@ $(XDG_DATA_HOME)/python/history: $(BASHRCD)/bashrc-xdg
 	@install -d $(@D)
 	@touch $@
 
+FILES += $(XDG_CONFIG_HOME)/systemd/user/restic@.service
+$(XDG_CONFIG_HOME)/systemd/user/restic@.service:
+	@install -m 644 -D /dev/stdin $@ <<- EOF
+		#
+		# Created by dotfiles setup script on $$(date -I) by ${USER}
+		#
+		[Unit]
+		Description=Restic backup for %i
+		After=network.target
+
+		[Service]
+		Type=simple
+		WorkingDirectory=$(DOTFILES)
+		RuntimeDirectory=restic/%i
+		IOSchedulingClass=idle
+		ExecStart=/usr/bin/systemd-inhibit --who="Restic Backup Service" --why="Automatic backup (%i) is running" /usr/bin/make %i-no-deps
+	EOF
+	@systemctl --user daemon-reload
+
+FILES += $(XDG_CONFIG_HOME)/systemd/user/restic-daily@.timer
+$(XDG_CONFIG_HOME)/systemd/user/restic-daily@.timer: $(XDG_CONFIG_HOME)/systemd/user/restic@.service
+	@install -m 644 -D /dev/stdin $@ <<- EOF
+		#
+		# Created by dotfiles setup script on $$(date -I) by ${USER}
+		#
+		[Unit]
+		Description=Daily backup of %i
+
+		[Timer]
+		OnBootSec=15min
+		RandomizedDelaySec=30min
+		OnCalendar=daily
+		Persistent=true
+		Unit=restic@%i.service
+
+		[Install]
+		WantedBy=timers.target
+	EOF
+	@systemctl --user daemon-reload
+
+FILES += $(XDG_CONFIG_HOME)/Code/User/settings.json
+$(XDG_CONFIG_HOME)/Code/User/settings.json: $(DOTFILES)/.config/Code/User/settings.json
+	@install -d $(@D)
+	@ln -svfn $< $@
+
 ########################################################################################################################
 #
 # Patches
@@ -1250,6 +1311,53 @@ PATCH += /etc/udev/rules.d/50-usb_power_save.rules
 		EOF
 	@sudo udevadm control --reload-rules && sudo udevadm trigger
 
+# Fix for the GNOME suspend issue
+# (see https://forums.developer.nvidia.com/t/trouble-suspending-with-510-39-01-linux-5-16-0-freezing-of-tasks-failed-after-20-009-seconds/200933/11)
+PATCH += patch-gnome-suspend
+patch-gnome-suspend:
+	@sudo install -m 644 -CD /dev/stdin /etc/systemd/system/gnome-shell-suspend.service <<- EOF
+		#
+		# Created by dotfiles setup script on $$(date -I) by ${USER}
+		#
+		[Unit]
+		Description=Suspend gnome-shell
+		Before=systemd-suspend.service
+		Before=systemd-hibernate.service
+		Before=nvidia-suspend.service
+		Before=nvidia-hibernate.service
+
+		[Service]
+		Type=oneshot
+		ExecStart=/usr/bin/killall -STOP gnome-shell
+
+		[Install]
+		WantedBy=systemd-suspend.service
+		WantedBy=systemd-hibernate.service
+	EOF
+
+	@sudo install -m 644 -CD /dev/stdin /etc/systemd/system/gnome-shell-resume.service <<- EOF
+		#
+		# Created by dotfiles setup script on $$(date -I) by ${USER}
+		#
+		[Unit]
+		Description=Resume gnome-shell
+		After=systemd-suspend.service
+		After=systemd-hibernate.service
+		After=nvidia-resume.service
+
+		[Service]
+		Type=oneshot
+		ExecStart=/usr/bin/killall -CONT gnome-shell
+
+		[Install]
+		WantedBy=systemd-suspend.service
+		WantedBy=systemd-hibernate.service
+	EOF
+
+	@sudo systemctl daemon-reload
+	@sudo systemctl enable gnome-shell-suspend
+	@sudo systemctl enable gnome-shell-resume
+
 ########################################################################################################################
 #
 # Updates
@@ -1281,6 +1389,15 @@ update-firmware: | fwupd
 	@$(call log,$(INFO), "\\nUpdating firmware ...\\n")
 	@fwupdmgr get-updates --force
 	@fwupdmgr update
+
+UPDATE += update-gnome-extensions
+update-gnome-extensions:
+	@echo -e "\n*******************************************************************************************************"
+	@$(call log,$(INFO), "\\nSchedule GNOME extension auto-update ...\\n")
+	@gdbus call --session \
+		--dest org.gnome.Shell.Extensions \
+		--object-path /org/gnome/Shell/Extensions \
+		--method org.gnome.Shell.Extensions.CheckForUpdates
 
 ########################################################################################################################
 #
@@ -1397,17 +1514,26 @@ check-fwupd-security: | fwupd
 # Backup rules
 #
 
-BACKUP += backup-home-primary
-backup-home-primary: pass restic fastfetch redhat-lsb diffutils
+.PHONY:
+backup-home-primary-no-deps:
 	@$(HOME_BIN)/backup-home-restic --env-file "$(HOME)/.home/.backup/.env.backup.primary"
 
-BACKUP += backup-home-secondary
-backup-home-secondary: pass restic fastfetch redhat-lsb diffutils
+.PHONY:
+backup-home-secondary-no-deps:
 	@$(HOME_BIN)/backup-home-restic --env-file "$(HOME)/.home/.backup/.env.backup.secondary"
 
-BACKUP += backup-home-cloud
-backup-home-cloud: pass restic fastfetch redhat-lsb diffutils
+.PHONY:
+backup-home-cloud-no-deps:
 	@$(HOME_BIN)/backup-home-restic --env-file "$(HOME)/.home/.backup/.env.backup.cloud"
+
+BACKUP += backup-home-primary
+backup-home-primary: | pass restic fastfetch redhat-lsb diffutils backup-home-primary-no-deps
+
+BACKUP += backup-home-secondary
+backup-home-secondary: pass restic fastfetch redhat-lsb diffutils backup-home-secondary-no-deps
+
+BACKUP += backup-home-cloud
+backup-home-cloud: pass restic fastfetch redhat-lsb diffutils backup-home-cloud-no-deps
 
 BACKUP += backup-router-primary
 backup-router-primary: pass restic curl jq
