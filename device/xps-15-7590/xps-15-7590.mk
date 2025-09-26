@@ -63,5 +63,5 @@ install_nvidia_drivers: | /etc/yum.repos.d/rpmfusion-nonfree.repo akmods grubby
 	EOF
 
 PATCH += patch_dell_xps
-patch_dell_xps: | fix_dell_deep_sleep fix_dell_camera install_nvidia_drivers \
+patch-dell-xps: | fix_dell_deep_sleep fix_dell_camera install_nvidia_drivers \
 	/etc/modprobe.d/dell.conf /etc/modprobe.d/btusb.conf /etc/sysctl.d/97-swappiness.conf
