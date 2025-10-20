@@ -3,6 +3,12 @@
 	"editor.codeActionsOnSave": {},
 	"redhat.telemetry.enabled": false,
 	"cSpell.userWords": [
+		"fastfetch",
+		"iexclude",
+		"obatiuk",
+		"RCLONE",
+		"restic",
+		"TPSLIMIT"
 	],
 	"files.autoSave": "afterDelay",
 	"diffEditor.renderSideBySide": false,

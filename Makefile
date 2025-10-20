@@ -51,6 +51,7 @@ DOTHOME := $(abspath $(HOME)/.home)
 BASHRCD := $(abspath $(HOME)/.bashrc.d)
 HOME_BIN := $(abspath $(DOTHOME)/bin)
 HOME_OPT := $(abspath $(DOTHOME)/opt)
+HOME_BACKUP := $(abspath $(DOTHOME)/backup)
 PASS_HOME := $(abspath $(HOME)/.password-store)
 PASS_EXT := $(abspath $(PASS_HOME)/.extensions)
 INCLUDE = $(DOTFILES)/include
@@ -59,8 +60,6 @@ DEVICE = $(DOTFILES)/device
 VIVALDI_CF_SRC := $(DOTFILES)/.config/vivaldi/CustomUIModifications
 VIVALDI_CF_DEST := $(XDG_CONFIG_HOME)/vivaldi/CustomUIModifications
 ULAUNCHER_EXT := $(XDG_DATA_HOME)/ulauncher/extensions
-STREAMDECK_CF_SRC := $(DOTFILES)/.config/streamdeck-ui
-STREAMDECK_CF_DEST := $(XDG_CONFIG_HOME)/streamdeck-ui
 
 INSTALL =
 PATCH =
@@ -125,7 +124,7 @@ PACKAGES_RPM += gnome-pomodoro gnome-clocks fd-find ydiff webp-pixbuf-loader usb
 PACKAGES_RPM += fastfetch bc usbutils pciutils acpi policycoreutils-devel pass-otp pass-audit
 PACKAGES_RPM += gnupg2 pinentry-gtk pinentry-tty pinentry-gnome3 gedit gedit-plugins gedit-plugin-editorconfig
 PACKAGES_RPM += gvfs-mtp screen progress pv tio dialog catimg cifs-utils sharutils binutils
-PACKAGES_RPM += restic rsync rclone micro wget xsensors lm_sensors curl jq
+PACKAGES_RPM += restic rsync rclone micro wget xsensors lm_sensors curl jq libnotify
 PACKAGES_RPM += unrar lynx crudini sysstat p7zip nmap cabextract iotop qrencode uuid tcpdump
 PACKAGES_RPM += git diffutils git-lfs git-extras git-credential-libsecret git-crypt bat mc gh perl-Image-ExifTool
 PACKAGES_RPM += snapd calibre ebook-tools clamav clamav-freshclam mdns-scan
@@ -142,7 +141,7 @@ PLUGINS_DNF += python3-dnf-plugin-rpmconf needs-restarting
 PACKAGES_SNAP := chromium-ffmpeg brave intellij-idea-community slack
 
 # All **user** `flatpak` packages that are not directly referenced
-PACKAGES_FLATPAK := org.gnupg.GPA org.gtk.Gtk3theme.Arc-Darker be.alexandervanhee.gradia
+PACKAGES_FLATPAK := org.gnupg.GPA org.gtk.Gtk3theme.Arc-Darker be.alexandervanhee.gradia com.core447.StreamController
 
 # Font packages
 PACKAGES_FONTS := google-droid-sans-fonts google-droid-serif-fonts google-droid-sans-mono-fonts
@@ -187,9 +186,6 @@ EXT_MICRO += $(addprefix micro_,editorconfig fzf filemanager)
 
 VIVALDI_CONF_FILES := $(shell find .config/vivaldi/CustomUIModifications -type f -name '*.*')
 VIVALDI_CONF_DEST_FILES := $(addprefix $(HOME)/, $(VIVALDI_CONF_FILES))
-
-STREAMDECK_CONF_FILES := $(shell find .config/streamdeck-ui -type f -name '*.*')
-STREAMDECK_CONF_DEST_FILES := $(addprefix $(HOME)/, $(STREAMDECK_CONF_FILES))
 
 EXT_PASS := symlink.bash age.bash ln.bash file.bash update.bash tessen.bash meta.bash
 EXT_PASS_DEST_FILES := $(addprefix $(PASS_EXT)/,$(EXT_PASS))
@@ -306,7 +302,7 @@ gnome-desktop:
 	@# Force group installation if -B flag is present
 	@$(if $(findstring B,$(firstword -$(MAKEFLAGS))), \
 		@sudo dnf -y group install $@, \
-		@sudo dnf group list --installed --hidden | grep $@ > /dev/null || sudo dnf -y group install $@)
+		@dnf group list --installed --hidden | grep $@ > /dev/null || sudo dnf -y group install $@)
 
 INSTALL += google-chrome
 google-chrome: | gnome-desktop /etc/yum.repos.d/google-chrome.repo
@@ -332,11 +328,9 @@ arduino: flatpak
 	@flatpak -y --user install cc.arduino.arduinoide cc.arduino.IDE2
 	@sudo usermod -aG dialout,tty,lock '$(USER)'
 
+INSTALL += code
 code: snap
 	@snap install $@ --classic
-
-INSTALL += vscode
-vscode: | code $(EXT_VSCODE)
 
 INSTALL += ddcutil
 ddcutil: | /etc/yum.repos.d/_copr\:copr.fedorainfracloud.org\:rockowitz\:ddcutil.repo
@@ -370,32 +364,33 @@ ifeq ($(ARC_THEME_SOURCE),git)
 # `arc-theme` package from the official repository doesn't have latest patches
 # Use patched Arc themes version from git: https://github.com/jnsh/arc-theme/blob/master/INSTALL.md
 INSTALL += arc-theme
-arc-theme: | gnome-desktop git arc-theme-git-install arc-theme-git-build
+arc-theme: | gnome-desktop git install-arc-theme-git build-arc-theme-git
 
-arc-theme-git-install:
+.PHONY: install-arc-theme-git
+install-arc-theme-git:
 	@sudo dnf -y remove arc-theme
 	# install pre-requisites
 	@$(call dnf,optipng gnome-themes-extra gtk-murrine-engine meson inkscape sassc glib2-devel gdk-pixbuf2 \
 		gtk3-devel gtk4-devel autoconf automake)
 
 # Using SELF_CALL=xxx to avoid `inkscape` segfaults during build (https://gitlab.com/inkscape/inkscape/-/issues/4716)
-arc-theme-git-build:
+.PHONY: build-arc-theme-git
+build-arc-theme-git:
 	@install -d $(HOME_OPT)
-	# FIXME: replace cd with -C argument (and similar for meson)
 	@rebuild_theme=false
 	@if [ ! -d $(HOME_OPT)/arc-theme ]; then
-		cd $(HOME_OPT) && git clone https://github.com/obatiuk/arc-theme --depth 1
-		cd $(HOME_OPT)/arc-theme && git pull
-		cd $(HOME_OPT)/arc-theme && meson setup --reconfigure --prefix=$(HOME)/.local \
+		git clone https://github.com/obatiuk/arc-theme --depth 1 $(HOME_OPT)/arc-theme
+		git -C $(HOME_OPT)/arc-theme pull
+		meson setup --reconfigure --prefix=$(HOME)/.local \
 			-Dvariants=dark,darker \
 			-Dthemes=gnome-shell,gtk2,gtk3,gtk4 \
-			build
+			 $(HOME_OPT)/arc-theme/build
 		rebuild_theme=true
 	fi
-	@if [ $$rebuild_theme == true ] || [ ! z $$(cd $(HOME_OPT)/arc-theme && git diff --shortstat HEAD) ]; then
-		cd $(HOME_OPT)/arc-theme && git pull
-		cd $(HOME_OPT)/arc-theme && SELF_CALL=true bash -c 'meson install -C build'
-		mkdir -p $(HOME)/.themes
+	@if [ $$rebuild_theme == true ] || [ ! z $$(git -C $(HOME_OPT)/arc-theme diff --shortstat HEAD) ]; then
+		git -C $(HOME_OPT)/arc-theme pull
+		SELF_CALL=true bash -c 'meson install -C $(HOME_OPT)/arc-theme/build'
+		install -d $(HOME)/.themes
 		for theme in Arc{,-Dark,-Darker,-Lighter}{,-solid}; do
 			if [ -d $(XDG_DATA_HOME)/themes/$${theme} ]; then
 				ln -svfn $(XDG_DATA_HOME)/themes/$${theme} $(HOME)/.themes/$${theme}
@@ -403,12 +398,12 @@ arc-theme-git-build:
 		done
 	fi
 
-UPDATE += arc-theme-git-update
-arc-theme-git-update: | git arc-theme-git-build
+UPDATE += update-arc-theme-git
+update-arc-theme-git: | git build-arc-theme-git
 
-CLEAN += arc-theme-git-clean
-arc-theme-git-clean:
-	@cd $(HOME_OPT)/arc-theme && meson compile --clean -C build
+CLEAN += clean-arc-theme-git
+clean-arc-theme-git:
+	@meson compile --clean -C $(HOME_OPT)/arc-theme/build
 
 else
 # Install `arc-theme` from the official repository. Updates will be tracked by default
@@ -436,7 +431,7 @@ tuned-ppd: | tuned
 INSTALL += pass
 pass: | git
 	@$(call dnf,$@)
-	@install -m 644 -d "$(HOME)/.password-store"
+	@install -m 744 -d $(HOME)/.password-store
 
 INSTALL += pass-extensions
 pass-extensions: | pass pass-otp pass-audit $(EXT_PASS_DEST_FILES)
@@ -455,18 +450,13 @@ gnome-shell-extensions-bin: | gnome-desktop git
 	@ln -snvf $(HOME_OPT)/install-gnome-extensions.git/install-gnome-extensions.sh $(HOME_BIN)/install-gnome-extensions
 	@chmod u+x $(HOME_BIN)/install-gnome-extensions
 
-UPDATE += gnome-shell-extensions-bin-update
-gnome-shell-extensions-bin-update:
+UPDATE += update-gnome-shell-extensions-bin
+update-gnome-shell-extensions-bin:
 	@if [ -d $(HOME_OPT)/install-gnome-extensions.git ]; then git -C $(HOME_OPT)/install-gnome-extensions.git pull; fi
 
 INSTALL += pip
 pip: | python3 python3-pip
 	@python -m pip install --upgrade pip
-
-INSTALL += streamdeck-ui
-streamdeck-ui: | python3-devel pip $(STREAMDECK_CONF_DEST_FILES)
-	@$(call dnf,hidapi)
-	@python -m pip install streamdeck-linux-gui --user
 
 INSTALL += smartmontools
 smartmontools:
@@ -480,7 +470,7 @@ meld: | gnome-desktop dconf
 
 INSTALL += obsidian
 obsidian: | flatpak
-	#@flatpak install md.obsidian.Obsidian
+	#@flatpak install md.obsidian.Obsidian - disabled for now to keep current locked version
 
 INSTALL += steam
 steam: | flatpak /etc/yum.repos.d/rpmfusion-nonfree.repo
@@ -516,18 +506,18 @@ logrotate:
 INSTALL += browserpass-bin
 browserpass-bin:
 	@$(call clone,browserpass-native.git)
-	@cd $(HOME_OPT)/browserpass-native.git && make browserpass configure
-	@cd $(HOME_OPT)/browserpass-native.git && sudo make install
-	@cd $(HOME_OPT)/browserpass-native.git && make hosts-chrome-user hosts-firefox-user hosts-vivaldi-user \
+	@make $(HOME_OPT)/browserpass-native.git browserpass configure
+	@sudo make -C $(HOME_OPT)/browserpass-native.git install
+	@make -C $(HOME_OPT)/browserpass-native.git hosts-chrome-user hosts-firefox-user hosts-vivaldi-user \
 		policies-chrome-user policies-vivaldi-user
 
-CLEAN += browserpass-clean
-browserpass-clean:
-	@cd $(HOME_OPT)/browserpass-native.git && make clean
+CLEAN += clean-browserpass
+clean-browserpass:
+	@make -C $(HOME_OPT)/browserpass-native.git clean
 
 INSTALL += browserpass
 browserpass: | git coreutils golang pass pass-extensions $(PASS_HOME)/.browserpass.json vivaldi google-chrome firefox \
-	browserpass-bin browserpass-clean
+	browserpass-bin clean-browserpass
 
 INSTALL += geoclue2
 geoclue2: | crudini
@@ -677,6 +667,7 @@ gnome-desktop-settings: | gnome-desktop fonts
 	@gsettings set org.gnome.mutter dynamic-workspaces false
 	@gsettings set org.gnome.mutter workspaces-only-on-primary false
 	@gsettings set org.gnome.SessionManager logout-prompt false
+	@gsettings set org.gnome.SessionManager auto-save-session true
 
 	# Fonts
 	@gsettings set org.gnome.desktop.interface monospace-font-name 'JetBrainsMono Nerd Font Mono 10'
@@ -694,7 +685,6 @@ gnome-desktop-settings: | gnome-desktop fonts
 		'chrome-hpfldicfbfomlpcikngkocigghgafkph-Profile_4.desktop', 'org.gnome.Pomodoro.desktop', \
 		'cc.arduino.IDE2.desktop', 'calibre-gui.desktop', 'com.valvesoftware.Steam.desktop', 'slack_slack.desktop', \
 		 'wine-Programs-reMarkable-reMarkable.desktop']"
-
 
 # GNOME display settings
 INSTALL += gnome-display-settings
@@ -1053,11 +1043,6 @@ $(VIVALDI_CF_DEST)/%: $(VIVALDI_CF_SRC)/%
 	@install -d $(@D)
 	@ln -svfn $< $@
 
-FILES += $(STREAMDECK_CONF_DEST_FILES)
-$(STREAMDECK_CF_DEST)/%: $(STREAMDECK_CF_SRC)/%
-	@install -d $(@D)
-	@ln -svfn $< $@
-
 FILES += /etc/NetworkManager/conf.d/00-randomize-mac.conf
 /etc/NetworkManager/conf.d/00-randomize-mac.conf: | gnome-desktop
 	@install -m 644 -D /dev/stdin $@ <<- EOF
@@ -1096,33 +1081,8 @@ FILES += /etc/systemd/resolved.conf.d/dnssec.conf
 	EOF
 	@sudo systemctl restart systemd-resolved
 
-FILES += $(XDG_CONFIG_HOME)/systemd/user/streamdeck.service
-$(XDG_CONFIG_HOME)/systemd/user/streamdeck.service: | systemd streamdeck-ui
-	@sudo install -m 644 -D /dev/stdin $@ <<- EOF
-		#
-		# Created by dotfiles setup script on $$(date -I) by ${USER}
-		#
-		[Unit]
-		Description=A Linux compatible UI for the Elgato Stream Deck.
-		Wants=gnome-session-initialized.target
-		After=gnome-session-initialized.target
-
-		[Service]
-		Type=simple
-		Environment="STREAMDECK_UI_LOG_FILE=/dev/null"
-		Environment="STREAMDECK_UI_CONFIG=$(HOME)/.config/streamdeck-ui/ui.json"
-		WorkingDirectory=$(HOME)
-		ExecStart=$(HOME)/.local/bin/streamdeck -n
-		Restart=on-failure
-
-		[Install]
-		WantedBy=graphical-session.target
-	EOF
-	@systemctl --user daemon-reload
-	@systemctl --user enable --now streamdeck.service
-
 FILES += /etc/udev/rules.d/60-streamdeck.rules
-/etc/udev/rules.d/60-streamdeck.rules: | streamdeck-ui
+/etc/udev/rules.d/60-streamdeck.rules:
 	@sudo install -m 644 -D /dev/stdin $@ <<- EOF
 		#
 		# Created by dotfiles setup script on $$(date -I) by ${USER}
@@ -1216,7 +1176,7 @@ $(PASS_EXT)/meta.bash: | git pass
 FILES += /usr/local/bin/pass-gen
 /usr/local/bin/pass-gen: | git pass .passgenrc
 	@$(call clone,pass-gen.git)
-	@cd $(HOME_OPT)/pass-gen.git && sudo make install
+	@sudo make -C $(HOME_OPT)/pass-gen.git install
 
 FILES += /etc/usbguard/rules.conf
 /etc/usbguard/rules.conf: | usbguard
@@ -1235,7 +1195,7 @@ $(XDG_DATA_HOME)/python/history: $(BASHRCD)/bashrc-xdg
 	@touch $@
 
 FILES += $(XDG_CONFIG_HOME)/systemd/user/restic@.service
-$(XDG_CONFIG_HOME)/systemd/user/restic@.service:
+$(XDG_CONFIG_HOME)/systemd/user/restic@.service: | restic libnotify
 	@install -m 644 -D /dev/stdin $@ <<- EOF
 		#
 		# Created by dotfiles setup script on $$(date -I) by ${USER}
@@ -1243,13 +1203,15 @@ $(XDG_CONFIG_HOME)/systemd/user/restic@.service:
 		[Unit]
 		Description=Restic backup for %i
 		After=network.target
+		ConditionUser=!root
 
 		[Service]
 		Type=simple
 		WorkingDirectory=$(DOTFILES)
 		RuntimeDirectory=restic/%i
 		IOSchedulingClass=idle
-		ExecStart=/usr/bin/systemd-inhibit --who="Restic Backup Service" --why="Automatic backup (%i) is running" /usr/bin/make %i-no-deps
+		Restart=no
+		ExecStart=/usr/bin/gnome-session-inhibit --inhibit logout:suspend:idle --app-id org.gnome.Terminal.desktop --reason "Automatic backup (%i) is running" /usr/bin/make %i-no-deps
 	EOF
 	@systemctl --user daemon-reload
 
@@ -1273,6 +1235,25 @@ $(XDG_CONFIG_HOME)/systemd/user/restic-daily@.timer: $(XDG_CONFIG_HOME)/systemd/
 		WantedBy=timers.target
 	EOF
 	@systemctl --user daemon-reload
+
+# Request admin authentication to ignore inhibitors
+FILES += /etc/polkit-1/rules.d/10-admin-auth-ignore-inhibit.rules
+/etc/polkit-1/rules.d/10-admin-auth-ignore-inhibit.rules:
+	@sudo install -m 644 -D /dev/stdin $@ <<- EOF
+		polkit.addRule(function(action, subject) {
+			if (action.id == "org.freedesktop.login1.power-off-ignore-inhibit" ||
+				action.id == "org.freedesktop.login1.power-off-multiple-sessions" ||
+				action.id == "org.freedesktop.login1.reboot-ignore-inhibit" ||
+				action.id == "org.freedesktop.login1.reboot-multiple-sessions" ||
+				action.id == "org.freedesktop.login1.suspend-ignore-inhibit" ||
+				action.id == "org.freedesktop.login1.suspend-multiple-sessions" ||
+				action.id == "org.freedesktop.login1.hibernate-ignore-inhibit" ||
+				action.id == "org.freedesktop.login1.hibernate-multiple-sessions"
+			) {
+				return polkit.Result.AUTH_ADMIN;
+			}
+		});
+	EOF
 
 FILES += $(XDG_CONFIG_HOME)/Code/User/settings.json
 $(XDG_CONFIG_HOME)/Code/User/settings.json: $(DOTFILES)/.config/Code/User/settings.json
@@ -1311,7 +1292,7 @@ PATCH += /etc/udev/rules.d/50-usb_power_save.rules
 		EOF
 	@sudo udevadm control --reload-rules && sudo udevadm trigger
 
-# Fix for the GNOME suspend issue
+# Fix for the NVIDIA suspend issue
 # (see https://forums.developer.nvidia.com/t/trouble-suspending-with-510-39-01-linux-5-16-0-freezing-of-tasks-failed-after-20-009-seconds/200933/11)
 PATCH += patch-gnome-suspend
 patch-gnome-suspend:
@@ -1383,13 +1364,6 @@ update-flatpak: | flatpak
 	@flatpak update
 	@flatpak update --user
 
-UPDATE += update-firmware
-update-firmware: | fwupd
-	@echo -e "\n*******************************************************************************************************"
-	@$(call log,$(INFO), "\\nUpdating firmware ...\\n")
-	@fwupdmgr get-updates --force
-	@fwupdmgr update
-
 UPDATE += update-gnome-extensions
 update-gnome-extensions:
 	@echo -e "\n*******************************************************************************************************"
@@ -1398,6 +1372,19 @@ update-gnome-extensions:
 		--dest org.gnome.Shell.Extensions \
 		--object-path /org/gnome/Shell/Extensions \
 		--method org.gnome.Shell.Extensions.CheckForUpdates
+
+UPDATE += update-micro-plugins
+update-micro-plugins: | micro
+	@echo -e "\n*******************************************************************************************************"
+	@$(call log,$(INFO), "\\nUpdating micro plugins ...\\n")
+	@$(foreach plugin, $(EXT_MICRO), $$(command -v micro) -plugin update $(subst micro_,,$(plugin);))
+
+UPDATE += update-firmware
+update-firmware: | fwupd
+	@echo -e "\n*******************************************************************************************************"
+	@$(call log,$(INFO), "\\nUpdating firmware ...\\n")
+	@fwupdmgr get-updates --force
+	@fwupdmgr update
 
 ########################################################################################################################
 #
@@ -1507,6 +1494,14 @@ CHECK += check-fwupd-security
 check-fwupd-security: | fwupd
 	@sudo fwupdmgr security
 
+CHECK += check-journal
+check-journal:
+	@journalctl --verify
+
+CHECK += check-ecryptfs
+check-ecryptfs: | ecryptfs-utils
+	@ecryptfs-verify -p
+
 #TODO: add rasdaemon checks
 
 ########################################################################################################################
@@ -1514,26 +1509,26 @@ check-fwupd-security: | fwupd
 # Backup rules
 #
 
-.PHONY:
+.PHONY: backup-home-primary-no-deps
 backup-home-primary-no-deps:
-	@$(HOME_BIN)/backup-home-restic --env-file "$(HOME)/.home/.backup/.env.backup.primary"
+	@$(HOME_BIN)/restic-backup --env-file "$(HOME_BACKUP)/.env.restic.primary" --conf-file "$(HOME_BACKUP)/.conf.backup.home"
 
-.PHONY:
+.PHONY: backup-home-secondary-no-deps
 backup-home-secondary-no-deps:
-	@$(HOME_BIN)/backup-home-restic --env-file "$(HOME)/.home/.backup/.env.backup.secondary"
+	@$(HOME_BIN)/restic-backup --env-file "$(HOME_BACKUP)/.env.restic.secondary" --conf-file "$(HOME_BACKUP)/.conf.backup.home"
 
-.PHONY:
+.PHONY: backup-home-cloud-no-deps
 backup-home-cloud-no-deps:
-	@$(HOME_BIN)/backup-home-restic --env-file "$(HOME)/.home/.backup/.env.backup.cloud"
+	@$(HOME_BIN)/restic-backup --env-file "$(HOME_BACKUP)/.env.restic.cloud" --conf-file "$(HOME_BACKUP)/.conf.backup.home"
 
 BACKUP += backup-home-primary
-backup-home-primary: | pass restic fastfetch redhat-lsb diffutils backup-home-primary-no-deps
+backup-home-primary: | pass restic redhat-lsb diffutils backup-home-primary-no-deps
 
 BACKUP += backup-home-secondary
-backup-home-secondary: pass restic fastfetch redhat-lsb diffutils backup-home-secondary-no-deps
+backup-home-secondary: pass restic redhat-lsb diffutils backup-home-secondary-no-deps
 
 BACKUP += backup-home-cloud
-backup-home-cloud: pass restic fastfetch redhat-lsb diffutils backup-home-cloud-no-deps
+backup-home-cloud: pass restic rclone redhat-lsb diffutils backup-home-cloud-no-deps
 
 BACKUP += backup-router-primary
 backup-router-primary: pass restic curl jq
@@ -1571,6 +1566,9 @@ backup-pass: git pass pass-extensions
 .PHONY: snap
 snap: | snapd /snap
 
+.PHONY: vscode
+vscode: | code $(EXT_VSCODE)
+
 .PHONY: ecryptfs
 ecryptfs: ecryptfs-utils
 
@@ -1588,6 +1586,9 @@ intellij: | intellij-idea-community $(EXT_INTELLIJ)
 
 .PHONY: geoclue
 geoclue: geoclue2
+
+.PHONY: streamcontroller
+streamcontroller: com.core447.StreamController
 
 .PHONY: backup-home
 backup-home: backup-home-primary backup-home-secondary backup-home-cloud
