@@ -214,7 +214,7 @@ ecryptfs-utils:
 	@sudo usermod -aG ecryptfs '$(USER)'
 
 INSTALL += fonts-better
-fonts-better: /etc/yum.repos.d/_copr\:copr.fedorainfracloud.org\:gombosg\:better_fonts.repo
+fonts-better: /etc/yum.repos.d/_copr\:copr.fedorainfracloud.org\:hyperreal\:better_fonts.repo
 	@$(call dnf,fontconfig-enhanced-defaults fontconfig-font-replacements)
 
 INSTALL += fonts_ms
@@ -368,7 +368,7 @@ arc-theme: | gnome-desktop git install-arc-theme-git build-arc-theme-git
 
 .PHONY: install-arc-theme-git
 install-arc-theme-git:
-	@sudo dnf -y remove arc-theme
+	-@sudo dnf -y remove arc-theme
 	# install pre-requisites
 	@$(call dnf,optipng gnome-themes-extra gtk-murrine-engine meson inkscape sassc glib2-devel gdk-pixbuf2 \
 		gtk3-devel gtk4-devel autoconf automake)
@@ -380,15 +380,16 @@ build-arc-theme-git:
 	@rebuild_theme=false
 	@if [ ! -d $(HOME_OPT)/arc-theme ]; then
 		git clone https://github.com/obatiuk/arc-theme --depth 1 $(HOME_OPT)/arc-theme
+		rebuild_theme=true
+	fi
+	@git -C $(HOME_OPT)/arc-theme remote update
+	@has_changes=$$(git -C $(HOME_OPT)/arc-theme status -uno | grep -q 'Your branch is behind' && echo 'true' || echo 'false')
+	@if [ $${rebuild_theme} == true ] || [ $${has_changes} == true ]; then
 		git -C $(HOME_OPT)/arc-theme pull
 		meson setup --reconfigure --prefix=$(HOME)/.local \
 			-Dvariants=dark,darker \
 			-Dthemes=gnome-shell,gtk2,gtk3,gtk4 \
-			 $(HOME_OPT)/arc-theme/build
-		rebuild_theme=true
-	fi
-	@if [ $$rebuild_theme == true ] || [ ! z $$(git -C $(HOME_OPT)/arc-theme diff --shortstat HEAD) ]; then
-		git -C $(HOME_OPT)/arc-theme pull
+			$(HOME_OPT)/arc-theme/build $(HOME_OPT)/arc-theme
 		SELF_CALL=true bash -c 'meson install -C $(HOME_OPT)/arc-theme/build'
 		install -d $(HOME)/.themes
 		for theme in Arc{,-Dark,-Darker,-Lighter}{,-solid}; do
@@ -848,11 +849,12 @@ FILES += /snap
 	@sudo [ -L '/usr/lib/snapd' ] && sudo rm -rfi '/usr/lib/snapd'
 	@sudo systemctl restart snapd
 
-FILES += /etc/yum.repos.d/_copr\:copr.fedorainfracloud.org\:gombosg\:better_fonts.repo
-/etc/yum.repos.d/_copr\:copr.fedorainfracloud.org\:gombosg\:better_fonts.repo:
-	@sudo dnf copr enable gombosg/better_fonts
+FILES += /etc/yum.repos.d/_copr\:copr.fedorainfracloud.org\:hyperreal\:better_fonts.repo
+/etc/yum.repos.d/_copr\:copr.fedorainfracloud.org\:hyperreal\:better_fonts.repo:
+	@sudo dnf copr enable hyperreal/better_fonts
 	# Delete previously used copr repository (if available)
 	-@sudo rm -fv /etc/yum.repos.d/_copr\:copr.fedorainfracloud.org\:chriscowleyunix\:better_fonts.repo
+	-@sudo rm -fv /etc/yum.repos.d/_copr\:copr.fedorainfracloud.org\:gombosg\:better_fonts.repo
 
 FILES += /etc/yum.repos.d/docker-ce.repo
 /etc/yum.repos.d/docker-ce.repo: | dnf-plugins
@@ -1454,11 +1456,11 @@ check-security-updates:
 
 CHECK += check-dnf-autoremove
 check-dnf-autoremove:
-	@if [ $$(sudo dnf list -q --autoremove | wc -l) -gt 0 ]; then $(call log,$(WARN),"Warning: There are candidate rpm packages for autoremoval"); fi
+	@if [ $$(sudo dnf list -q --autoremove | wc -l) -gt 0 ]; then $(call log,$(WARN),"Warning: There are candidate rpm packages for auto-removal"); fi
 
 CHECK += check-dnf-needs-restarting
 check-dnf-needs-restarting:
-	@sudo dnf needs-restarting
+	-@sudo dnf needs-restarting
 
 CHECK += check-rpmconf
 check-rpmconf: | rpmconf meld
@@ -1532,27 +1534,27 @@ backup-home-cloud: pass restic rclone redhat-lsb diffutils backup-home-cloud-no-
 
 BACKUP += backup-router-primary
 backup-router-primary: pass restic curl jq
-	@$(HOME_BIN)/backup-router-restic --env-file "$(HOME)/.home/.backup/.env.backup.primary"
+	@$(HOME_BIN)/backup-router-restic --env-file "$(HOME)/.home/backup/legacy/.env.backup.primary"
 
 BACKUP += backup-router-secondary
 backup-router-secondary: pass restic curl jq
-	@$(HOME_BIN)/backup-router-restic --env-file "$(HOME)/.home/.backup/.env.backup.secondary"
+	@$(HOME_BIN)/backup-router-restic --env-file "$(HOME)/.home/backup/legacy/.env.backup.secondary"
 
 BACKUP += backup-router-cloud
 backup-router-cloud: pass restic curl jq
-	@$(HOME_BIN)/backup-router-restic --env-file "$(HOME)/.home/.backup/.env.backup.cloud"
+	@$(HOME_BIN)/backup-router-restic --env-file "$(HOME)/.home/backup/legacy/.env.backup.cloud"
 
 BACKUP += backup-system-primary
 backup-system-primary: pass restic fastfetch redhat-lsb diffutils
-	@$(HOME_BIN)/backup-system-restic --env-file "$(HOME)/.home/.backup/.env.backup.primary"
+	@$(HOME_BIN)/backup-system-restic --env-file "$(HOME)/.home/backup/legacy/.env.backup.primary"
 
 BACKUP += backup-system-secondary
 backup-system-secondary: pass restic fastfetch redhat-lsb diffutils
-	@$(HOME_BIN)/backup-system-restic --env-file "$(HOME)/.home/.backup/.env.backup.secondary"
+	@$(HOME_BIN)/backup-system-restic --env-file "$(HOME)/.home/backup/legacy/.env.backup.secondary"
 
 BACKUP += backup-system-cloud
 backup-system-cloud: pass restic fastfetch redhat-lsb diffutils
-	@$(HOME_BIN)/backup-system-restic --env-file "$(HOME)/.home/.backup/.env.backup.cloud"
+	@$(HOME_BIN)/backup-system-restic --env-file "$(HOME)/.home/backup/legacy/.env.backup.cloud"
 
 BACKUP += backup-pass
 backup-pass: git pass pass-extensions
