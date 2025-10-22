@@ -124,7 +124,7 @@ PACKAGES_RPM += gnome-pomodoro gnome-clocks fd-find ydiff webp-pixbuf-loader usb
 PACKAGES_RPM += fastfetch bc usbutils pciutils acpi policycoreutils-devel pass-otp pass-audit
 PACKAGES_RPM += gnupg2 pinentry-gtk pinentry-tty pinentry-gnome3 gedit gedit-plugins gedit-plugin-editorconfig
 PACKAGES_RPM += gvfs-mtp screen progress pv tio dialog catimg cifs-utils sharutils binutils
-PACKAGES_RPM += restic rsync rclone micro wget xsensors lm_sensors curl jq libnotify
+PACKAGES_RPM += restic rsync rclone micro wget xsensors lm_sensors curl jq libnotify glow
 PACKAGES_RPM += unrar lynx crudini sysstat p7zip nmap cabextract iotop qrencode uuid tcpdump
 PACKAGES_RPM += git diffutils git-lfs git-extras git-credential-libsecret git-crypt bat mc gh perl-Image-ExifTool
 PACKAGES_RPM += snapd calibre ebook-tools clamav clamav-freshclam mdns-scan
@@ -1262,6 +1262,11 @@ $(XDG_CONFIG_HOME)/Code/User/settings.json: $(DOTFILES)/.config/Code/User/settin
 	@install -d $(@D)
 	@ln -svfn $< $@
 
+FILES += $(XDG_CONFIG_HOME)/glow/glow.yml
+$(XDG_CONFIG_HOME)/glow/glow.yml: $(DOTFILES)/.config/glow/glow.yml | glow
+	@install -d $(@D)
+	@ln -svfn $< $@
+
 ########################################################################################################################
 #
 # Patches
@@ -1369,8 +1374,8 @@ update-flatpak: | flatpak
 UPDATE += update-gnome-extensions
 update-gnome-extensions:
 	@echo -e "\n*******************************************************************************************************"
-	@$(call log,$(INFO), "\\nSchedule GNOME extension auto-update ...\\n")
-	@gdbus call --session \
+	@$(call log,$(INFO), "\\nScheduling GNOME extension auto-update ...\\n")
+	-@gdbus call --session \
 		--dest org.gnome.Shell.Extensions \
 		--object-path /org/gnome/Shell/Extensions \
 		--method org.gnome.Shell.Extensions.CheckForUpdates
