@@ -1,14 +1,63 @@
+#!/usr/bin/env -S echo "This should not be run directly. Use: \nsource"
+#
+# Development Environment Configuration
+#
+# Sets XDG defaults, configures ADB, loads NVM, and defines utility functions
+#
+# Note: This file is intended to be SOURCED by your .bashrc
+#
+# shellcheck shell=bash
+# shellcheck disable=SC2148,SC1091
+
+
+# --- XDG Base Directory Specification ---
+
+# Sets XDG_DATA_HOME if it is not already set
 : "${XDG_DATA_HOME:=${HOME}/.local/share}"
 
+# --- ADB Environment Configuration ---
+
+# Alias to redefine the ADB home directory to prevent it from cluttering $HOME
+# The ADB daemon often creates ~/.android/adbkey, which is moved here
 alias adb='HOME="${XDG_DATA_HOME}/android" adb'
 
-export NVM_DIR="${XDG_DATA_HOME}/nvm"
-[ -s "${NVM_DIR}/nvm.sh" ] && \. "${NVM_DIR}/nvm.sh" # This loads nvm
-[ -s "${NVM_DIR}/bash_completion" ] && \. "${NVM_DIR}/bash_completion"  # This loads nvm bash_completion
+# --- Node Version Manager (NVM) Setup ---
 
+# Set NVM directory according to XDG standards
+export NVM_DIR="${XDG_DATA_HOME}/nvm"
+
+# Load NVM and its bash completion functions if they exist
+[ -s "${NVM_DIR}/nvm.sh" ] && \. "${NVM_DIR}/nvm.sh"
+[ -s "${NVM_DIR}/bash_completion" ] && \. "${NVM_DIR}/bash_completion"
+
+# --- Google Cloud SDK Setup ---
+
+# Update PATH and enable shell command completion for gcloud if the necessary files exist
+if [ -f '/opt/google/google-cloud-sdk/path.bash.inc' ]; then \. '/opt/google/google-cloud-sdk/path.bash.inc'; fi
+if [ -f '/opt/google/google-cloud-sdk/completion.bash.inc' ]; then \. '/opt/google/google-cloud-sdk/completion.bash.inc'; fi
+
+# --- Utility Functions ---
+
+# dtags: Fetches and displays all available tags for a given Docker image
+# Usage: dtags <image>
 function dtags {
-	local image="${1}"
-	curl --silent \
-		"https://registry.hub.docker.com/v2/repositories/library/${image}/tags?page_size=1000" \
-		| jq -r ".results[].name" | sort --version-sort
+    local IMAGE_NAME="${1}"
+
+    if [[ -z "${IMAGE_NAME}" ]]; then
+        echo "Usage: dtags <image_name>"
+        return 1
+    fi
+
+    # Determine the correct Docker Hub repository path:
+    # If the name contains a slash (e.g., user/repo), use it directly
+    # Otherwise, assume it's an official image (e.g., library/ubuntu)
+    local REPO_PATH="${IMAGE_NAME}"
+    if [[ ! "${IMAGE_NAME}" =~ / ]]; then
+        REPO_PATH="library/${IMAGE_NAME}"
+    fi
+
+    curl --silent \
+        "https://registry.hub.docker.com/v2/repositories/${REPO_PATH}/tags?page_size=1000" \
+        | jq -r ".results[].name" \
+        | sort --version-sort
 }

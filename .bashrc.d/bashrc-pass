@@ -1,18 +1,68 @@
+#!/usr/bin/env -S echo "This should not be run directly. Use: \nsource"
+#
+# Password Store Configuration
+#
+# Sets up environment variables and utility functions for the 'pass' command.
+#
+# Note: This file is intended to be SOURCED by your .bashrc
+#
+# shellcheck shell=bash
+
+# --- Environment Variables ---
+
+# Enable support for Password Store extensions (if installed)
 export PASSWORD_STORE_ENABLE_EXTENSIONS=true
+# Set the location of the password store directory
 export PASSWORD_STORE_DIR="${HOME}/.password-store"
+# Set the location of the extensions directory
 export PASSWORD_STORE_EXTENSIONS_DIR="${PASSWORD_STORE_DIR}/.extensions"
 
+# --- Utility Functions ---
+
+# pw: Custom function to copy password and OTP sequentially to the clipboard.
+# WARNING: The 'exit' command in the original function was replaced with 'return'
+# to prevent it from killing the entire shell session.
 function pw {
-	export PASSWORD_STORE_CLIP_TIME=8
-	export PASSWORD_STORE_X_SELECTION=primary
-	pass -c2 "$1"; sleep 5; pass -c "$1"; sleep 5; pass otp -c "$1"; exit
+    if [ -z "$1" ]; then
+        echo "Usage: pw <password-key>" >&2
+        return 1
+    fi
+
+    # Define variables locally to prevent polluting the shell environment.
+    local PASSWORD_STORE_CLIP_TIME=8
+    local PASSWORD_STORE_X_SELECTION=primary
+
+    echo "-> Copying login to clipboard (clears in ${PASSWORD_STORE_CLIP_TIME}s)..." >&2
+
+    PASSWORD_STORE_CLIP_TIME="${PASSWORD_STORE_CLIP_TIME}" \
+    PASSWORD_STORE_X_SELECTION="${PASSWORD_STORE_X_SELECTION}" \
+    pass meta "$1" login
+
+	sleep ${PASSWORD_STORE_CLIP_TIME}
+
+    echo "-> Copying password to clipboard (clears in ${PASSWORD_STORE_CLIP_TIME}s)..." >&2
+
+    PASSWORD_STORE_CLIP_TIME="${PASSWORD_STORE_CLIP_TIME}" \
+    PASSWORD_STORE_X_SELECTION="${PASSWORD_STORE_X_SELECTION}" \
+    pass -c "$1"
+
+    sleep ${PASSWORD_STORE_CLIP_TIME}
+
+    echo "-> Copying OTP code to clipboard (standard timeout)..." >&2
+    pass otp -c "$1"
+
+    return 0
 }
 
+# pg: Generate a new password and immediately save it to the store.
+#     Assumes the 'pass-gen' utility is available.
 function pg {
-	if [ -z "$1" ]; then
-		# display usage if no parameters given
-		echo "Usage: pg <password-key>"
-	else
-		pass-gen | sed '/^Reading.*/d;q' | pass add -e "$@"
-	fi
+    if [ -z "$1" ]; then
+        # Display usage to standard error
+        echo "Usage: pg <password-key>" >&2
+        return 1
+    else
+        # The sed command filters the 'Reading...' line from 'pass-gen' output.
+        pass-gen | sed '/^Reading.*/d;q' | pass add -e "$@"
+    fi
 }

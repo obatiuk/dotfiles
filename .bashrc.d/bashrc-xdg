@@ -1,43 +1,52 @@
+#!/usr/bin/env -S echo "This should not be run directly. Use: \nsource"
+#
+# XDG Base Directory Compliance Configuration
+#
+# This script sets environment variables to conform to the XDG Base Directory
+# Specification, redirecting application files from the user's home directory
+# to standard locations like ~/.config, ~/.local/share, and ~/.cache
+#
+# Note: This file is intended to be SOURCED by your .bashrc
+#
+# Sources:
+# - https://specifications.freedesktop.org/basedir-spec/latest/
+# - https://wiki.archlinux.org/title/XDG_Base_Directory
+#
+# shellcheck shell=bash
+# shellcheck disable=SC2155
+
+# --- Define Primary XDG Variables (with default fallback) ---
+
+# If XDG variables are not already set, define them based on the spec.
+
 : "${XDG_CONFIG_HOME:=${HOME}/.config}"
 : "${XDG_DATA_HOME:=${HOME}/.local/share}"
 : "${XDG_STATE_HOME:=${HOME}/.local/state}"
 : "${XDG_CACHE_HOME:=${HOME}/.cache}"
 
-# Move `docker` from $HOME folder
-export DOCKER_CONFIG="${XDG_CONFIG_HOME}/docker"
+# --- Environment Variables Redirection ---
 
-# Move `.icons` from $HOME folder (should work by default)
+# Configuration Files (XDG_CONFIG_HOME)
+export DOCKER_CONFIG="${XDG_CONFIG_HOME}/docker"         # Docker client configuration
+export WGETRC="${XDG_CONFIG_HOME}/wget/wgetrc"           # Wget configuration file
+export GTK2_RC_FILES="${XDG_CONFIG_HOME}/gtk-2.0/gtkrc"  # GTK2 configuration
+
+# Data Files (XDG_DATA_HOME)
+export ANDROID_USER_HOME="${XDG_DATA_HOME}/android"      # Android SDK/emulator data (.android)
+export GNUPGHOME="${XDG_DATA_HOME}/gnupg"                # GnuPG directory (.gnupg)
+export GRADLE_USER_HOME="${XDG_DATA_HOME}/gradle"        # Gradle configuration (.gradle)
+export OPAMROOT="${XDG_DATA_HOME}/opam"                  # Opam root directory (.opam)
+export W3M_DIR="${XDG_DATA_HOME}/w3m"                    # W3m configuration (.w3m)
+export GOPATH="${XDG_DATA_HOME}/go"                      # Go workspace
+export PYTHON_HISTORY="${XDG_DATA_HOME}/python/history"  # Python interactive history
+
+# Data Files - Specialized
+# Note: XCURSOR_PATH is often required to look in /usr/share/icons first
 export XCURSOR_PATH="/usr/share/icons:${XDG_DATA_HOME}/icons"
 
-# Move `.android` from $HOME folder
-export ANDROID_USER_HOME="${XDG_DATA_HOME}/android"
+# State Files (XDG_STATE_HOME)
+export HISTFILE="${XDG_STATE_HOME}/bash/history"         # Bash history file (.bash_history)
 
-# Move `.bash_history` from $HOME folder
-export HISTFILE="${XDG_STATE_HOME}/bash/history"
-
-# Move `.nv` from $HOME folder
-export CUDA_CACHE_PATH="${XDG_CACHE_HOME}/nv"
-
-# Move `.gnupg` from $HOME folder
-export GNUPGHOME="${XDG_DATA_HOME}/gnupg"
-
-# Move `.gradle` from the $HOME folder
-export GRADLE_USER_HOME="${XDG_DATA_HOME}/gradle"
-
-# Move `.w3m` from the $HOME folder
-export W3M_DIR="${XDG_DATA_HOME}/w3m"
-
-# Move `.opam` from the $HOME folder
-export OPAMROOT="${XDG_DATA_HOME}/opam"
-
-# Move `.wgetrc` from the $HOME folder
-export WGETRC="${XDG_CONFIG_HOME}/wget/wgetrc"
-
-export GTK2_RC_FILES="${XDG_CONFIG_HOME}/gtk-2.0/gtkrc"
-
-# Move `/go` from the $HOME folder
-export GOPATH="{$XDG_DATA_HOME}"/go
-export GOMODCACHE="${XDG_CACHE_HOME}"/go/mod
-
-# Move python history file
-export PYTHON_HISTORY="${XDG_DATA_HOME}/python/history"
+# Cache Files (XDG_CACHE_HOME)
+export CUDA_CACHE_PATH="${XDG_CACHE_HOME}/nv"            # NVIDIA CUDA cache (.nv)
+export GOMODCACHE="${XDG_CACHE_HOME}/go/mod"             # Go module cache

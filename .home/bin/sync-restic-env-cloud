@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+#
+# Restic Secrets Migration Script
+#
+# This script retrieves Restic repository credentials (URL and password) from
+# the local 'pass' store and places them into the system keyring
+# via 'secret-tool' for easier retrieval by systemd services
+
+command -v pass > /dev/null 2>&1 || { echo "ERROR: 'pass' command not found. Aborting!" >&2; exit 1; }
+command -v secret-tool > /dev/null 2>&1 || { echo "ERROR: 'secret-tool' command not found. Aborting!" >&2; exit 1; }
+
+_restic_repo_name="cloud"
+_restic_pass_file="infra/home/service/restic/network/remote-${_restic_repo_name}"
+
+echo "Retrieving restic server configuration and credentials for repository '${_restic_repo_name}' from pass store..."
+
+# Retrieve metadata and secrets from the pass store
+_restic_repository=$(pass meta ${_restic_pass_file} url)
+_restic_password=$(pass show ${_restic_pass_file} | head -n 1)
+
+if [ -z "${_restic_repository}" ] || [ -z "${_restic_password}" ]; then
+    echo "ERROR: Failed to retrieve critical restic secrets. Check path: ${_restic_pass_file}" >&2
+    exit 1
+fi
+
+echo "Storing restic credentials for '${_restic_repo_name}' into keyring..."
+
+echo -n "${_restic_repository}" | secret-tool store --label="URL for '${_restic_repo_name}' restic repository" \
+	repository "${_restic_repo_name}" \
+	type url \
+	service backup \
+	app_id restic
+
+echo -n "${_restic_password}" | secret-tool store --label="Password for '${_restic_repo_name}' restic repository" \
+	repository "${_restic_repo_name}" \
+	type password \
+	service backup \
+	app_id restic
+
+unset _restic_repo_name
+unset _restic_pass_file
+unset _restic_repository
+unset _restic_password
+
+echo "Migration complete"

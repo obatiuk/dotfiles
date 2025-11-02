@@ -1,0 +1,150 @@
+#!/usr/bin/env -S echo "This should not be run directly. Use: \nsource"
+#
+# This file is intended to be SOURCED, not executed directly.
+# It defines the MQTT autodiscovery backup payload
+#
+# shellcheck shell=bash
+
+export BACKUP_UNIQUE_ID="${BACKUP_CONF_NAME}_${BACKUP_ENV_NAME}"
+export BACKUP_PRETTY_NAME="Restic Backup - ${BACKUP_CONF_NAME} (${BACKUP_ENV_NAME})"
+
+HASS_BACKUP_SENSOR_ID="restic-backup-${BACKUP_UNIQUE_ID//_/-}"
+HASS_BACKUP_COMPONENT_ID_PREFIX="restic_backup_${BACKUP_UNIQUE_ID}"
+
+export HASS_BACKUP_CONFIG_TOPIC="homeassistant/device/${HASS_BACKUP_SENSOR_ID}/config"
+export HASS_BACKUP_STATS_TOPIC="homeassistant/device/${HASS_BACKUP_SENSOR_ID}/stats"
+export HASS_BACKUP_STATE_TOPIC="homeassistant/device/${HASS_BACKUP_SENSOR_ID}/state"
+export HASS_BACKUP_NEXT_START_TOPIC="homeassistant/device/${HASS_BACKUP_SENSOR_ID}/next_start"
+
+HASS_RESTIC_BACKUP_DISCOVERY_PAYLOAD="$(
+cat <<EOF
+{
+    "device": {
+        "ids": "${HASS_BACKUP_SENSOR_ID}",
+        "name": "${BACKUP_PRETTY_NAME}"
+    },
+    "origin": {
+        "name": "systemd"
+    },
+    "components" : {
+        "${HASS_BACKUP_COMPONENT_ID_PREFIX}_last_backup_start" : {
+            "platform": "sensor",
+            "name": "Last Backup Start",
+            "device_class": "timestamp",
+            "value_template":"{{value_json.backup_start}}",
+            "unique_id":"${HASS_BACKUP_COMPONENT_ID_PREFIX}_last_backup_start"
+        },
+        "${HASS_BACKUP_COMPONENT_ID_PREFIX}_last_backup_end" : {
+            "platform": "sensor",
+            "name": "Last Backup End",
+            "device_class": "timestamp",
+            "value_template":"{{value_json.backup_end}}",
+            "unique_id":"${HASS_BACKUP_COMPONENT_ID_PREFIX}_last_backup_end"
+        },
+        "${HASS_BACKUP_COMPONENT_ID_PREFIX}_files_new" : {
+            "platform": "sensor",
+            "name": "New Files",
+            "entity_category": "diagnostic",
+            "state_class": "measurement",
+            "icon": "mdi:file-upload",
+            "value_template":"{{value_json.files_new}}",
+            "unique_id":"${HASS_BACKUP_COMPONENT_ID_PREFIX}_files_new"
+        },
+        "${HASS_BACKUP_COMPONENT_ID_PREFIX}_files_changed" : {
+            "platform": "sensor",
+            "name": "Changed Files",
+            "entity_category": "diagnostic",
+            "state_class": "measurement",
+            "icon": "mdi:file-edit",
+            "value_template":"{{value_json.files_changed}}",
+            "unique_id":"${HASS_BACKUP_COMPONENT_ID_PREFIX}_files_changed"
+        },
+        "${HASS_BACKUP_COMPONENT_ID_PREFIX}_files_unmodified" : {
+            "platform": "sensor",
+            "name": "Unmodified Files",
+            "entity_category": "diagnostic",
+            "state_class": "measurement",
+            "icon": "mdi:file-check",
+            "value_template":"{{value_json.files_unmodified}}",
+            "unique_id":"${HASS_BACKUP_COMPONENT_ID_PREFIX}_files_unmodified"
+        },
+        "${HASS_BACKUP_COMPONENT_ID_PREFIX}_total_files_processed" : {
+            "platform": "sensor",
+            "name": "Total Files Processed",
+            "entity_category": "diagnostic",
+            "state_class": "measurement",
+            "icon": "mdi:file-find",
+            "value_template":"{{value_json.total_files_processed}}",
+            "unique_id":"${HASS_BACKUP_COMPONENT_ID_PREFIX}_total_files_processed"
+        },
+        "${HASS_BACKUP_COMPONENT_ID_PREFIX}_total_file_count" : {
+            "platform": "sensor",
+            "name": "Total File Count",
+            "entity_category": "diagnostic",
+            "state_class": "measurement",
+            "icon": "mdi:file-multiple",
+            "value_template":"{{value_json.total_file_count}}",
+            "unique_id":"${HASS_BACKUP_COMPONENT_ID_PREFIX}_total_file_count"
+        },
+        "${HASS_BACKUP_COMPONENT_ID_PREFIX}_dirs_new" : {
+            "platform": "sensor",
+            "name": "New Directories",
+            "entity_category": "diagnostic",
+            "state_class": "measurement",
+            "icon": "mdi:folder-upload",
+            "value_template":"{{value_json.dirs_new}}",
+            "unique_id":"${HASS_BACKUP_COMPONENT_ID_PREFIX}_dirs_new"
+        },
+        "${HASS_BACKUP_COMPONENT_ID_PREFIX}_dirs_changed" : {
+            "platform": "sensor",
+            "name": "Changed Directories",
+            "entity_category": "diagnostic",
+            "state_class": "measurement",
+            "icon": "mdi:folder-edit",
+            "value_template":"{{value_json.dirs_changed}}",
+            "unique_id":"${HASS_BACKUP_COMPONENT_ID_PREFIX}_dirs_changed"
+        },
+        "${HASS_BACKUP_COMPONENT_ID_PREFIX}_dirs_unmodified" : {
+            "platform": "sensor",
+            "name": "Unmodified Directories",
+            "entity_category": "diagnostic",
+            "state_class": "measurement",
+            "icon": "mdi:folder-check",
+            "value_template":"{{value_json.dirs_unmodified}}",
+            "unique_id":"${HASS_BACKUP_COMPONENT_ID_PREFIX}_dirs_unmodified"
+        },
+        "${HASS_BACKUP_COMPONENT_ID_PREFIX}_total_size" : {
+            "platform": "sensor",
+            "name": "Total Size",
+            "entity_category": "diagnostic",
+            "state_class": "measurement",
+            "unit_of_measurement": "GiB",
+            "device_class": "data_size",
+            "suggested_display_precision": 2,
+            "value_template":"{{value_json.total_size / 1073741824 | round(3)}}",
+            "unique_id":"${HASS_BACKUP_COMPONENT_ID_PREFIX}_total_size"
+        },
+        "${HASS_BACKUP_COMPONENT_ID_PREFIX}_backup_state" : {
+            "platform": "sensor",
+            "name": "Backup State",
+            "device_class": "enum",
+            "value_template":"{{value_json.state}}",
+            "unique_id":"${HASS_BACKUP_COMPONENT_ID_PREFIX}_backup_state",
+            "state_topic": "${HASS_BACKUP_STATE_TOPIC}"
+        },
+        "${HASS_BACKUP_COMPONENT_ID_PREFIX}_next_backup_start" : {
+            "platform": "sensor",
+            "name": "Next Backup Start",
+            "device_class": "timestamp",
+            "icon": "mdi:calendar-clock",
+            "value_template":"{{value}}",
+            "unique_id":"${HASS_BACKUP_COMPONENT_ID_PREFIX}_next_backup_start",
+            "state_topic": "${HASS_BACKUP_NEXT_START_TOPIC}"
+        }
+    },
+    "state_topic": "${HASS_BACKUP_STATS_TOPIC}"
+}
+EOF
+)"
+
+export HASS_RESTIC_BACKUP_DISCOVERY_PAYLOAD

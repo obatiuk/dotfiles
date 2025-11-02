@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+#
+# Restic Secrets Migration Script
+#
+# This script retrieves all necessary credentials for a Restic repository hosted
+# on a REST backend from the local 'pass' store and places them into
+# the system keyring via 'secret-tool' for easier retrieval by systemd services
+
+command -v pass > /dev/null 2>&1 || { echo "ERROR: 'pass' command not found. Aborting!" >&2; exit 1; }
+command -v secret-tool > /dev/null 2>&1 || { echo "ERROR: 'secret-tool' command not found. Aborting!" >&2; exit 1; }
+
+_restic_repo_name="secondary"
+_restic_pass_file="infra/home/service/restic/network/remote-${_restic_repo_name}"
+
+echo "Retrieving restic server configuration and credentials for repository '${_restic_repo_name}' from pass store..."
+
+_restic_server_host=$(pass meta ${_restic_pass_file} server_host)
+_restic_server_port=$(pass meta ${_restic_pass_file} server_port)
+_restic_rest_username=$(pass meta ${_restic_pass_file} server_username)
+_restic_rest_password=$(pass meta ${_restic_pass_file} server_password)
+_restic_password=$(pass show ${_restic_pass_file} | head -n 1)
+_restic_repository=rest:https://${_restic_server_host}:${_restic_server_port}/
+
+if [ -z "${_restic_repository}" ] || [ -z "${_restic_password}" ]; then
+    echo "ERROR: Failed to retrieve critical restic secrets. Check path: ${_restic_pass_file}" >&2
+    exit 1
+fi
+
+echo "Storing restic credentials for '${_restic_repo_name}' into keyring..."
+
+echo -n "${_restic_repository}" | secret-tool store --label="URL for '${_restic_repo_name}' restic repository" \
+    repository "${_restic_repo_name}" \
+    type url \
+    service backup \
+    app_id restic
+
+echo -n "${_restic_password}" | secret-tool store --label="Password for '${_restic_repo_name}' restic repository" \
+    repository "${_restic_repo_name}" \
+    type password \
+    service backup \
+    app_id restic
+
+echo -n "${_restic_rest_username}" | secret-tool store --label="REST server username for '${_restic_repo_name}' restic repository" \
+    repository "${_restic_repo_name}" \
+    type rest-username \
+    service backup \
+    app_id restic
+
+echo -n "${_restic_rest_password}" | secret-tool store --label="REST server password for '${_restic_repo_name}' restic repository" \
+    repository "${_restic_repo_name}" \
+    type rest-password \
+    service backup \
+    app_id restic
+
+unset _restic_repo_name
+unset _restic_pass_file
+unset _restic_server_host
+unset _restic_server_port
+unset _restic_repository
+unset _restic_password
+unset _restic_rest_username
+unset _restic_rest_password
+
+echo "Migration complete"

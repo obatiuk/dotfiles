@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+#
+# Script to prepare the environment for a gaming session:
+# 1. Restart audio service (if needed for stability)
+# 2. Connect specified Bluetooth devices
+# 3. Launch Steam
+
+# List of MAC addresses to connect
+BLUETOOTH_DEVICES=(
+    "04:52:C7:C4:7E:06"     # Headphones
+    "FB:F2:2F:0A:33:93"     # Stadia Controller 1
+    "EF:E3:D6:67:C3:6C"     # Stadia Controller 2
+    "A0:FA:9C:69:2A:11"     # PS5 Dual Sense Controller
+)
+
+# Restart audio service to ensure device stability
+echo "Restarting WirePlumber audio service..."
+systemctl restart --user wireplumber.service
+
+# Switch to a single monitor mode
+"${HOME}"/.home/bin/switch-monitor single
+
+# Wait for audio service and monitor switching to stabilize before trying to connect devices
+sleep 5
+
+echo "Connecting bluetooth devices..."
+for mac in "${BLUETOOTH_DEVICES[@]}"; do
+    # Run in the background (&) and suppress standard output for cleanliness
+    # Use a short timeout to prevent the script from hanging on a failed connection
+    timeout 5s /usr/bin/bluetoothctl connect "${mac}" > /dev/null 2>&1 &
+    # A brief pause between connection attempts helps prevent overwhelming the Bluetooth stack
+    sleep 0.5
+done
+
+echo "Launching Steam..."
+flatpak run --user com.valvesoftware.Steam &

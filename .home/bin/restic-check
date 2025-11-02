@@ -1,0 +1,137 @@
+#!/usr/bin/env bash
+#
+# Restic Repository Check Agent
+#
+# Checks restic repository consistency and return
+#
+# shellcheck disable=SC2086
+
+# --- Utility Functions ---
+
+# Log errors to stderr
+function _err { echo "ERROR: " "$@" 1>&2; }
+
+# Attempts to acquire exclusive file lock. If busy, the process will wait until the lock is released
+# Usage: _get_lock <file_descriptor_number>
+function _get_lock {
+    local FILE_DESCRIPTOR_NUMBER="${1}"
+    if ! flock -n "${FILE_DESCRIPTOR_NUMBER}"; then
+        echo "Target environment '${BACKUP_ENV_NAME}' is currently locked by another process (Lock FD: ${FILE_DESCRIPTOR_NUMBER}). Waiting..."
+        flock "${FILE_DESCRIPTOR_NUMBER}"
+        echo "Lock acquired after waiting. Resuming script..."
+    else
+        echo "Acquired exclusive lock on '${BACKUP_ENV_NAME}'. (Lock FD: ${FILE_DESCRIPTOR_NUMBER})."
+    fi
+}
+
+# Unlocks the restic repository
+# shellcheck disable=SC2329,SC2317
+function _unlock_repository {
+    echo "Unlocking restic repository ..."
+    restic unlock
+}
+
+# Display usage instructions
+function _usage {
+    echo -e "Usage:\n $(basename "$0") --env-file <file_path>"
+    sleep 1
+}
+
+# --- Argument Parsing ---
+
+_env_file=
+
+while true; do
+  case "${1}" in
+    --env-file)
+        _env_file="${2}"
+      shift 2
+      ;;
+    --)
+      shift
+      break
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
+
+[[ -z "${_env_file}" ]] && { _usage; exit 1;}
+
+# --- Check Prerequisites ---
+
+[ ! -f "${_env_file}" ] && { _err "Unable to load environment file ${_env_file}. Aborting!"; exit 1; }
+command -v restic > /dev/null 2>&1 || { _err "'restic' command not found. Aborting!"; exit 1; }
+command -v jq > /dev/null 2>&1 || { _err "'jq' command not found. Aborting!"; exit 1; }
+command -v mosquitto_pub > /dev/null 2>&1 || { _err "'mosquitto_pub' command not found. Aborting!"; exit 1; }
+
+# --- Load Configuration ---
+
+echo "Loading restic environment file '${_env_file}' ..."
+# shellcheck source=/dev/null
+source "${_env_file}"
+echo "Restic environment file '${_env_file}' was loaded successfully."
+
+echo "Loading MQTT environment file ..."
+# shellcheck source=/dev/null
+source "${HOME}/.home/backup/.env.mqtt.primary"
+
+echo "Loading MQTT autodiscovery payload files ..."
+# shellcheck source=/dev/null
+source "${HOME}/.home/backup/.mqtt.restic.repo.payload"
+
+# Sanity checks
+REQUIRED_VARS=(
+    "BACKUP_ENV_NAME"
+	"RESTIC_LOCK_FD"
+	"RESTIC_LOCK_FILE"
+    "MQTT_PUB_ARGS"
+    "HASS_REPO_CONFIG_TOPIC"
+    "HASS_RESTIC_REPOSITORY_DISCOVERY_PAYLOAD"
+    "HASS_REPO_STATE_TOPIC"
+)
+
+for var in "${REQUIRED_VARS[@]}"; do
+    if [ -z "$(eval echo "\$$var")" ]; then
+        _err "Required environment variable '${var}' is not set. Aborting!"
+        exit 1
+    fi
+done
+
+# Configure repository device using MQTT autodiscovery feature in Home Assistant
+# echo "Following restic repository MQTT payload will be used for autodiscovery:"
+# echo "${HASS_RESTIC_REPOSITORY_DISCOVERY_PAYLOAD}" | jq
+mosquitto_pub ${MQTT_PUB_ARGS} -r -t "${HASS_REPO_CONFIG_TOPIC}" -m "${HASS_RESTIC_REPOSITORY_DISCOVERY_PAYLOAD}"
+
+# Open the lock file and assign it a file descriptor
+exec {RESTIC_LOCK_FD}>"${RESTIC_LOCK_FILE}" || { _err "Unable to open or create lock file '${RESTIC_LOCK_FILE}'. Aborting."; exit 1; }
+
+# Execute the main process within a subshell to manage the lock automatically
+(
+    _get_lock "${RESTIC_LOCK_FD}" || { _err "Unable to obtain the file lock. Aborting."; exit 1;}
+
+    # Handle interrupt signal and normal exit
+    trap '_exit $?' INT
+    trap '_exit' EXIT
+
+    # Clean-up function run on EXIT or INT
+    # shellcheck disable=SC2329,SC2317
+    function _exit {
+        _sig=$?
+        if [ ${_sig} = 130 ]; then
+            _err "Interrupted by user (SIGINT). Unlocking repository and exiting."
+            _unlock_repository
+        fi
+        # The flock file descriptor will close automatically when the subshell exits
+        exit ${_sig}
+    }
+
+	# Publish repository check results to MQTT broker
+	echo "Reporting '${REPO_PRETTY_NAME}' check results ..."
+	restic check --read-data-subset 1G --json \
+		| jq 'select(.message_type == "summary") | del(.message_type) | . + { "last_checked": (now | strftime("%Y-%m-%dT%H:%M:%S%z"))}' \
+		| mosquitto_pub ${MQTT_PUB_ARGS} -r -t "${HASS_REPO_STATE_TOPIC}" -s
+)
+
+echo "Done"

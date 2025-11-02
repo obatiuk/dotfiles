@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+
+#
+# Monitor Configuration Switcher
+#
+# This script switches between a single-monitor and a three-monitor setup
+# using `gnome-monitor-config`
+#
+# Usage:
+#   ./monitor_switcher.sh single   - Activates the main monitor (DP-6) only
+#   ./monitor_switcher.sh all      - Activates and aligns all three monitors
+#
+# shellcheck disable=SC2086
+
+set -euo pipefail
+
+# The primary monitor, used for the 'single' setup.
+MAIN_MONITOR_CONFIG="-LpM DP-6 -m 3840x1600@59.994 -t normal"
+
+# The full configuration for the 'all' setup.
+ALL_MONITORS_CONFIG="-LM DP-4 -m 2560x1440@59.951 -t right right \
+ -LpM DP-6 -m 3840x1600@59.994 -x 1440 -y 0 -t normal right \
+ -LM eDP-1 -m 1920x1080@59.963 -x 5280 -y 0 -t normal"
+
+# --- Functions ---
+
+function usage {
+    echo "Usage: $(basename "$0") <mode>"
+    echo "Modes:"
+    echo "  single: Activates the primary DP-6 monitor only"
+    echo "  all:    Activates and aligns all three monitors (DP-4, DP-6, eDP-1)"
+    return 1
+}
+
+# Check if gnome-monitor-config is available
+command -v gnome-monitor-config > /dev/null 2>&1 || {
+    echo "ERROR: 'gnome-monitor-config' command not found. Aborting."
+    return 1
+}
+
+# Ensure exactly one argument is provided
+if [ "$#" -ne 1 ]; then
+    usage
+fi
+
+MODE="$1"
+
+case "$MODE" in
+    single)
+        echo "Switching to single-monitor mode (DP-6) ..."
+        gnome-monitor-config set ${MAIN_MONITOR_CONFIG}
+        ;;
+    all)
+        echo "Switching to all-monitors mode (DP-4, DP-6, eDP-1) ..."
+        gnome-monitor-config set ${ALL_MONITORS_CONFIG}
+        # Restore laptop monitor brightness (for some unknown reason it drops after the switch)
+        brightnessctl set -d intel_backlight 50%
+        ;;
+    *)
+        echo "ERROR: Unknown mode '$MODE'."
+        usage
+        ;;
+esac
+
+echo "Monitor configuration complete."

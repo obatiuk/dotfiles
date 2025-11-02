@@ -1,0 +1,70 @@
+#!/usr/bin/env -S echo "This should not be run directly. Use: \nsource"
+#
+# This file is intended to be SOURCED not executed directly.
+# It defines the restic arguments for the 'home' backup
+#
+# shellcheck shell=bash
+
+# --- Prerequisite Checks ---
+
+command -v lsb_release > /dev/null 2>&1 || { echo "ERROR: 'lsb_release' command not found. Aborting!" >&2; return 1; }
+command -v diff > /dev/null 2>&1 || { echo "ERROR: 'diff' command not found. Aborting!" >&2; return 1; }
+
+# --- Configuration Variables ---
+
+_host_name=$(hostname)
+_backup_folder="${HOME}"
+_backup_exclude_file="${HOME}/.home/backup/lst.exclude.home"
+_tag_home="home"
+_tag_keep="keep"
+# Convert OS name to lowercase for use as a tag
+_tag_os_name="$(lsb_release -si | tr '[:upper:]' '[:lower:]')"
+# Combine OS name and version
+_tag_os_version="${_tag_os_name}:$(lsb_release -sr)"
+_backup_tags="--tag ${_tag_home} --tag ${_tag_os_name} --tag ${_tag_os_version}"
+
+# --- Backup Scope Preview ---
+
+echo "Folder and files to be backed up in '${_backup_folder}' (excluding patterns in '${_backup_exclude_file}'):"
+
+echo -e "$(diff --ignore-matching-lines='^#' --left-column -B --suppress-common-lines --side-by-side -t \
+     <(find "${_backup_folder}" -maxdepth 1 2>/dev/null | sort) \
+     <(echo -e "$(eval "echo -e \"$(<"${_backup_exclude_file}")\"")" | sed -e '/^\s*#.*$/d' -e '/^\s*$/d' | sort))"
+
+# --- Restic Command Arguments ---
+
+# Arguments used for the 'restic backup' command
+RESTIC_ARGS_BACKUP="--exclude-caches --cleanup-cache --verbose \
+    --host ${_host_name} \
+    ${_backup_tags} \
+    --iexclude-file ${_backup_exclude_file} \
+    ${_backup_folder}"
+
+# Arguments for comparing snapshots
+RESTIC_ARGS_COMPARE="--host ${_host_name} ${_backup_tags}"
+
+# Arguments used for the 'restic forget --prune' command
+RESTIC_ARGS_PRUNE="--keep-last 10 --keep-daily 7 --keep-weekly 4 --keep-monthly 12 --keep-yearly 5 \
+    --group-by host,tags \
+    --host ${_host_name} \
+    --keep-tag ${_tag_keep} \
+    --tag ${_tag_home} \
+    --tag ${_tag_os_name}"
+
+# Arguments for getting statistics on the latest snapshot
+RESTIC_ARGS_SNAPSHOT_STATS="--host ${_host_name} ${_backup_tags}"
+
+export BACKUP_CONF_NAME="home"
+export RESTIC_ARGS_BACKUP
+export RESTIC_ARGS_COMPARE
+export RESTIC_ARGS_PRUNE
+export RESTIC_ARGS_SNAPSHOT_STATS
+
+unset _host_name
+unset _backup_folder
+unset _backup_exclude_file
+unset _tag_home
+unset _tag_keep
+unset _tag_os_name
+unset _tag_os_version
+unset _backup_tags

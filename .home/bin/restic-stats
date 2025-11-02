@@ -1,0 +1,129 @@
+#!/usr/bin/env bash
+#
+# Restic Stats Agent
+#
+# This script performs two main functions:
+#
+# - Determines the next scheduled run time for the specified backup timer
+#   and publishes this timestamp to an MQTT broker.
+#
+#   (Note: This logic must be in a separate script because a systemd timer
+#   unit cannot determine its *own* next scheduled run time while it is
+#   currently executing)
+#
+# - Gathers and publishes basic restic repository statistics
+#
+# shellcheck disable=SC2086
+
+# --- Utility Functions ---
+
+# Log errors to stderr
+function _err { echo "ERROR: " "$@" 1>&2; }
+
+# Display usage instructions
+function _usage {
+    echo -e "Usage:\n $(basename "$0") --env-file <file_path> --backup-conf-name <name>"
+    sleep 1
+}
+
+# --- Argument Parsing ---
+
+_env_file=
+BACKUP_CONF_NAME=
+
+while true; do
+  case "${1}" in
+    --env-file)
+        _env_file="${2}"
+      shift 2
+      ;;
+    --backup-conf-name)
+        BACKUP_CONF_NAME="${2}"
+      shift 2
+      ;;
+    --)
+      shift
+      break
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
+
+[[ -z "${_env_file}" || -z "${BACKUP_CONF_NAME}" ]] && { _usage; exit 1;}
+
+# --- Check Prerequisites ---
+
+[ ! -f "${_env_file}" ] && { _err "Unable to load environment file ${_env_file}. Aborting!"; exit 1; }
+command -v restic > /dev/null 2>&1 || { _err "'restic' command not found. Aborting!"; exit 1; }
+command -v jq > /dev/null 2>&1 || { _err "'jq' command not found. Aborting!"; exit 1; }
+command -v mosquitto_pub > /dev/null 2>&1 || { _err "'mosquitto_pub' command not found. Aborting!"; exit 1; }
+
+# --- Load Configuration ---
+
+export BACKUP_CONF_NAME
+
+echo "Loading restic environment file '${_env_file}' ..."
+# shellcheck source=/dev/null
+source "${_env_file}"
+echo "Restic environment file '${_env_file}' was loaded successfully."
+
+echo "Loading MQTT environment file ..."
+# shellcheck source=/dev/null
+source "${HOME}/.home/backup/.env.mqtt.primary"
+
+echo "Loading MQTT autodiscovery payload files ..."
+# shellcheck source=/dev/null
+source "${HOME}/.home/backup/.mqtt.restic.repo.payload"
+# shellcheck source=/dev/null
+source "${HOME}/.home/backup/.mqtt.restic.backup.payload"
+
+# Sanity checks
+REQUIRED_VARS=(
+    "BACKUP_ENV_NAME"
+    "BACKUP_CONF_NAME"
+    "MQTT_PUB_ARGS"
+    "HASS_REPO_CONFIG_TOPIC"
+    "HASS_REPO_STATS_TOPIC"
+    "HASS_BACKUP_CONFIG_TOPIC"
+    "HASS_RESTIC_REPOSITORY_DISCOVERY_PAYLOAD"
+    "HASS_RESTIC_BACKUP_DISCOVERY_PAYLOAD"
+    "HASS_BACKUP_NEXT_START_TOPIC"
+    "BACKUP_UNIQUE_ID"
+)
+
+for var in "${REQUIRED_VARS[@]}"; do
+    if [ -z "$(eval echo "\$$var")" ]; then
+        _err "Required environment variable '${var}' is not set. Aborting!"
+        exit 1
+    fi
+done
+
+# Configure repository device using MQTT autodiscovery feature in Home Assistant
+# echo "Following restic repository MQTT payload will be used for autodiscovery:"
+# echo "${HASS_RESTIC_REPOSITORY_DISCOVERY_PAYLOAD}" | jq
+mosquitto_pub ${MQTT_PUB_ARGS} -r -t "${HASS_REPO_CONFIG_TOPIC}" -m "${HASS_RESTIC_REPOSITORY_DISCOVERY_PAYLOAD}"
+
+# Configure backup device using MQTT autodiscovery feature in Home Assistant
+# echo "Following restic backup MQTT payload will be used for autodiscovery:"
+# echo "${HASS_RESTIC_BACKUP_DISCOVERY_PAYLOAD}" | jq
+mosquitto_pub ${MQTT_PUB_ARGS} -r -t "${HASS_BACKUP_CONFIG_TOPIC}" -m "${HASS_RESTIC_BACKUP_DISCOVERY_PAYLOAD}"
+
+# Get next scheduled backup run using `systemctl`. Return 'null' if multiple or no timers were found
+_next_backup_start=$(systemctl list-timers --user --all --output=json 2>/dev/null | \
+    jq --compact-output --raw-output \
+        "[ .[] | select(.unit | contains(\"${BACKUP_UNIQUE_ID//_/-}\")) | .next? ]
+        | map(select(. != null))
+        | if length == 1 then (.[0] | tonumber / 1000000 | strftime(\"%Y-%m-%dT%H:%M:%S%z\")) else null end")
+
+# Publish next start date to MQTT broker
+echo "Reporting next scheduled '${BACKUP_PRETTY_NAME}' run ..."
+mosquitto_pub ${MQTT_PUB_ARGS} -r -t "${HASS_BACKUP_NEXT_START_TOPIC}" -m "${_next_backup_start}"
+
+# Publish repository stats to MQTT broker
+echo "Reporting '${REPO_PRETTY_NAME}' repository stats ..."
+restic --no-lock stats --mode raw-data --json \
+    | mosquitto_pub ${MQTT_PUB_ARGS} -r -t "${HASS_REPO_STATS_TOPIC}" -s
+
+echo "Done"

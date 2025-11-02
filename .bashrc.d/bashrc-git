@@ -1,19 +1,32 @@
+#!/usr/bin/env -S echo "This should not be run directly. Use: \nsource"
+#
+# Git Environment Configuration
+#
+# Note: This file is intended to be SOURCED by your .bashrc
+#
+# shellcheck shell=bash
+# shellcheck disable=SC2148,SC1091
+
+# --- Interactive Shell and Prompt Setup ---
+
 # Settings in this file are only for interactive shells.
-# I don't know why bash loads this file for scp etc.,
-# but return if that's the case.
+# Return if running in a non-interactive shell (e.g., scp, script execution).
 [ "$PS1" ] || return
 
+# Load Git prompt script if available
 [ -r /usr/share/git-core/contrib/completion/git-prompt.sh ] && . /usr/share/git-core/contrib/completion/git-prompt.sh
 
 # If the function __git_ps1 is NOT defined, create a dummy
-type __git_ps1 > /dev/null 2>&1
-if [ $? != "0" ] ; then
-	# define a dummy function so that it can be safely used in PS1 below.
-	__git_ps1() { echo ; }
+if ! type __git_ps1 > /dev/null 2>&1 ; then
+    __git_ps1() { echo ; }
 fi
 
+# Git Prompt configuration
 export GIT_PS1_SHOWCOLORHINTS=1
 export GIT_PS1_SHOWUNTRACKEDFILES=1
 export GIT_PS1_SHOWDIRTYSTATE=1
 
+# PROMPT_COMMAND handles history syncing and setting the final PS1
+# WARNING: The history management here (syncing, clearing, reloading) is very aggressive,
+# ensuring history is shared across all open terminals immediately.
 export PROMPT_COMMAND='history -n; history -w; history -c; history -r; __git_ps1 "[\[\e[0;33m\]\u\[\e[0;m\]@\h \W"] "\\\$ "'

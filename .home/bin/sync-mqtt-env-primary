@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+#
+# MQTT Secrets Migration Script
+#
+# This script retrieves MQTT connection credentials from the local 'pass' store
+# and places them into the system keyring via 'secret-tool' for easier
+# retrieval by systemd services
+
+command -v pass > /dev/null 2>&1 || { echo "ERROR: 'pass' command not found. Aborting!" >&2; exit 1; }
+command -v secret-tool > /dev/null 2>&1 || { echo "ERROR: 'secret-tool' command not found. Aborting!" >&2; exit 1; }
+
+_mqtt_server_name="primary"
+_mqtt_pass_file="infra/home/service/mqtt/${_mqtt_server_name}"
+
+echo "Retrieving MQTT configuration and credentials for '${_mqtt_server_name}' server from pass store..."
+
+# Retrieve metadata and secrets from the pass store
+_mqtt_server_host=$(pass meta ${_mqtt_pass_file} server_host)
+_mqtt_server_port=$(pass meta ${_mqtt_pass_file} server_port)
+_mqtt_server_username=$(pass meta ${_mqtt_pass_file} username)
+_mqtt_server_password=$(pass show ${_mqtt_pass_file} | head -n 1)
+
+if [ -z "${_mqtt_server_host}" ] || [ -z "${_mqtt_server_port}" ]; then
+    echo "ERROR: Failed to retrieve MQTT server host or port. Check path: ${_mqtt_pass_file}" >&2
+    exit 1
+fi
+
+echo "Storing MQTT credentials for '${_mqtt_server_name}' into keyring..."
+
+echo -n "${_mqtt_server_host}" | secret-tool store --label="MQTT '${_mqtt_server_name}' server host" \
+	id "${_mqtt_server_name}" \
+	type host \
+	service publish \
+ 	app_id mqtt
+
+echo -n "${_mqtt_server_port}" | secret-tool store --label="MQTT '${_mqtt_server_name}' server port" \
+ 	id "${_mqtt_server_name}" \
+ 	type port \
+ 	service publish \
+ 	app_id mqtt
+
+echo -n "${_mqtt_server_username}" | secret-tool store --label="Username for '${_mqtt_server_name}' MQTT server" \
+ 	id "${_mqtt_server_name}" \
+ 	type username \
+ 	service publish \
+ 	app_id mqtt
+
+echo -n "${_mqtt_server_password}" | secret-tool store --label="Password for '${_mqtt_server_name}' MQTT server" \
+ 	id "${_mqtt_server_name}" \
+ 	type password \
+ 	service publish \
+ 	app_id mqtt
+
+unset _mqtt_server_name
+unset _mqtt_pass_file
+unset _mqtt_server_host
+unset _mqtt_server_port
+unset _mqtt_server_username
+unset _mqtt_server_password
+
+echo "Migration complete"

@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+#
+# Utility script to retrieve Roomba access token for HASS integration
+#
+# Source: https://www.home-assistant.io/integrations/roomba/#retrieving-credentials-from-the-cloud-with-dorita980
+
+docker run -it node sh -c "npm install -g dorita980 \
+     && get-roomba-password-cloud \
+     $(pass meta www/irobot.com/account login) \
+     $(pass show www/irobot.com/account | head -n 1)"

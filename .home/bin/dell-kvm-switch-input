@@ -1,43 +1,55 @@
 #!/usr/bin/env bash
-
 #
-# How to use ddcutil to switch input of a Dell screen
+# Script to toggle the input source of a DDC/CI compatible monitor using ddcutil.
 #
-# Source: https://jeancharles.quillet.org/posts/2021-08-20-How-to-use-ddcutil-to-switch-input-of-a-Dell-screen.html
+# Prerequisites: ddcutil must be installed.
 #
 
-set -o nounset
-set -o errexit
+# Monitor model string (must exactly match ddcutil's output for -l/--display)
+MONITOR_MODEL='DELL U3821DW'
 
-model='DELL U3821DW'
-cmd=$(command -v ddcutil)
+# VCP Code for Input Select
+VCP_CODE=0x60
 
-# Get current input
-current=$(${cmd} -l "${model}" getvcp 60 | sed -n "s/.*(sl=\(.*\))/\1/p")
+# VCP values for the two inputs to toggle between
+INPUT_DP_1=0x0f # Example: DisplayPort (DP)
+INPUT_USB_C=0x1b # Example: USB-C/KVM
 
-# Get the other input
-case $current in
+# Check if ddcutil is installed and store its path
+DDCUTIL_CMD=$(command -v ddcutil) || { echo "ERROR: 'ddcutil' command not found. Aborting." >&2; exit 1; }
 
-	# Usb
-	0x1b)
-		output=0x0f
-		;;
+# Get current input value (VCP 0x60)
+echo "Getting current input for monitor: ${MONITOR_MODEL}" >&2
+CURRENT_VCP=$(${DDCUTIL_CMD} -l "${MONITOR_MODEL}" getvcp "${VCP_CODE}" \
+    | sed -n "s/.*(sl=\(.*\))/\1/p")
 
-	# Display port
-	0x0f)
-		output=0x1b
-		;;
+if [ -z "${CURRENT_VCP}" ]; then
+    echo "ERROR: Failed to retrieve current VCP code for ${MONITOR_MODEL}. Check ddcutil permissions/connection." >&2
+    exit 1
+fi
 
-	*)
-		echo "Unknown input"
-		exit 1
-		;;
+# Determine the target input value
+TARGET_VCP=""
+TARGET_NAME=""
+case "${CURRENT_VCP}" in
+    "${INPUT_USB_C}")
+        TARGET_VCP="${INPUT_DP_1}"
+        TARGET_NAME="DisplayPort (VCP ${TARGET_VCP})"
+        ;;
+
+    "${INPUT_DP_1}")
+        TARGET_VCP="${INPUT_USB_C}"
+        TARGET_NAME="USB-C/KVM (VCP ${TARGET_VCP})"
+        ;;
+
+    *)
+        echo "ERROR: Current input VCP code '${CURRENT_VCP}' is unknown. Cannot toggle." >&2
+        exit 1
+        ;;
 esac
 
-# Set new input
-${cmd} -l "${model}" setvcp 60 ${output}
+# Set the new input
+echo "Switching input to: ${TARGET_NAME}" >&2
+${DDCUTIL_CMD} -l "${MONITOR_MODEL}" setvcp "${VCP_CODE}" "${TARGET_VCP}"
 
-unset model
-unset cmd
-unset current
-unset output
+echo "Input switched successfully." >&2

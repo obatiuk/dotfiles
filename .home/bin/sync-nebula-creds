@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+#
+#  Router Secrets Migration Script
+#
+# This script retrieves router connection credentials from the local 'pass' store
+# and places them into the system keyring via 'secret-tool' for easier
+# retrieval by systemd services
+
+command -v pass > /dev/null 2>&1 || { echo "ERROR: 'pass' command not found. Aborting!" >&2; exit 1; }
+command -v secret-tool > /dev/null 2>&1 || { echo "ERROR: 'secret-tool' command not found. Aborting!" >&2; exit 1; }
+
+_router_host="nebula.lan"
+_router_url="https://${_router_host}"
+
+echo "Retrieving router credentials for '${_router_host}.' server from pass store..."
+
+# Get credentials using 'pass'
+_openwrt_username=$(pass meta "infra/home/www/${_router_host}/account" username)
+_openwrt_password=$(pass show "infra/home/www/${_router_host}/account" | head -n 1)
+
+# Basic check for credentials
+if [[ -z "${_openwrt_username}" || -z "${_openwrt_password}" ]]; then
+    echo "ERROR: Router credentials not found via 'pass'. Aborting!" >&2
+    return 1
+fi
+
+echo "Storing router configuration and credentials for '${_router_host}' into keyring..."
+
+echo -n "${_router_url}" | secret-tool store --label="OpenWrt URL for '${_router_host}' router" \
+ 	host "${_router_host}" \
+ 	type url \
+ 	device router \
+ 	app_id openwrt
+
+echo -n "${_openwrt_username}" | secret-tool store --label="OpenWrt username for '${_router_host}' router" \
+ 	host "${_router_host}" \
+ 	type username \
+ 	device router \
+ 	app_id openwrt
+
+echo -n "${_openwrt_password}" | secret-tool store --label="OpenWrt password for '${_router_host}' router" \
+ 	host "${_router_host}" \
+ 	type password \
+ 	device router \
+ 	app_id openwrt
+
+unset _router_host
+unset _router_domain
+unset _router_host
+unset _router_url
+unset _openwrt_username
+unset _openwrt_password
+
+echo "Migration complete"

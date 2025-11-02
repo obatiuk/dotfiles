@@ -1,189 +1,300 @@
-# Settings in this file are only for interactive shells.
-# I don't know why bash loads this file for scp etc.,
-# Return if that's the case.
-[ "$PS1" ] || return
+#!/usr/bin/env -S echo "This should not be run directly. Use: \nsource"
+#
+# General Bash Environment Configuration
+#
+# Sets up aliases, history, path, and utility functions for interactive shells
+#
+# Note: This file is intended to be SOURCED by your .bashrc
+#
+# shellcheck shell=bash
+# shellcheck disable=SC1090
 
-# Load user bash-completion files manually,
-# for some reason on-demand loading doesn't work (at least for pass-xxxx files)
+# --- Interactive Shell Check ---
+
+# Only load settings if running in an interactive shell (PS1 is set)
+# If this file is loaded during SCP or non-interactive operations, return immediately
+[ -z "$PS1" ] && return
+
+# --- Bash Completions ---
+
+# Manually load user bash-completion files
+# This ensures completions for tools like 'pass' and others are available
 for bcfile in "${HOME}"/.local/share/bash-completion/completions/* ; do
   [ -f "${bcfile}" ] && . "${bcfile}"
 done
 
-# User specific environment
-if ! [[ $PATH =~ $HOME/.home/bin ]]
-then
-    PATH="$HOME/.home/bin:$PATH"
+# --- PATH Management ---
+
+# Add $HOME/.home/bin to the start of the PATH if it is not already present
+# shellcheck disable=SC2076
+if ! [[ ":$PATH:" =~ ":$HOME/.home/bin:" ]]; then
+    export PATH="${HOME}/.home/bin:$PATH"
 fi
-export PATH
 
-# Base aliases
-alias ls="ls --color=auto --human-readable"                                     # More readable output
-alias la="ls -la --color=auto --human-readable"
-alias grep="grep --color=auto"
-alias free="free -ht"
-alias space="du -S | sort -n -r | more"
-alias rm="rm -vi"
-alias du="du -kh"                                                               # Makes a more readable output
-alias df="df -Tha --total"
-alias mkdir="mkdir -pv"
-alias reload="source \${HOME}/.bashrc"
-alias update="make update -s -C \${HOME}/.home/.dotfiles.d"
-alias backup="make backup -s -C \${HOME}/.home/.dotfiles.d"
-alias clean="make clean -s -C \${HOME}/.home/.dotfiles.d"
-alias mnt="mount | column -t"
-alias cat="bat --paging=never"
-alias edit="/usr/bin/editor"
-alias dotfiles="cd \${HOME}/.home/.dotfiles.d"
+# --- Base Aliases ---
 
-# Make multiple shells share the same history file
-export HISTSIZE=1000000                                                         # Bash history will save N commands
-export HISTFILESIZE=${HISTSIZE}                                                 # Bash will remember N commands
-export HISTCONTROL=ignoreboth:erasedups                                         # Ignore duplicates and spaces
+# Use single quotes for aliases to prevent premature variable expansion.
+alias ls='ls --color=auto --human-readable'             # More readable output
+alias la='ls -la --color=auto --human-readable'
+alias grep='grep --color=auto'
+alias free='free -ht'
+alias space='du -S | sort -n -r | more'
+alias rm='rm -vi'
+alias du='du -kh'                                       # Makes a more readable output
+alias df='df -Tha --total'
+alias mkdir='mkdir -pv'
+alias reload='source "${HOME}/.bashrc"'                 # Safer reloading of bashrc
+alias update='make update -s -C "${HOME}/.home/.dotfiles.d"'
+alias backup='make backup -s -C "${HOME}/.home/.dotfiles.d"'
+alias clean='make clean -s -C "${HOME}/.home/.dotfiles.d"'
+alias mnt='mount | column -t'
+alias cat='bat --paging=never'                          # Requires 'bat' installed
+alias edit='/usr/bin/editor'                            # Use the system editor alternative
+alias dotfiles='cd "${HOME}/.home/.dotfiles.d"'
+
+# --- History Management ---
+
+# History settings for sharing history across multiple shell sessions seamlessly.
+export HISTSIZE=1000000
+export HISTFILESIZE=${HISTSIZE}
+export HISTCONTROL=ignoreboth:erasedups                 # Ignore duplicates and spaces
 export HISTIGNORE='&:ls:ll:la:cd:exit:clear:history'
 export HISTTIMEFORMAT='%F %T '
-export PROMPT_COMMAND="history -n; history -w; history -c; history -r; $PROMPT_COMMAND"
+
+# Safe and standard history synchronization pattern:
+# 1. Append current history to file (history -a).
+# 2. Read new history from file written by other sessions (history -n).
+# 3. Append previous PROMPT_COMMANDs using parameter expansion.
+export PROMPT_COMMAND='history -a; history -n; '${PROMPT_COMMAND:-}''
 
 # Append to the history file, don't overwrite it
 shopt -s histappend
 
-# check the window size after each command and, if necessary,
-# update the values of LINES and COLUMNS.
+# Check the window size after each command.
 shopt -s checkwinsize
 
-# man settings
+# --- Pager and Editor Settings ---
+
+# Man page settings (Disables SGR for better compatibility, sets up pager options)
 export GROFF_NO_SGR=1
 export MANPAGER="less -s -M +Gg"
 
-# Source: http://unix.stackexchange.com/a/147
-
-# default editor (use `editor` alternative)
+# Default editor (use 'editor' alternative)
 export VISUAL=/usr/bin/editor
 export EDITOR=/usr/bin/editor
 
-# fzf settings
+# --- FZF Settings ---
+
 export FZF_DEFAULT_OPTS="--multi --height 40% --layout=reverse --border --inline-info --preview 'bat --style=numbers --color=always --line-range :500 {}'"
 export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude .git --exclude .Private'
 export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
 export FZF_ALT_C_COMMAND="fd -t d . $HOME"
 
-# ydiff settings
+# --- YDIFF Settings ---
+
 export YDIFF_OPTIONS='-s -w0 --pager=bat'
 
-# GPG settings
-GPG_TTY=$(tty)
+# --- GPG Settings ---
+
+# Required for GPG to work in the terminal, especially when using 'pass'
+GPG_TTY="$(tty)"
 export GPG_TTY
 
+# --- Utility Functions ---
+
+# man: Function to display man pages with custom colors using tput, while preserving environment.
 function man {
-	env \
-		LESS_TERMCAP_mb=$(tput bold; tput setaf 2) \
-		LESS_TERMCAP_md=$(tput bold; tput setaf 6) \
-		LESS_TERMCAP_me=$(tput sgr0) \
-		LESS_TERMCAP_so=$(tput bold; tput setaf 3; tput setab 4) \
-		LESS_TERMCAP_se=$(tput rmso; tput sgr0) \
-		LESS_TERMCAP_us=$(tput smul; tput bold; tput setaf 7) \
-		LESS_TERMCAP_ue=$(tput rmul; tput sgr0) \
-		LESS_TERMCAP_mr=$(tput rev) \
-		LESS_TERMCAP_mh=$(tput dim) \
-		LESS_TERMCAP_ZN=$(tput ssubm) \
-		LESS_TERMCAP_ZV=$(tput rsubm) \
-		LESS_TERMCAP_ZO=$(tput ssupm) \
-		LESS_TERMCAP_ZW=$(tput rsupm) \
-		PAGER="${commands[less]:-$PAGER}" \
-		man "$@"
+    # Check if tput is available before attempting to use it for colors
+    if command -v tput >/dev/null 2>&1; then
+        env \
+            LESS_TERMCAP_mb="$(tput bold; tput setaf 2)" \
+            LESS_TERMCAP_md="$(tput bold; tput setaf 6)" \
+            LESS_TERMCAP_me="$(tput sgr0)" \
+            LESS_TERMCAP_so="$(tput bold; tput setaf 3; tput setab 4)" \
+            LESS_TERMCAP_se="$(tput rmso; tput sgr0)" \
+            LESS_TERMCAP_us="$(tput smul; tput bold; tput setaf 7)" \
+            LESS_TERMCAP_ue="$(tput rmul; tput sgr0)" \
+            LESS_TERMCAP_mr="$(tput rev)" \
+            LESS_TERMCAP_mh="$(tput dim)" \
+            LESS_TERMCAP_ZN="$(tput ssubm)" \
+            LESS_TERMCAP_ZV="$(tput rsubm)" \
+            LESS_TERMCAP_ZO="$(tput ssupm)" \
+            LESS_TERMCAP_ZW="$(tput rsupm)" \
+            PAGER="$(command -v less || echo "$PAGER")" \
+            command man "$@"
+    else
+        # Fallback to standard man if tput is not available
+        command man "$@"
+    fi
 }
 
+# fcount: Counts the number of regular files in each immediate subdirectory.
 function fcount {
-	find . -maxdepth 1 -type d | sort | while read -r dir; do n=$(find "$dir" -type f | wc -l); printf "%4d : %s\n" $n "$dir"; done
+    find . -maxdepth 1 -type d | sort | while read -r dir; do
+        n=$(find "${dir}" -type f 2>/dev/null | wc -l)
+        printf "%4d : %s\n" "${n}" "${dir}"
+    done
 }
 
-# Source: https://github.com/xvoland/Extract/blob/master/extract.sh
-
+# extract: Extracts archives using the appropriate command based on file extension
 function extract {
-	if [ -z "$1" ]; then
-		# display usage if no parameters given
-		echo "Usage: extract <path/file_name>.<zip|rar|bz2|gz|tar|tbz2|tgz|Z|7z|xz|ex|tar.bz2|tar.gz|tar.xz>"
-		echo "       extract <path/file_name_1.ext> [path/file_name_2.ext] [path/file_name_3.ext]"
-	else
-		for n in "$@" ; do
-			if [ -f "$n" ] ; then
-				case "${n%,}" in
-					*.cbt|*.tar.bz2|*.tar.gz|*.tar.xz|*.tbz2|*.tgz|*.txz|*.tar) tar xvf "$n"       ;;
-					*.lzma)      unlzma ./"$n"      ;;
-					*.bz2)       bunzip2 ./"$n"     ;;
-					*.cbr|*.rar) unrar x -ad ./"$n" ;;
-					*.gz)        gunzip ./"$n"      ;;
-					*.cbz|*.epub|*.zip) unzip ./"$n"       ;;
-					*.z)         uncompress ./"$n"  ;;
-					*.7z|*.apk|*.arj|*.cab|*.cb7|*.chm|*.deb|*.dmg|*.iso|*.lzh|*.msi|*.pkg|*.rpm|*.udf|*.wim|*.xar) 7z x ./"$n"        ;;
-					*.xz)        unxz ./"$n"        ;;
-					*.exe)       cabextract ./"$n"  ;;
-					*.cpio)      cpio -id < ./"$n"  ;;
-					*.cba|*.ace) unace x ./"$n"     ;;
-					*.zpaq)      zpaq x ./"$n"      ;;
-					*.arc)       arc e ./"$n"       ;;
-					*.cso)       ciso 0 ./"$n" ./"$n.iso" && \
-									  extract $n.iso && \rm -f $n ;;
-					*)
-								 echo "extract: '$n' - unknown archive method"
-								 return 1
-								 ;;
-				esac
-			else
-				echo "'$n' - file does not exist"
-				return 1
-			fi
-		done
-	fi
+    if [ -z "$1" ]; then
+        echo "Usage: extract <path/file_name>.<ext>" >&2
+        echo "       extract <path/file_name_1.ext> [path/file_name_2.ext] [...]" >&2
+        return 1
+    fi
+
+    for n in "$@" ; do
+        local archive_file="${n%,}"
+
+        if [ -f "${archive_file}" ] ; then
+            case "${archive_file}" in
+                *.cbt|*.tar.bz2|*.tar.gz|*.tar.xz|*.tbz2|*.tgz|*.txz|*.tar) tar xvf "${archive_file}"       ;;
+                *.lzma)      unlzma "${archive_file}"      ;;
+                *.bz2)       bunzip2 "${archive_file}"     ;;
+                *.cbr|*.rar) unrar x -ad "${archive_file}" ;;
+                *.gz)        gunzip "${archive_file}"      ;;
+                *.cbz|*.epub|*.zip) unzip "${archive_file}"       ;;
+                *.z)         uncompress "${archive_file}"  ;;
+                *.7z|*.apk|*.arj|*.cab|*.cb7|*.chm|*.deb|*.dmg|*.iso|*.lzh|*.msi|*.pkg|*.rpm|*.udf|*.wim|*.xar) 7z x "${archive_file}"        ;;
+                *.xz)        unxz "${archive_file}"        ;;
+                *.exe)       cabextract "${archive_file}"  ;;
+                *.cpio)      cpio -id < "${archive_file}"  ;;
+                *.cba|*.ace) unace x "${archive_file}"     ;;
+                *.zpaq)      zpaq x "${archive_file}"      ;;
+                *.arc)       arc e "${archive_file}"       ;;
+                *.cso)       ciso 0 "${archive_file}" "${archive_file%.cso}.iso" && \
+                             extract "${archive_file%.cso}.iso" && command rm -f "${archive_file}" ;;
+                *)
+                             echo "extract: '${archive_file}' - unknown archive method" >&2
+                             return 1
+                             ;;
+            esac
+        else
+            echo "Error: '${archive_file}' - file does not exist or is not a regular file" >&2
+            return 1
+        fi
+    done
 }
 
+# ff: Simple recursive file search using grep
 function ff {
-	grep -r "$1" .;
+    if [ -z "$1" ]; then
+        echo "Usage: ff <pattern>" >&2
+        return 1
+    fi
+    grep -r "$1" .
 }
 
-exists() { [[ ${1:0:1} == "/" ]] && { test -f $1 || test -d $1; } || command -v $1 >/dev/null 2>&1; }
+# exists: Checks if a command, file, or directory exists
+function exists {
+    if [[ ${1:0:1} == "/" ]]; then
+        [[ -f "$1" || -d "$1" ]]
+    else
+        command -v "$1" >/dev/null 2>&1
+    fi
+}
 
+# img64: Converts an image file to a base64 Data URL
 function img64 {
 
-	usage() {
-		echo "Usage: img64 [FILE]"
-		echo -e "Formats: APNG BMP GIF JPEG PNG WEBP\n"
-	}
+    usage() {
+        echo "Usage: img64 [FILE]" >&2
+        echo -e "Formats: APNG BMP GIF JPEG PNG WEBP\n" >&2
+    }
 
-	# Print usage and exit if the file was not provided
-	[ $# -eq 0 ] && echo -e "\nError: file is not specified\n" && usage && return 1
+    if [ $# -eq 0 ]; then
+        echo -e "\nError: file is not specified\n" >&2
+        usage
+        return 1
+    fi
 
-	# Check if file exists and is a regular file
-	[ ! -f "$1" ] && echo -e "\nError: file not found\n" && usage && return 1
+    # Check if file exists and is a regular file
+    if [ ! -f "$1" ]; then
+        echo -e "\nError: file not found\n" >&2
+        usage
+        return 1
+    fi
 
-	# Grab the image format
-	local fmt
-	fmt=$(file "$1" | grep -iEo 'apng|bmp|gif|jpeg|png|webp' | head -n1 | tr '[:upper:]' '[:lower:]')
+    # Check for required utilities
+    if ! command -v file >/dev/null || ! command -v base64 >/dev/null; then
+        echo "Error: Required commands 'file' and 'base64' not found." >&2
+        return 1
+    fi
 
-	# Check if the image format is supported
-	[ -z "$fmt" ] && echo -e "\nError: unsupported file format\n" && usage && return 1
+    # Grab the image format using MIME type
+    local fmt
+    fmt=$(file -b --mime-type "$1" | sed -E 's/image\/(x-)?//' | head -n1 | tr '[:upper:]' '[:lower:]')
 
-	# Generate template
-	echo "data:image/${fmt};base64,$(base64 -w 0 "$1")"
+    # Check if the image format is supported or recognized by file utility
+    # shellcheck disable=SC2076
+    if [ -z "$fmt" ] || [[ ! "apng bmp gif jpeg png webp" =~ "$fmt" ]]; then
+        echo -e "\nError: unsupported or unrecognized file format: ${fmt}\n" >&2
+        usage
+        return 1
+    fi
+
+    # Generate template
+    echo "data:image/${fmt};base64,$(base64 -w 0 "$1")"
 }
 
+# qr: Generates a QR code for a given string using qrencode
 function qr {
-	qrencode -m 2 -t utf8 <<< "$1"
+    if [ -z "$1" ]; then
+        echo "Usage: qr <text_to_encode>" >&2
+        return 1
+    fi
+
+    command -v qrencode >/dev/null 2>&1 || { echo "Error: 'qrencode' command not found." >&2; return 1; }
+    qrencode -m 2 -t utf8 <<< "$1"
 }
 
+# sshkeys: Lists and verifies all public SSH keys in the default directory
 function sshkeys {
-	for key in "${HOME}"/.ssh/id_*; do echo -n "${key%.pub}: "; ssh-keygen -l -f "${key}"; done | sort | uniq
+    local key
+    for key in "${HOME}"/.ssh/id_*; do
+        # Only process files that are private keys (i.e., not ending in .pub)
+        if [[ "$key" == *".pub" ]]; then
+             continue
+        fi
+        # Check if the public key counterpart exists
+        if [ -f "${key}.pub" ]; then
+            echo -n "${key%.pub}: "
+            ssh-keygen -l -f "${key}.pub"
+        fi
+    done | sort | uniq
 }
 
+# search: Searches for packages across DNF, Flatpak, and Snap
 function search {
 
-	usage() {
-		echo -e "Usage: search [package]\n"
-	}
+    usage() {
+        echo -e "Usage: search [package]\n" >&2
+    }
 
-	[ $# -eq 0 ] && echo -e "\nError: package is not specified\n" && usage && return 1
+    if [ $# -eq 0 ]; then
+        echo -e "\nError: package is not specified\n" >&2
+        usage
+        return 1
+    fi
 
-	local package="$1"
-	echo "dnf: " && dnf -q search "$package"
-	command -v flatpak > /dev/null 2>&1 && echo -e "\nflatpak: " && flatpak search "$package" | grep -i "$package"
-	command -v snap > /dev/null 2>&1 && echo -e "\nsnap: " && snap search "$package" | grep -i "$package"
+    local package="$1"
+
+    # DNF
+    if command -v dnf >/dev/null 2>&1; then
+        echo "dnf: "
+        dnf -q search "$package"
+    fi
+
+    # Flatpak
+    if command -v flatpak >/dev/null 2>&1; then
+        echo -e "\nflatpak: "
+        flatpak search "$package" | grep -i "$package"
+    fi
+
+    # Snap
+    if command -v snap >/dev/null 2>&1; then
+        echo -e "\nsnap: "
+        snap search "$package" | grep -i "$package"
+    fi
 }

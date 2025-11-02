@@ -54,12 +54,14 @@ HOME_OPT := $(abspath $(DOTHOME)/opt)
 HOME_BACKUP := $(abspath $(DOTHOME)/backup)
 PASS_HOME := $(abspath $(HOME)/.password-store)
 PASS_EXT := $(abspath $(PASS_HOME)/.extensions)
-INCLUDE = $(DOTFILES)/include
-DEVICE = $(DOTFILES)/device
+INCLUDE = $(abspath $(DOTFILES)/include)
+DEVICE = $(abspath $(DOTFILES)/device)
 
-VIVALDI_CF_SRC := $(DOTFILES)/.config/vivaldi/CustomUIModifications
-VIVALDI_CF_DEST := $(XDG_CONFIG_HOME)/vivaldi/CustomUIModifications
-ULAUNCHER_EXT := $(XDG_DATA_HOME)/ulauncher/extensions
+VIVALDI_CF_SRC_DIR := $(DOTFILES)/.config/vivaldi/CustomUIModifications
+VIVALDI_CF_DEST_DIR := $(XDG_CONFIG_HOME)/vivaldi/CustomUIModifications
+HOME_BACKUP_CF_SRC_DIR :=  $(DOTFILES)/.home/backup
+HOME_BACKUP_CF_DEST_DIR := $(HOME_BACKUP)
+ULAUNCHER_EXT_DIR := $(XDG_DATA_HOME)/ulauncher/extensions
 
 INSTALL =
 PATCH =
@@ -124,11 +126,11 @@ PACKAGES_RPM += gnome-pomodoro gnome-clocks fd-find ydiff webp-pixbuf-loader usb
 PACKAGES_RPM += fastfetch bc usbutils pciutils acpi policycoreutils-devel pass-otp pass-audit
 PACKAGES_RPM += gnupg2 pinentry-gtk pinentry-tty pinentry-gnome3 gedit gedit-plugins gedit-plugin-editorconfig
 PACKAGES_RPM += gvfs-mtp screen progress pv tio dialog catimg cifs-utils sharutils binutils
-PACKAGES_RPM += restic rsync rclone micro wget xsensors lm_sensors curl jq libnotify glow
+PACKAGES_RPM += restic rsync rclone micro wget xsensors lm_sensors curl jq libnotify glow libsecret
 PACKAGES_RPM += unrar lynx crudini sysstat p7zip nmap cabextract iotop qrencode uuid tcpdump
 PACKAGES_RPM += git diffutils git-lfs git-extras git-credential-libsecret git-crypt bat mc gh perl-Image-ExifTool
 PACKAGES_RPM += snapd calibre ebook-tools clamav clamav-freshclam mdns-scan
-PACKAGES_RPM += fedora-workstation-repositories
+PACKAGES_RPM += fedora-workstation-repositories gnome-monitor-config
 PACKAGES_RPM += adwaita-icon-theme adwaita-cursor-theme dconf
 PACKAGES_RPM += python3 python3-pip python3-devel python3-virtualenv
 
@@ -184,13 +186,26 @@ EXT_INTELLIJ += com.jetbrains.packagesearch.intellij-plugin com.jetbrains.plugin
 # micro extensions
 EXT_MICRO += $(addprefix micro_,editorconfig fzf filemanager)
 
-VIVALDI_CONF_FILES := $(shell find .config/vivaldi/CustomUIModifications -type f -name '*.*')
-VIVALDI_CONF_DEST_FILES := $(addprefix $(HOME)/, $(VIVALDI_CONF_FILES))
+# vivaldi configuration files
+VIVALDI_CONF_FILES := $(shell find $(VIVALDI_CF_SRC_DIR) -type f -print)
+VIVALDI_CONF_DEST_FILES := $(patsubst $(VIVALDI_CF_SRC_DIR)/%,$(VIVALDI_CF_DEST_DIR)/%,$(VIVALDI_CONF_FILES))
 
+# pass extensions
 EXT_PASS := symlink.bash age.bash ln.bash file.bash update.bash tessen.bash meta.bash
 EXT_PASS_DEST_FILES := $(addprefix $(PASS_EXT)/,$(EXT_PASS))
 
+# List of editors
 EDITORS := /usr/bin/vi /usr/bin/nano /usr/bin/micro
+
+# Backup configuration files
+BACKUP_CONF_FILES := $(shell find $(HOME_BACKUP_CF_SRC_DIR) -type f -print)
+BACKUP_CONF_DEST_FILES := $(patsubst $(HOME_BACKUP_CF_SRC_DIR)/%,$(HOME_BACKUP_CF_DEST_DIR)/%,$(BACKUP_CONF_FILES))
+
+# List of backup configuration names
+BACKUP_CONFIGS :=home nebula
+
+# List of backup environment names
+BACKUP_ENVS:=primary secondary cloud
 
 ########################################################################################################################
 #
@@ -546,10 +561,42 @@ firewall-profiles:
 # - find a way to assign firewall profile to an interface
 
 INSTALL += backup-services
-backup-services: restic $(XDG_CONFIG_HOME)/systemd/user/restic@.service $(XDG_CONFIG_HOME)/systemd/user/restic-daily@.timer
-	@systemctl --user enable --now 'restic-daily@backup-home-primary.timer'
-	@systemctl --user enable --now 'restic-daily@backup-home-secondary.timer'
-	@systemctl --user enable --now 'restic-daily@backup-home-cloud.timer'
+backup-services: | $(XDG_CONFIG_HOME)/systemd/user/restic-backup@.service \
+	$(XDG_CONFIG_HOME)/systemd/user/restic-stats@.service \
+	$(XDG_CONFIG_HOME)/systemd/user/restic-check@.service \
+	$(XDG_CONFIG_HOME)/systemd/user/restic-backup-daily@.timer \
+	$(XDG_CONFIG_HOME)/systemd/user/restic-backup-monthly@.timer \
+	$(XDG_CONFIG_HOME)/systemd/user/restic-check-monthly@.timer
+
+	@systemctl --user enable 'restic-stats@home-primary.service'
+	@systemctl --user enable 'restic-stats@home-secondary.service'
+	@systemctl --user enable 'restic-stats@home-cloud.service'
+
+	@systemctl --user enable 'restic-stats@nebula-primary.service'
+	@systemctl --user enable 'restic-stats@nebula-secondary.service'
+	@systemctl --user enable 'restic-stats@nebula-cloud.service'
+
+	@systemctl --user enable 'restic-check@primary.service'
+	@systemctl --user enable 'restic-check@secondary.service'
+	@systemctl --user enable 'restic-check@cloud.service'
+
+	@systemctl --user enable --now 'restic-backup-daily@home-primary.timer'
+	@systemctl --user enable --now 'restic-backup-daily@home-secondary.timer'
+	@systemctl --user enable --now 'restic-backup-daily@home-cloud.timer'
+
+	@systemctl --user enable --now 'restic-backup-monthly@nebula-primary.timer'
+	@systemctl --user enable --now 'restic-backup-monthly@nebula-secondary.timer'
+	@systemctl --user enable --now 'restic-backup-monthly@nebula-cloud.timer'
+
+	@systemctl --user enable --now 'restic-check-monthly@primary.timer'
+	@systemctl --user enable --now 'restic-check-monthly@secondary.timer'
+	@systemctl --user enable --now 'restic-check-monthly@cloud.timer'
+
+INSTALL += mosquitto
+mosquitto:
+	@$(call dnf, $@)
+	@sudo systemctl stop mosquitto.service
+	@sudo systemctl disable mosquitto.service
 
 ########################################################################################################################
 #
@@ -811,8 +858,8 @@ $(PACKAGES_FLATPAK): | gnome-desktop flatpak
 INSTALL += $(EXT_ULAUNCHER)
 $(EXT_ULAUNCHER): | git ulauncher
 	@$(call clone,$@)
-	@install -d $(ULAUNCHER_EXT)
-	@ln -svfn $(HOME_OPT)/$@ $(ULAUNCHER_EXT)/$(subst .git,,$@)
+	@install -d $(ULAUNCHER_EXT_DIR)
+	@ln -svfn $(HOME_OPT)/$@ $(ULAUNCHER_EXT_DIR)/$(subst .git,,$@)
 
 INSTALL += $(EXT_GSHELL)
 $(EXT_GSHELL): | gnome-desktop dconf gnome-shell-extensions-bin
@@ -828,7 +875,7 @@ $(EXT_VSCODE): | snap code
 	@snap run code --force --install-extension '$@'
 
 INSTALL += $(EXT_INTELLIJ)
-$(EXT_INTELLIJ): | intellij-idea-community $(HOME_BIN)/acpi-battery-status
+$(EXT_INTELLIJ): | intellij-idea-community acpi
 	@$$(command -v intellij-idea-community) installPlugins $@
 
 INSTALL += $(EXT_MICRO)
@@ -997,8 +1044,28 @@ $(HOME_BIN)/dell-kvm-switch-input: $(DOTFILES)/.home/bin/dell-kvm-switch-input |
 	@ln -svfn $< $@
 	@chmod +x $<
 
-FILES += $(HOME_BIN)/acpi-battery-status
-$(HOME_BIN)/acpi-battery-status: $(DOTFILES)/.home/bin/acpi-battery-status | acpi
+FILES += $(HOME_BIN)/switch-monitor
+$(HOME_BIN)/switch-monitor: $(DOTFILES)/.home/bin/switch-monitor | gnome-monitor-config
+	@ln -svfn $< $@
+	@chmod +x $<
+
+FILES += $(HOME_BIN)/start-steam
+$(HOME_BIN)/start-steam: $(DOTFILES)/.home/bin/start-steam | $(HOME_BIN)/switch-monitor
+	@ln -svfn $< $@
+	@chmod +x $<
+
+FILES += $(HOME_BIN)/restic-backup
+$(HOME_BIN)/restic-backup: $(DOTFILES)/.home/bin/restic-backup | restic jq curl redhat-lsb diffutils mosquitto libsecret $(BACKUP_CONF_DEST_FILES)
+	@ln -svfn $< $@
+	@chmod +x $<
+
+FILES += $(HOME_BIN)/restic-stats
+$(HOME_BIN)/restic-stats: $(DOTFILES)/.home/bin/restic-stats | restic jq curl mosquitto libsecret $(BACKUP_CONF_DEST_FILES)
+	@ln -svfn $< $@
+	@chmod +x $<
+
+FILES += $(HOME_BIN)/restic-check
+$(HOME_BIN)/restic-check: $(DOTFILES)/.home/bin/restic-check | restic jq mosquitto libsecret $(BACKUP_CONF_DEST_FILES)
 	@ln -svfn $< $@
 	@chmod +x $<
 
@@ -1041,7 +1108,7 @@ $(XDG_CONFIG_HOME)/mc/ini: $(DOTFILES)/.config/mc/ini | mc
 	@ln -svfn $< $@
 
 FILES += $(VIVALDI_CONF_DEST_FILES)
-$(VIVALDI_CF_DEST)/%: $(VIVALDI_CF_SRC)/%
+$(VIVALDI_CF_DEST_DIR)/%: $(VIVALDI_CF_SRC_DIR)/%
 	@install -d $(@D)
 	@ln -svfn $< $@
 
@@ -1196,29 +1263,79 @@ $(XDG_DATA_HOME)/python/history: $(BASHRCD)/bashrc-xdg
 	@install -d $(@D)
 	@touch $@
 
-FILES += $(XDG_CONFIG_HOME)/systemd/user/restic@.service
-$(XDG_CONFIG_HOME)/systemd/user/restic@.service: | restic libnotify
+FILES += $(XDG_CONFIG_HOME)/systemd/user/restic-backup@.service
+$(XDG_CONFIG_HOME)/systemd/user/restic-backup@.service: | $(HOME_BIN)/restic-backup
 	@install -m 644 -D /dev/stdin $@ <<- EOF
 		#
 		# Created by dotfiles setup script on $$(date -I) by ${USER}
 		#
 		[Unit]
-		Description=Restic backup for %i
+		Description=Runs restic backup for %i
+		After=network.target
+		ConditionUser=!root
+
+		[Service]
+		# The 'oneshot' type is required; without it, dependent services will not wait for completion
+		# (See systemd documentation for details on Type=oneshot)
+		Type=oneshot
+		RuntimeDirectory=restic-backup/%i
+		IOSchedulingClass=idle
+		Restart=no
+		ExecStart=/usr/bin/gnome-session-inhibit --inhibit logout:suspend:idle --app-id org.gnome.Terminal.desktop --reason "Automatic restic backup (%i) is running" /usr/bin/make -C $(DOTFILES) backup-restic-%i-no-deps
+	EOF
+	@systemd-analyze verify $@
+	@systemctl --user daemon-reload
+
+FILES += $(XDG_CONFIG_HOME)/systemd/user/restic-stats@.service
+$(XDG_CONFIG_HOME)/systemd/user/restic-stats@.service: | $(HOME_BIN)/restic-stats $(XDG_CONFIG_HOME)/systemd/user/restic-backup@.service
+	@install -m 644 -D /dev/stdin $@ <<- EOF
+		#
+		# Created by dotfiles setup script on $$(date -I) by ${USER}
+		#
+		[Unit]
+		Description=Publishes next backup run and repository statistics for %i
+		After=network.target restic-backup@%i.service
+		ConditionUser=!root
+
+		[Service]
+		Type=simple
+		RuntimeDirectory=restic-stats/%i
+		IOSchedulingClass=idle
+		Restart=no
+		ExecStart=/usr/bin/make -C $(DOTFILES) stats-restic-%i-no-deps
+
+		[Install]
+		WantedBy=restic-backup@%i.service
+	EOF
+	@systemd-analyze verify $@
+	@systemctl --user daemon-reload
+
+FILES += $(XDG_CONFIG_HOME)/systemd/user/restic-check@.service
+$(XDG_CONFIG_HOME)/systemd/user/restic-check@.service: | $(HOME_BIN)/restic-check
+	@install -m 644 -D /dev/stdin $@ <<- EOF
+		#
+		# Created by dotfiles setup script on $$(date -I) by ${USER}
+		#
+		[Unit]
+		Description=Verifies '%i' repository integrity and publishes the result
 		After=network.target
 		ConditionUser=!root
 
 		[Service]
 		Type=simple
-		WorkingDirectory=$(DOTFILES)
-		RuntimeDirectory=restic/%i
+		RuntimeDirectory=restic-check/%i
 		IOSchedulingClass=idle
 		Restart=no
-		ExecStart=/usr/bin/gnome-session-inhibit --inhibit logout:suspend:idle --app-id org.gnome.Terminal.desktop --reason "Automatic backup (%i) is running" /usr/bin/make %i-no-deps
+		ExecStart=/usr/bin/make -C $(DOTFILES) check-restic-%i-no-deps
+
+		[Install]
+		WantedBy=default.target
 	EOF
+	@systemd-analyze verify $@
 	@systemctl --user daemon-reload
 
-FILES += $(XDG_CONFIG_HOME)/systemd/user/restic-daily@.timer
-$(XDG_CONFIG_HOME)/systemd/user/restic-daily@.timer: $(XDG_CONFIG_HOME)/systemd/user/restic@.service
+FILES += $(XDG_CONFIG_HOME)/systemd/user/restic-backup-daily@.timer
+$(XDG_CONFIG_HOME)/systemd/user/restic-backup-daily@.timer: | $(XDG_CONFIG_HOME)/systemd/user/restic-backup@.service
 	@install -m 644 -D /dev/stdin $@ <<- EOF
 		#
 		# Created by dotfiles setup script on $$(date -I) by ${USER}
@@ -1231,11 +1348,56 @@ $(XDG_CONFIG_HOME)/systemd/user/restic-daily@.timer: $(XDG_CONFIG_HOME)/systemd/
 		RandomizedDelaySec=30min
 		OnCalendar=daily
 		Persistent=true
-		Unit=restic@%i.service
+		Unit=restic-backup@%i.service
 
 		[Install]
 		WantedBy=timers.target
 	EOF
+	@systemd-analyze verify $@
+	@systemctl --user daemon-reload
+
+FILES += $(XDG_CONFIG_HOME)/systemd/user/restic-backup-monthly@.timer
+$(XDG_CONFIG_HOME)/systemd/user/restic-backup-monthly@.timer: | $(XDG_CONFIG_HOME)/systemd/user/restic-backup@.service
+	@install -m 644 -D /dev/stdin $@ <<- EOF
+		#
+		# Created by dotfiles setup script on $$(date -I) by ${USER}
+		#
+		[Unit]
+		Description=Monthly backup of %i
+
+		[Timer]
+		OnBootSec=15min
+		RandomizedDelaySec=1h
+		OnCalendar=monthly
+		Persistent=true
+		Unit=restic-backup@%i.service
+
+		[Install]
+		WantedBy=timers.target
+	EOF
+	@systemd-analyze verify $@
+	@systemctl --user daemon-reload
+
+FILES += $(XDG_CONFIG_HOME)/systemd/user/restic-check-monthly@.timer
+$(XDG_CONFIG_HOME)/systemd/user/restic-check-monthly@.timer: | $(HOME_BIN)/restic-check
+	@install -m 644 -D /dev/stdin $@ <<- EOF
+		#
+		# Created by dotfiles setup script on $$(date -I) by ${USER}
+		#
+		[Unit]
+		Description=Monthly check for %i
+
+		[Timer]
+		OnBootSec=15min
+		RandomizedDelaySec=1h
+		OnCalendar=monthly
+		Persistent=true
+		Unit=restic-check@%i.service
+
+		[Install]
+		WantedBy=timers.target
+	EOF
+	@systemd-analyze verify $@
 	@systemctl --user daemon-reload
 
 # Request admin authentication to ignore inhibitors
@@ -1264,6 +1426,11 @@ $(XDG_CONFIG_HOME)/Code/User/settings.json: $(DOTFILES)/.config/Code/User/settin
 
 FILES += $(XDG_CONFIG_HOME)/glow/glow.yml
 $(XDG_CONFIG_HOME)/glow/glow.yml: $(DOTFILES)/.config/glow/glow.yml | glow
+	@install -d $(@D)
+	@ln -svfn $< $@
+
+FILES += $(BACKUP_CONF_DEST_FILES)
+$(HOME_BACKUP_CF_DEST_DIR)/%: $(HOME_BACKUP_CF_SRC_DIR)/%
 	@install -d $(@D)
 	@ln -svfn $< $@
 
@@ -1509,6 +1676,20 @@ CHECK += check-ecryptfs
 check-ecryptfs: | ecryptfs-utils
 	@ecryptfs-verify -p
 
+define restic-check-rule-set
+# Target called by a systemd service to generate state report for the specific environment
+.PHONY: check-restic-$(1)-no-deps
+check-restic-$(1)-no-deps:
+	@$(HOME_BIN)/restic-check --env-file "$(HOME_BACKUP)/.env.restic.$(1)"
+
+CHECK += check-restic-env-$(1)
+check-restic-$(1): | $(HOME_BIN)/restic-check check-restic-$(1)-no-deps
+endef
+
+# Generate dynamic check rules for each restic environment
+$(foreach env, $(BACKUP_ENVS),\
+	$(eval $(call restic-check-rule-set,$(env))))
+
 #TODO: add rasdaemon checks
 
 ########################################################################################################################
@@ -1516,38 +1697,25 @@ check-ecryptfs: | ecryptfs-utils
 # Backup rules
 #
 
-.PHONY: backup-home-primary-no-deps
-backup-home-primary-no-deps:
-	@$(HOME_BIN)/restic-backup --env-file "$(HOME_BACKUP)/.env.restic.primary" --conf-file "$(HOME_BACKUP)/.conf.backup.home"
+define restic-backup-rule-set
+# Target called by a systemd service to execute a backup using the specific backup configuration and restic environment
+.PHONY: backup-$(1)-$(2)-no-deps
+backup-restic-$(1)-$(2)-no-deps:
+	@$(HOME_BIN)/restic-backup --conf-file "$(HOME_BACKUP)/.conf.backup.$(1)" --env-file "$(HOME_BACKUP)/.env.restic.$(2)"
 
-.PHONY: backup-home-secondary-no-deps
-backup-home-secondary-no-deps:
-	@$(HOME_BIN)/restic-backup --env-file "$(HOME_BACKUP)/.env.restic.secondary" --conf-file "$(HOME_BACKUP)/.conf.backup.home"
+# Target called by a systemd service to generate a stats report for the specific restic environment
+.PHONY: report-stats-$(1)-$(2)-no-deps
+stats-restic-$(1)-$(2)-no-deps:
+	@$(HOME_BIN)/restic-stats --backup-conf-name "$(1)" --env-file "$(HOME_BACKUP)/.env.restic.$(2)"
 
-.PHONY: backup-home-cloud-no-deps
-backup-home-cloud-no-deps:
-	@$(HOME_BIN)/restic-backup --env-file "$(HOME_BACKUP)/.env.restic.cloud" --conf-file "$(HOME_BACKUP)/.conf.backup.home"
+BACKUP += backup-restic-$(1)-$(2)
+backup-$(1)-$(2): | $(HOME_BIN)/restic-backup $(HOME_BIN)/restic-stats backup-$(1)-$(2)-no-deps
+endef
 
-BACKUP += backup-home-primary
-backup-home-primary: | pass restic redhat-lsb diffutils backup-home-primary-no-deps
-
-BACKUP += backup-home-secondary
-backup-home-secondary: pass restic redhat-lsb diffutils backup-home-secondary-no-deps
-
-BACKUP += backup-home-cloud
-backup-home-cloud: pass restic rclone redhat-lsb diffutils backup-home-cloud-no-deps
-
-BACKUP += backup-router-primary
-backup-router-primary: pass restic curl jq
-	@$(HOME_BIN)/backup-router-restic --env-file "$(HOME)/.home/backup/legacy/.env.backup.primary"
-
-BACKUP += backup-router-secondary
-backup-router-secondary: pass restic curl jq
-	@$(HOME_BIN)/backup-router-restic --env-file "$(HOME)/.home/backup/legacy/.env.backup.secondary"
-
-BACKUP += backup-router-cloud
-backup-router-cloud: pass restic curl jq
-	@$(HOME_BIN)/backup-router-restic --env-file "$(HOME)/.home/backup/legacy/.env.backup.cloud"
+# Generate dynamic backup rules for every pair of backup config and environment (e.g. <conf>-<env>)
+$(foreach config, $(BACKUP_CONFIGS),\
+ 	$(foreach env, $(BACKUP_ENVS),\
+ 		$(eval $(call restic-backup-rule-set,$(config),$(env)))))
 
 BACKUP += backup-system-primary
 backup-system-primary: pass restic fastfetch redhat-lsb diffutils
@@ -1601,7 +1769,7 @@ streamcontroller: com.core447.StreamController
 backup-home: backup-home-primary backup-home-secondary backup-home-cloud
 
 .PHONY: backup-router
-backup-router: backup-router-primary backup-router-secondary backup-router-cloud
+backup-router: backup-nebula-primary backup-nebula-secondary backup-nebula-cloud
 
 .PHONY: backup-system
 backup-system: backup-system-primary backup-system-secondary backup-system-cloud

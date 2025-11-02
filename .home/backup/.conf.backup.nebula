@@ -1,0 +1,112 @@
+#!/usr/bin/env -S echo "This should not be run directly. Use: \nsource"
+#
+# This file is intended to be SOURCED not executed directly.
+# It defines the restic arguments for the 'nebula' backup
+#
+# shellcheck shell=bash
+# shellcheck disable=SC2086
+
+# --- Prerequisite Checks ---
+
+command -v curl > /dev/null 2>&1 || { echo "ERROR: 'curl' command not found. Aborting!" >&2; return 1; }
+command -v jq > /dev/null 2>&1 || { echo "ERROR: 'jq' command not found. Aborting!" >&2; return 1; }
+command -v secret-tool > /dev/null 2>&1 || { echo "ERROR: 'secret-tool' command not found. Aborting!" >&2; return 1; }
+
+# --- Retrieve secrets from keyring ---
+
+ROUTER_HOST_NAME="nebula"
+ROUTER_HOST="${ROUTER_HOST_NAME}.lan"
+_lookup_base="device router app_id openwrt host ${ROUTER_HOST}"
+
+# --- Retrieve secrets from keyring ---
+
+# Restic Repository URL
+_router_luci_url="$(secret-tool lookup ${_lookup_base} type url)/cgi-bin"
+_router_luci_username=$(secret-tool lookup ${_lookup_base} type username)
+_router_luci_password=$(secret-tool lookup ${_lookup_base} type password)
+
+# Basic check for credentials
+if [[ -z "${_router_luci_username}" || -z "${_router_luci_password}" ]]; then
+    echo "ERROR: OpenWrt credentials for '${ROUTER_HOST}' were not found in system keyring'. Aborting!" >&2
+    return 1
+fi
+
+# --- OpenWrt authentication and data retrieval ---
+
+# Get RPC auth token
+_rpc_auth_token=$(curl -s -k -X POST "${_router_luci_url}/luci/rpc/auth" --data \
+  "{\"id\":1,\"method\":\"login\",\"params\":[\"${_router_luci_username}\",\"${_router_luci_password}\"]}" \
+    | jq -r '.result')
+
+if [[ "${_rpc_auth_token}" == "null" ]]; then
+    echo "ERROR: Failed to retrieve RPC auth token. Check credentials and URL. Aborting!" >&2
+    return 1
+fi
+
+# Get OS version
+_os_ver=$(curl -s -k -X POST "${_router_luci_url}/luci/rpc/sys?auth=${_rpc_auth_token}" --data \
+  '{"id":1,"method":"exec","params":["ubus call system board"]}' | \
+    jq -r '.result | fromjson | .release | "\(.version)-\(.revision)"')
+
+# Get session ID
+_login_params="luci_username=${_router_luci_username}&luci_password=${_router_luci_password}"
+_session_id=$(curl -s -k --data-raw "${_login_params}" -c - "${_router_luci_url}/luci" \
+  | grep sysauth | sed -r 's/.*sysauth.*\s+//')
+
+if [[ -z "${_session_id}" ]]; then
+    echo "ERROR: Failed to retrieve session ID. Check LuCI URL. Aborting!" >&2
+    return 1
+fi
+
+# --- Restic Command Arguments ---
+
+_tag_keep="keep"
+_tag_os_name="openwrt"
+_tag_os_version="${_tag_os_name}:${_os_ver// /-}"
+_backup_tags="--tag system --tag stream --tag ${_tag_os_name} --tag ${_tag_os_version}"
+
+# Arguments used for the 'restic backup' command
+RESTIC_ARGS_BACKUP="--verbose --exclude-caches --cleanup-cache --no-cache \
+    --host ${ROUTER_HOST_NAME} \
+    ${_backup_tags} \
+    --stdin-filename=openwrt-luci-backup-${ROUTER_HOST}.tgz \
+    --stdin-from-command -- \
+    curl -s ${_router_luci_url}/cgi-backup --data-raw sessionid=${_session_id}"
+
+# Arguments for comparing snapshots
+RESTIC_ARGS_COMPARE="--host ${ROUTER_HOST_NAME} ${_backup_tags}"
+
+# Arguments used for the 'restic forget --prune' command
+RESTIC_ARGS_PRUNE="--keep-last 10 --keep-daily 7 --keep-weekly 4 --keep-monthly 12 --keep-yearly 5 \
+    --group-by host,tags \
+    --host ${ROUTER_HOST_NAME} \
+    --keep-tag ${_tag_keep} \
+    --tag system \
+    --tag stream \
+    --tag ${_tag_os_name} \
+    --tag ${_tag_os_version}"
+
+# Arguments for getting statistics on the latest snapshot
+RESTIC_ARGS_SNAPSHOT_STATS="--host ${ROUTER_HOST_NAME} ${_backup_tags}"
+
+export BACKUP_CONF_NAME="${ROUTER_HOST_NAME}"
+export RESTIC_ARGS_BACKUP
+export RESTIC_ARGS_COMPARE
+export RESTIC_ARGS_PRUNE
+export RESTIC_ARGS_SNAPSHOT_STATS
+
+unset ROUTER_HOST_NAME
+unset ROUTER_HOST
+unset _lookup_base
+unset _router_luci_url
+unset _router_luci_username
+unset _router_luci_password
+unset _rpc_auth_token
+unset _os_ver
+unset _login_params
+unset _session_id
+unset _tag_keep
+unset _tag_os_name
+unset _tag_os_version
+unset _backup_tags
+

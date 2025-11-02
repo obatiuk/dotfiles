@@ -1,0 +1,255 @@
+#!/usr/bin/env bash
+#
+# Restic Backup Agent
+#
+# Inspired by these awesome projects:
+# - https://github.com/walthowd/ha-restic
+# - https://github.com/CodingSquirrel/ha-duplicacy/
+
+# shellcheck disable=SC2086
+
+# --- Utility Functions ---
+
+# Log errors to stderr
+# Usage: _err <message>
+function _err { echo "ERROR: " "$@" 1>&2; }
+
+# Attempts to acquire exclusive file lock. If busy, the process will wait until the lock is released
+# Usage: _get_lock <file_descriptor_number>
+function _get_lock {
+    local FILE_DESCRIPTOR_NUMBER="${1}"
+    if ! flock -n "${FILE_DESCRIPTOR_NUMBER}"; then
+        echo "Target environment '${BACKUP_ENV_NAME}' is currently locked by another process (Lock FD: ${FILE_DESCRIPTOR_NUMBER}). Waiting..."
+        flock "${FILE_DESCRIPTOR_NUMBER}"
+        echo "Lock acquired after waiting. Resuming script..."
+    else
+        echo "Acquired exclusive lock on '${BACKUP_ENV_NAME}'. (Lock FD: ${FILE_DESCRIPTOR_NUMBER})."
+    fi
+}
+
+# Executes the restic backup command
+function _do_backup {
+    echo "Starting backup ..."
+    restic backup ${RESTIC_ARGS_BACKUP}
+}
+
+# Sends a notification via notify-send
+# Usage: _notify <urgency> <message> [optional_replace_id]
+function _notify {
+    local urgency="${1}"
+    local message="${2}"
+    local replace_id="${3}"
+    local title="${BACKUP_CONF_NAME} (${BACKUP_ENV_NAME})"
+
+    if [ -z "${replace_id}" ]; then
+        notify-send -a "restic backup" -u "${urgency}" -p "${title}" "${message}"
+    else
+        notify-send -a "restic backup" -u "${urgency}" -p -r "${replace_id}" "${title}" "${message}"
+    fi
+}
+
+# Displays the diff between the two most recent snapshots
+function _show_diff {
+    echo "Displaying diff between the two most recent snapshots ..."
+    # shellcheck disable=SC2046
+    restic diff $(restic snapshots ${RESTIC_ARGS_COMPARE} --json | jq -r '.[-2:][].id')
+}
+
+# Prunes the repository according to the forget policy.
+function _prune_repository {
+    echo "Pruning repository ..."
+    restic forget --prune ${RESTIC_ARGS_PRUNE}
+}
+
+# Unlocks the restic repository
+# shellcheck disable=SC2329,SC2317
+function _unlock_repository {
+    echo "Unlocking restic repository ..."
+    restic unlock
+}
+
+# Display usage instructions
+function _usage {
+    echo -e "Usage:\n $(basename "$0") --env-file <file_path> --conf-file <file_path>"
+    sleep 1
+}
+
+# --- Argument Parsing ---
+
+_env_file=
+_conf_file=
+
+while true; do
+  case "${1}" in
+    --env-file)
+        _env_file="${2}"
+      shift 2
+      ;;
+    --conf-file)
+        _conf_file="${2}"
+      shift 2
+      ;;
+    --)
+      shift
+      break
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
+
+[[ -z "${_env_file}" || -z "${_conf_file}" ]] && { _usage; exit 1;}
+
+# --- Check Prerequisites ---
+
+[ ! -f "${_env_file}" ] && { _err "Unable to load environment file ${_env_file}. Aborting!"; exit 1; }
+[ ! -f "${_conf_file}" ] && { _err "Unable to load environment file ${_conf_file}. Aborting!"; exit 1; }
+
+command -v restic > /dev/null 2>&1 || { _err "'restic' command not found. Aborting!"; exit 1; }
+command -v jq > /dev/null 2>&1 || { _err "'jq' command not found. Aborting!"; exit 1; }
+command -v notify-send > /dev/null 2>&1 || { _err "'notify-send' command not found. Aborting!"; exit 1; }
+command -v mosquitto_pub > /dev/null 2>&1 || { _err "'mosquitto_pub' command not found. Aborting!"; exit 1; }
+
+# --- Load Configuration ---
+
+echo "Loading restic environment file '${_env_file}' ..."
+# shellcheck source=/dev/null
+source "${_env_file}"
+echo "Restic environment file '${_env_file}' was loaded successfully."
+
+echo "Loading backup configuration file '${_conf_file}' ..."
+# shellcheck source=/dev/null
+source "${_conf_file}"
+echo "Backup configuration file '${_conf_file}' was loaded successfully."
+
+echo "Loading MQTT environment file ..."
+# shellcheck source=/dev/null
+source "${HOME}/.home/backup/.env.mqtt.primary"
+
+echo "Loading MQTT autodiscovery payload files ..."
+# shellcheck source=/dev/null
+source "${HOME}/.home/backup/.mqtt.restic.repo.payload"
+# shellcheck source=/dev/null
+source "${HOME}/.home/backup/.mqtt.restic.backup.payload"
+
+# Sanity checks
+REQUIRED_VARS=(
+    "BACKUP_ENV_NAME"
+    "BACKUP_CONF_NAME"
+    "RESTIC_LOCK_FD"
+    "RESTIC_LOCK_FILE"
+	"RESTIC_ARGS_BACKUP"
+	"RESTIC_ARGS_COMPARE"
+	"RESTIC_ARGS_PRUNE"
+	"RESTIC_ARGS_SNAPSHOT_STATS"
+    "MQTT_PUB_ARGS"
+    "HASS_REPO_CONFIG_TOPIC"
+    "HASS_REPO_STATS_TOPIC"
+    "HASS_BACKUP_CONFIG_TOPIC"
+    "HASS_BACKUP_STATE_TOPIC"
+    "HASS_BACKUP_STATS_TOPIC"
+    "HASS_RESTIC_REPOSITORY_DISCOVERY_PAYLOAD"
+    "HASS_RESTIC_BACKUP_DISCOVERY_PAYLOAD"
+)
+
+for var in "${REQUIRED_VARS[@]}"; do
+    if [ -z "$(eval echo "\$$var")" ]; then
+        _err "Required environment variable '${var}' is not set. Aborting!"
+        exit 1
+    fi
+done
+
+# --- Main Execution Block ---
+
+# Configure repository device using MQTT autodiscovery feature in Home Assistant
+# echo "Following restic repository MQTT payload will be used for autodiscovery:"
+# echo "${HASS_RESTIC_REPOSITORY_DISCOVERY_PAYLOAD}" | jq
+mosquitto_pub ${MQTT_PUB_ARGS} -r -t "${HASS_REPO_CONFIG_TOPIC}" -m "${HASS_RESTIC_REPOSITORY_DISCOVERY_PAYLOAD}"
+
+# Configure backup device using MQTT autodiscovery feature in Home Assistant
+# echo "Following restic backup MQTT payload will be used for autodiscovery:"
+# echo "${HASS_RESTIC_BACKUP_DISCOVERY_PAYLOAD}" | jq
+mosquitto_pub ${MQTT_PUB_ARGS} -r -t "${HASS_BACKUP_CONFIG_TOPIC}" -m "${HASS_RESTIC_BACKUP_DISCOVERY_PAYLOAD}"
+
+# Report "Running" backup state immediately before starting the lock
+mosquitto_pub ${MQTT_PUB_ARGS} -r -t "${HASS_BACKUP_STATE_TOPIC}" -m "{\"state\" : \"Running\"}"
+
+# Open the lock file and assign it a file descriptor
+exec {RESTIC_LOCK_FD}>"${RESTIC_LOCK_FILE}" || { _err "Unable to open or create lock file '${RESTIC_LOCK_FILE}'. Aborting."; exit 1; }
+
+# Execute the main process within a subshell to manage the lock automatically
+(
+    _get_lock "${RESTIC_LOCK_FD}" || { _err "Unable to obtain the file lock. Aborting."; exit 1;}
+
+    _result=1 # Default exit code is failure
+    _nid=""   # Notification ID
+
+    # Handle interrupt signal or normal exit
+    trap '_exit $?' INT
+    trap '_exit' EXIT
+
+    # Clean-up function run on EXIT or INT
+    # shellcheck disable=SC2329,SC2317
+    function _exit {
+        _sig=$?
+        if [ "${_sig}" = 130 ]; then
+            _err "Interrupted by user (SIGINT). Unlocking repository and exiting."
+            _unlock_repository
+        fi
+        # The flock file descriptor will close automatically when the subshell exits
+        exit ${_result}
+    }
+
+    # Start Backup
+    _nid=$(_notify "normal" "Backup has started ...") || _err "The script was unable to send a notification. Ignoring."
+
+	echo "Backing up data ..."
+
+    _do_backup
+    _result=${?} # Save the restic exit code
+
+    # Do not continue if backup failed
+    if [ ${_result} -ne 0 ]; then
+        exit "${_result}"
+    fi
+
+    # Report backup completion
+	mosquitto_pub ${MQTT_PUB_ARGS} -r -t "${HASS_BACKUP_STATE_TOPIC}" -m "{\"state\" : \"Idle\"}"
+
+    _nid=$(_notify "normal" "Backup has completed ..." "${_nid}") || _err "The script was unable to send a notification. Ignoring."
+
+    # Show diff between current and most recent backup
+    if [ "${_result}" -eq 0 ]; then
+        _show_diff || _err "There was an error while building a diff between current and most recent backup. Ignoring."
+    fi
+
+    # Prune repository. Continue even if prune fails
+    _nid=$(_notify "normal" "Pruning repository ..." "${_nid}") || _err "The script was unable to send a notification. Ignoring."
+    _prune_repository || true
+
+    _nid=$(_notify "normal" "Backup has finished" "${_nid}") || _err "The script was unable to send a notification. Ignoring."
+
+    echo "Reporting successful backup results and updated statistics ..."
+
+    # Combine and report restic snapshot stats
+    { restic --no-lock snapshots ${RESTIC_ARGS_SNAPSHOT_STATS} latest --json | jq '.[0].summary'; \
+      restic --no-lock stats ${RESTIC_ARGS_SNAPSHOT_STATS} latest --json; } \
+        | jq -s "add" | mosquitto_pub ${MQTT_PUB_ARGS} -r -t "${HASS_BACKUP_STATS_TOPIC}" -s
+
+    # The subshell exits with the restic backup result
+    exit ${_result}
+)
+
+# Catch the exit code from the subshell
+result=${?}
+
+# Report error if the subshell failed
+if [ ${result} -ne 0 ]; then
+    echo "Backup failed with exit code (${result}). Reporting failure ..."
+    _notify "critical" "Backup error occurred! Check the logs." > /dev/null || { _err "The script was unable to send a notification. Ignoring."; }
+    mosquitto_pub ${MQTT_PUB_ARGS} -r -t "${HASS_BACKUP_STATE_TOPIC}" -m "{\"state\" : \"Failure\"}"
+fi
+
+echo "Done"
+exit ${result}

@@ -1,0 +1,145 @@
+#!/usr/bin/env -S echo "This should not be run directly. Use: \nsource"
+#
+# This file is intended to be SOURCED, not executed directly.
+# It defines the MQTT autodiscovery repository payload
+#
+# shellcheck shell=bash
+
+export REPO_UNIQUE_ID="${BACKUP_ENV_NAME}"
+export REPO_PRETTY_NAME="Restic Repository (${BACKUP_ENV_NAME})"
+
+HASS_REPO_SENSOR_ID="restic-repo-${REPO_UNIQUE_ID//_/-}"
+HASS_REPO_COMPONENT_ID_PREFIX="restic_repo_${REPO_UNIQUE_ID}"
+
+export HASS_REPO_CONFIG_TOPIC="homeassistant/device/${HASS_REPO_SENSOR_ID}/config"
+export HASS_REPO_STATS_TOPIC="homeassistant/device/${HASS_REPO_SENSOR_ID}/stats"
+export HASS_REPO_STATE_TOPIC="homeassistant/device/${HASS_REPO_SENSOR_ID}/state"
+
+HASS_RESTIC_REPOSITORY_DISCOVERY_PAYLOAD="$(
+cat <<EOF
+{
+    "device": {
+        "ids": "${HASS_REPO_SENSOR_ID}",
+        "name": "${REPO_PRETTY_NAME}"
+    },
+    "origin": {
+        "name": "systemd"
+    },
+    "components" : {
+        "${HASS_REPO_COMPONENT_ID_PREFIX}_total_size" : {
+            "platform": "sensor",
+            "name": "Total Size",
+            "entity_category": "diagnostic",
+            "state_class": "measurement",
+            "unit_of_measurement": "GiB",
+            "device_class": "data_size",
+            "suggested_display_precision": 2,
+            "value_template":"{{value_json.total_size / 1073741824 | round(3)}}",
+            "unique_id":"${HASS_REPO_COMPONENT_ID_PREFIX}_total_size"
+        },
+        "${HASS_REPO_COMPONENT_ID_PREFIX}_total_uncompressed_size" : {
+            "platform": "sensor",
+            "name": "Total Uncompressed Size",
+            "entity_category": "diagnostic",
+            "state_class": "measurement",
+            "unit_of_measurement": "GiB",
+            "device_class": "data_size",
+            "suggested_display_precision": 2,
+            "icon": "mdi:database-sync",
+            "value_template":"{{value_json.total_uncompressed_size / 1073741824 | round(3)}}",
+            "unique_id":"${HASS_REPO_COMPONENT_ID_PREFIX}_total_uncompressed_size"
+        },
+        "${HASS_REPO_COMPONENT_ID_PREFIX}_compression_ratio" : {
+            "platform": "sensor",
+            "name": "Compression Ratio",
+            "entity_category": "diagnostic",
+            "state_class": "measurement",
+            "suggested_display_precision": 2,
+            "value_template":"{{value_json.total_uncompressed_size / 1073741824 | round(3)}}",
+            "unique_id":"${HASS_REPO_COMPONENT_ID_PREFIX}_compression_ratio"
+        },
+        "${HASS_REPO_COMPONENT_ID_PREFIX}_compression_progress" : {
+            "platform": "sensor",
+            "name": "Compression Progress",
+            "entity_category": "diagnostic",
+            "state_class": "measurement",
+            "unit_of_measurement": "%",
+            "icon": "mdi:progress-upload",
+            "suggested_display_precision": 2,
+            "value_template":"{{value_json.compression_progress}}",
+            "unique_id":"${HASS_REPO_COMPONENT_ID_PREFIX}_compression_progress"
+        },
+        "${HASS_REPO_COMPONENT_ID_PREFIX}_compression_space_saving" : {
+            "platform": "sensor",
+            "name": "Compression Space Savings",
+            "entity_category": "diagnostic",
+            "state_class": "measurement",
+            "unit_of_measurement": "%",
+            "suggested_display_precision": 2,
+            "value_template":"{{value_json.compression_space_saving}}",
+            "unique_id":"${HASS_REPO_COMPONENT_ID_PREFIX}_compression_space_saving"
+        },
+        "${HASS_REPO_COMPONENT_ID_PREFIX}_total_blob_count" : {
+            "platform": "sensor",
+            "name": "Total Blob Count",
+            "entity_category": "diagnostic",
+            "state_class": "measurement",
+            "icon": "mdi:database-settings",
+            "value_template":"{{value_json.total_blob_count}}",
+            "unique_id":"${HASS_REPO_COMPONENT_ID_PREFIX}_total_blob_count"
+        },
+        "${HASS_REPO_COMPONENT_ID_PREFIX}_snapshots_count" : {
+            "platform": "sensor",
+            "name": "Snapshots Count",
+            "entity_category": "diagnostic",
+            "state_class": "measurement",
+            "icon": "mdi:history",
+            "value_template":"{{value_json.snapshots_count}}",
+            "unique_id":"${HASS_REPO_COMPONENT_ID_PREFIX}_snapshots_count"
+        },
+        "${HASS_REPO_COMPONENT_ID_PREFIX}_num_errors" : {
+            "platform": "sensor",
+            "name": "Number Of Errors",
+            "entity_category": "diagnostic",
+            "state_class": "measurement",
+            "icon": "mdi:alert-circle",
+            "value_template":"{{value_json.num_errors}}",
+            "unique_id":"${HASS_REPO_COMPONENT_ID_PREFIX}_num_errors",
+            "state_topic": "${HASS_REPO_STATE_TOPIC}"
+        },
+		"${HASS_REPO_COMPONENT_ID_PREFIX}_suggest_repair_index" : {
+			"platform": "binary_sensor",
+			"payload_on": true,
+            "payload_off": false,
+			"name": "Index Repair Suggested",
+			"icon": "mdi:wrench",
+			"value_template":"{{value_json.suggest_repair_index}}",
+			"unique_id":"${HASS_REPO_COMPONENT_ID_PREFIX}_suggest_repair_index",
+            "state_topic": "${HASS_REPO_STATE_TOPIC}"
+		},
+		"${HASS_REPO_COMPONENT_ID_PREFIX}_suggest_prune" : {
+			"platform": "binary_sensor",
+			"payload_on": true,
+            "payload_off": false,
+			"name": "Pruning Suggested",
+			"icon": "mdi:wrench",
+			"value_template":"{{value_json.suggest_prune}}",
+			"unique_id":"${HASS_REPO_COMPONENT_ID_PREFIX}_suggest_prune",
+            "state_topic": "${HASS_REPO_STATE_TOPIC}"
+		},
+		"${HASS_REPO_COMPONENT_ID_PREFIX}_last_checked" : {
+            "platform": "sensor",
+            "name": "Last Checked",
+            "device_class": "timestamp",
+            "value_template":"{{value_json.last_checked}}",
+			"unique_id":"${HASS_REPO_COMPONENT_ID_PREFIX}_last_checked",
+            "state_topic": "${HASS_REPO_STATE_TOPIC}"
+		}
+    },
+    "state_topic": "${HASS_REPO_STATS_TOPIC}"
+}
+EOF
+)"
+
+export HASS_RESTIC_REPOSITORY_DISCOVERY_PAYLOAD
+
