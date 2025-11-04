@@ -122,10 +122,10 @@ PACKAGES_RPM += iwl*-firmware fwupd bluez bash bash-completion avahi avahi-tools
 PACKAGES_RPM += hplip hplip-gui xsane ffmpeg feh nano htop btop fzf less xdg-utils httpie lynis cheat tldr
 PACKAGES_RPM += ImageMagick baobab gimp gparted gnome-terminal seahorse cups duf ssh-audit coreutils openssl
 PACKAGES_RPM += libreoffice-core libreoffice-writer libreoffice-calc libreoffice-filters minder firefox vlc
-PACKAGES_RPM += gnome-pomodoro gnome-clocks fd-find ydiff webp-pixbuf-loader usbguard tuned
-PACKAGES_RPM += fastfetch bc usbutils pciutils acpi policycoreutils-devel pass-otp pass-audit
+PACKAGES_RPM += gnome-pomodoro gnome-clocks fd-find ydiff webp-pixbuf-loader tuned usbguard-selinux usbguard-notifier
+PACKAGES_RPM += usbguard-dbus fastfetch bc usbutils pciutils acpi policycoreutils-devel pass-otp pass-audit
 PACKAGES_RPM += gnupg2 pinentry-gtk pinentry-tty pinentry-gnome3 gedit gedit-plugins gedit-plugin-editorconfig
-PACKAGES_RPM += gvfs-mtp screen progress pv tio dialog catimg cifs-utils sharutils binutils
+PACKAGES_RPM += gvfs-mtp screen progress pv tio dialog catimg cifs-utils sharutils binutils odt2txt
 PACKAGES_RPM += restic rsync rclone micro wget xsensors lm_sensors curl jq libnotify glow libsecret
 PACKAGES_RPM += unrar lynx crudini sysstat p7zip nmap cabextract iotop qrencode uuid tcpdump
 PACKAGES_RPM += git diffutils git-lfs git-extras git-credential-libsecret git-crypt bat mc gh perl-Image-ExifTool
@@ -561,12 +561,13 @@ firewall-profiles:
 # - find a way to assign firewall profile to an interface
 
 INSTALL += backup-services
-backup-services: | $(XDG_CONFIG_HOME)/systemd/user/restic-backup@.service \
+backup-services: rclone | $(XDG_CONFIG_HOME)/systemd/user/restic-backup@.service \
 	$(XDG_CONFIG_HOME)/systemd/user/restic-stats@.service \
 	$(XDG_CONFIG_HOME)/systemd/user/restic-check@.service \
 	$(XDG_CONFIG_HOME)/systemd/user/restic-backup-daily@.timer \
 	$(XDG_CONFIG_HOME)/systemd/user/restic-backup-monthly@.timer \
-	$(XDG_CONFIG_HOME)/systemd/user/restic-check-monthly@.timer
+	$(XDG_CONFIG_HOME)/systemd/user/restic-check-monthly@.timer \
+	$(XDG_CONFIG_HOME)/rclone/rclone.conf
 
 	@systemctl --user enable 'restic-stats@home-primary.service'
 	@systemctl --user enable 'restic-stats@home-secondary.service'
@@ -597,6 +598,10 @@ mosquitto:
 	@$(call dnf, $@)
 	@sudo systemctl stop mosquitto.service
 	@sudo systemctl disable mosquitto.service
+
+INSTALL += usbguard
+usbguard: | usbguard-selinux usbguard-notifier usbguard-dbus /etc/polkit-1/rules.d/70-allow-usbguard.rules
+	@$(call dnf, $@)
 
 ########################################################################################################################
 #
@@ -796,6 +801,10 @@ gnome-privacy-settings: | gnome-desktop
 	@gsettings set org.gnome.desktop.privacy old-files-age 10
 	@gsettings set org.gnome.desktop.privacy remove-old-temp-files true
 	@gsettings set org.gnome.desktop.privacy remove-old-trash-files false
+
+	# Disable unusable `usb-protection` GNOME settings until this bug is fixed:
+	# https://gitlab.gnome.org/GNOME/gnome-settings-daemon/-/issues/735
+	@gsettings set org.gnome.desktop.privacy usb-protection false
 	@gsettings set org.gnome.desktop.privacy usb-protection-level 'lockscreen'
 
 	@gsettings set org.gnome.desktop.notifications show-banners false
@@ -1247,12 +1256,6 @@ FILES += /usr/local/bin/pass-gen
 	@$(call clone,pass-gen.git)
 	@sudo make -C $(HOME_OPT)/pass-gen.git install
 
-FILES += /etc/usbguard/rules.conf
-/etc/usbguard/rules.conf: | usbguard
-	@sudo sh -c 'usbguard generate-policy > /etc/usbguard/rules.conf'
-	@sudo chmod 0600 /etc/usbguard/rules.conf
-	@sudo systemctl enable --now usbguard
-
 # FIXME: permission denied, should be rewritten
 FILES += /etc/pki/akmods/certs/public_key.der
 /etc/pki/akmods/certs/public_key.der: | akmods mokutil openssl
@@ -1400,10 +1403,11 @@ $(XDG_CONFIG_HOME)/systemd/user/restic-check-monthly@.timer: | $(HOME_BIN)/resti
 	@systemd-analyze verify $@
 	@systemctl --user daemon-reload
 
-# Request admin authentication to ignore inhibitors
 FILES += /etc/polkit-1/rules.d/10-admin-auth-ignore-inhibit.rules
 /etc/polkit-1/rules.d/10-admin-auth-ignore-inhibit.rules:
 	@sudo install -m 644 -D /dev/stdin $@ <<- EOF
+		// Request admin authentication to ignore inhibitors.
+		// Should prevent running backups from interruption.
 		polkit.addRule(function(action, subject) {
 			if (action.id == "org.freedesktop.login1.power-off-ignore-inhibit" ||
 				action.id == "org.freedesktop.login1.power-off-multiple-sessions" ||
@@ -1433,6 +1437,31 @@ FILES += $(BACKUP_CONF_DEST_FILES)
 $(HOME_BACKUP_CF_DEST_DIR)/%: $(HOME_BACKUP_CF_SRC_DIR)/%
 	@install -d $(@D)
 	@ln -svfn $< $@
+
+FILES += $(XDG_CONFIG_HOME)/rclone/rclone.conf
+$(XDG_CONFIG_HOME)/rclone/rclone.conf: $(DOTFILES)/.config/rclone/rclone.conf
+	@install -d $(@D)
+	@ln -svfn $< $@
+
+FILES += /etc/polkit-1/rules.d/70-allow-usbguard.rules
+/etc/polkit-1/rules.d/70-allow-usbguard.rules:
+	@sudo install -m 644 -D /dev/stdin $@ <<- EOF
+		// Allow users in wheel group to communicate with USBGuard
+		polkit.addRule(function(action, subject) {
+			if ((action.id == "org.usbguard.Policy1.listRules" ||
+				 action.id == "org.usbguard.Policy1.appendRule" ||
+				 action.id == "org.usbguard.Policy1.removeRule" ||
+				 action.id == "org.usbguard.Devices1.applyDevicePolicy" ||
+				 action.id == "org.usbguard.Devices1.listDevices" ||
+				 action.id == "org.usbguard1.getParameter" ||
+				 action.id == "org.usbguard1.setParameter") &&
+				subject.active == true && subject.local == true &&
+				subject.isInGroup("wheel")) {
+					return polkit.Result.YES;
+			}
+		});
+	EOF
+
 
 ########################################################################################################################
 #
@@ -1617,6 +1646,14 @@ setup-mok-keys: /etc/pki/akmods/certs/public_key.der
 		$(call log,$(WARN),"Warning: You must restart ASAP to run MOK manager"); \
 	fi
 
+SETUP += setup-usbguard
+setup-usbguard: | usbguard usbguard-notifier usbguard-dbus
+	@sudo sh -c 'usbguard generate-policy > /etc/usbguard/rules.conf'
+	@sudo chmod 600 /etc/usbguard/rules.conf
+	@sudo systemctl enable --now usbguard.service
+	@sudo systemctl enable --now usbguard-dbus.service
+	@systemctl --user enable --now usbguard-notifier.service
+
 ########################################################################################################################
 #
 # Verification rules
@@ -1699,17 +1736,17 @@ $(foreach env, $(BACKUP_ENVS),\
 
 define restic-backup-rule-set
 # Target called by a systemd service to execute a backup using the specific backup configuration and restic environment
-.PHONY: backup-$(1)-$(2)-no-deps
+.PHONY: backup-restic-$(1)-$(2)-no-deps
 backup-restic-$(1)-$(2)-no-deps:
 	@$(HOME_BIN)/restic-backup --conf-file "$(HOME_BACKUP)/.conf.backup.$(1)" --env-file "$(HOME_BACKUP)/.env.restic.$(2)"
 
 # Target called by a systemd service to generate a stats report for the specific restic environment
-.PHONY: report-stats-$(1)-$(2)-no-deps
+.PHONY: stats-restic-$(1)-$(2)-no-deps
 stats-restic-$(1)-$(2)-no-deps:
 	@$(HOME_BIN)/restic-stats --backup-conf-name "$(1)" --env-file "$(HOME_BACKUP)/.env.restic.$(2)"
 
-BACKUP += backup-restic-$(1)-$(2)
-backup-$(1)-$(2): | $(HOME_BIN)/restic-backup $(HOME_BIN)/restic-stats backup-$(1)-$(2)-no-deps
+BACKUP += backup-$(1)-$(2)
+backup-$(1)-$(2): $(HOME_BIN)/restic-backup $(HOME_BIN)/restic-stats backup-restic-$(1)-$(2)-no-deps
 endef
 
 # Generate dynamic backup rules for every pair of backup config and environment (e.g. <conf>-<env>)
