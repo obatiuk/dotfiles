@@ -129,7 +129,7 @@ PACKAGES_RPM += gvfs-mtp screen progress pv tio dialog catimg cifs-utils sharuti
 PACKAGES_RPM += restic rsync rclone micro wget xsensors lm_sensors curl jq libnotify glow libsecret
 PACKAGES_RPM += unrar lynx crudini sysstat p7zip nmap cabextract iotop qrencode uuid tcpdump
 PACKAGES_RPM += git diffutils git-lfs git-extras git-credential-libsecret git-crypt bat mc gh perl-Image-ExifTool
-PACKAGES_RPM += snapd calibre ebook-tools clamav clamav-freshclam mdns-scan
+PACKAGES_RPM += calibre ebook-tools clamav clamav-freshclam mdns-scan
 PACKAGES_RPM += fedora-workstation-repositories gnome-monitor-config
 PACKAGES_RPM += adwaita-icon-theme adwaita-cursor-theme dconf
 PACKAGES_RPM += python3 python3-pip python3-devel python3-virtualenv
@@ -291,7 +291,7 @@ docker: /etc/yum.repos.d/docker-ce.repo | systemd
 	@$(call dnf,docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin)
 	@sudo groupadd --force docker
 	@sudo usermod -aG docker '$(USER)'
-	@sudo systemctl enable --now docker
+	@sudo systemctl enable --now $@
 
 INSTALL += ql700
 ql700: | cups
@@ -344,7 +344,7 @@ arduino: flatpak
 	@sudo usermod -aG dialout,tty,lock '$(USER)'
 
 INSTALL += code
-code: snap
+code: snapd
 	@snap install $@ --classic
 
 INSTALL += ddcutil
@@ -359,8 +359,7 @@ morewaita-icon-theme: | /etc/yum.repos.d/_copr\:copr.fedorainfracloud.org\:dusan
 INSTALL += ulauncher
 ulauncher:
 	@$(call dnf,$@)
-	@systemctl --user daemon-reload
-	@systemctl --user enable --now ulauncher.service
+	@systemctl --user enable --now $@
 
 INSTALL += ulauncher-extensions
 ulauncher-extensions: ulauncher $(EXT_ULAUNCHER)
@@ -441,7 +440,7 @@ INSTALL += tuned-ppd
 tuned-ppd: | tuned
 	@$(call dnf,$@)
 	@sudo systemctl enable --now tuned
-	@sudo systemctl enable --now tuned-ppd
+	@sudo systemctl enable --now $@
 	@sudo tuned-adm profile $(shell tuned-adm recommend)
 
 INSTALL += pass
@@ -472,7 +471,7 @@ update-gnome-shell-extensions-bin:
 
 INSTALL += pip
 pip: | python3 python3-pip
-	@python -m pip install --upgrade pip
+	@python -m $@ install --upgrade $@
 
 INSTALL += smartmontools
 smartmontools:
@@ -497,14 +496,21 @@ steam: | flatpak /etc/yum.repos.d/rpmfusion-nonfree.repo
 		org.freedesktop.Platform.VulkanLayer.gamescope
 	@flatpak override --user --filesystem=/run/udev:ro com.valvesoftware.Steam
 
-INSTALL += snap
-snap: | snapd /snap
+INSTALL += snapd
+snapd:
+	@$(call dnf, $@)
+	@sudo ln -svnf /var/lib/snapd/snap /snap
+	# A manual fix for the broken snap when `/usr/lib/snapd` link exists
+	# (see https://discussion.fedoraproject.org/t/snap-stopped-working-on-f41/161371 and
+	# https://github.com/canonical/snapd/commit/858801cf47fe5e8dc6307e4cf02191b7157fc0c2)
+	@sudo [ -L '/usr/lib/snapd' ] && sudo rm -rfi '/usr/lib/snapd'
 	@sudo snap set system refresh.retain=2
+	@sudo systemctl restart $@
 
 INSTALL += logrotate
 logrotate:
 	@$(call dnf,$@)
-	@sudo systemctl enable --now logrotate.timer
+	@sudo systemctl enable --now $@.timer
 	# Add missing logrotate rules (F39)
 	@sudo install -DC /dev/stdin /etc/logrotate.d/dnf <<- EOF
 	#
@@ -596,12 +602,19 @@ backup-services: rclone | $(XDG_CONFIG_HOME)/systemd/user/restic-backup@.service
 INSTALL += mosquitto
 mosquitto:
 	@$(call dnf, $@)
-	@sudo systemctl stop mosquitto.service
-	@sudo systemctl disable mosquitto.service
+
+	# Disable mosquitto services, we need only mosquitto_pub/sub binaries
+	@sudo systemctl stop $@
+	@sudo systemctl disable $@
 
 INSTALL += usbguard
 usbguard: | usbguard-selinux usbguard-notifier usbguard-dbus /etc/polkit-1/rules.d/70-allow-usbguard.rules
 	@$(call dnf, $@)
+
+INSTALL += rasdaemon
+rasdaemon:
+	@$(call dnf, $@)
+	@sudo systemctl enable --now $@
 
 ########################################################################################################################
 #
@@ -857,11 +870,11 @@ $(PACKAGES_GSHELL): | gnome-desktop
 	@if [ -f $(INCLUDE)/$@.ini ]; then dconf load '/' < $(INCLUDE)/$@.ini; fi
 
 INSTALL += $(PACKAGES_SNAP)
-$(PACKAGES_SNAP): | gnome-desktop snapd /snap
+$(PACKAGES_SNAP): | snapd
 	@sudo snap install $@
 
 INSTALL += $(PACKAGES_FLATPAK)
-$(PACKAGES_FLATPAK): | gnome-desktop flatpak
+$(PACKAGES_FLATPAK): | flatpak
 	@flatpak install --user $@
 
 INSTALL += $(EXT_ULAUNCHER)
@@ -895,15 +908,6 @@ $(EXT_MICRO): | micro fzf
 #
 # Files
 #
-
-FILES += /snap
-/snap: /var/lib/snapd/snap | snapd
-	@sudo ln -svnf $< $@
-	# A manual fix for the broken snap in F41 if `/usr/lib/snapd` link exists
-	# (see https://discussion.fedoraproject.org/t/snap-stopped-working-on-f41/161371 and
-	# https://github.com/canonical/snapd/commit/858801cf47fe5e8dc6307e4cf02191b7157fc0c2)
-	@sudo [ -L '/usr/lib/snapd' ] && sudo rm -rfi '/usr/lib/snapd'
-	@sudo systemctl restart snapd
 
 FILES += /etc/yum.repos.d/_copr\:copr.fedorainfracloud.org\:hyperreal\:better_fonts.repo
 /etc/yum.repos.d/_copr\:copr.fedorainfracloud.org\:hyperreal\:better_fonts.repo:
@@ -1684,7 +1688,7 @@ check-disk-space: | duf
 	@duf -all -warnings
 
 CHECK += check-docker-disk-usage
-check-docker-disk-usage:
+check-docker-disk-usage: | docker
 	-@docker system df
 
 CHECK += check-ssh
@@ -1719,15 +1723,17 @@ define restic-check-rule-set
 check-restic-$(1)-no-deps:
 	@$(HOME_BIN)/restic-check --env-file "$(HOME_BACKUP)/.env.restic.$(1)"
 
-CHECK += check-restic-env-$(1)
-check-restic-$(1): | $(HOME_BIN)/restic-check check-restic-$(1)-no-deps
+CHECK += check-restic-$(1)
+check-restic-$(1): $(HOME_BIN)/restic-check check-restic-$(1)-no-deps
 endef
 
 # Generate dynamic check rules for each restic environment
 $(foreach env, $(BACKUP_ENVS),\
 	$(eval $(call restic-check-rule-set,$(env))))
 
-#TODO: add rasdaemon checks
+CHECK += check-rasdaemon
+check-rasdaemon: | rasdaemon
+	@sudo ras-mc-ctl --summary
 
 ########################################################################################################################
 #
@@ -1776,7 +1782,7 @@ backup-pass: git pass pass-extensions
 #
 
 .PHONY: snap
-snap: | snapd /snap
+snap: | snapd
 
 .PHONY: vscode
 vscode: | code $(EXT_VSCODE)
