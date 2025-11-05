@@ -116,7 +116,7 @@ endef
 # Packages
 #
 
-# All rpm packages that are not directly referenced
+# All RPM packages that do not require manual installation steps
 PACKAGES_RPM := rpm dnf redhat-lsb rpmconf pwgen systemd pam-u2f pamu2fcfg xdg-user-dirs audit golang akmods mokutil
 PACKAGES_RPM += iwl*-firmware fwupd bluez bash bash-completion avahi avahi-tools samba-client tree brightnessctl
 PACKAGES_RPM += hplip hplip-gui xsane ffmpeg feh nano htop btop fzf less xdg-utils httpie lynis cheat tldr
@@ -139,10 +139,10 @@ PLUGINS_DNF := dnf-plugins-core dnf-plugin-diff python3-dnf-plugin-tracer dnf-pl
 PLUGINS_DNF += remove-retired-packages dracut-config-rescue clean-rpm-gpg-pubkey python3-dnf-plugin-show-leaves
 PLUGINS_DNF += python3-dnf-plugin-rpmconf needs-restarting
 
-# All `snap` packages that are not directly referenced
+# All `snap` packages that do not require manual installation steps
 PACKAGES_SNAP := chromium-ffmpeg brave intellij-idea-community slack
 
-# All **user** `flatpak` packages that are not directly referenced
+# All **user** `flatpak` that do not require manual installation steps
 PACKAGES_FLATPAK := org.gnupg.GPA org.gtk.Gtk3theme.Arc-Darker be.alexandervanhee.gradia com.core447.StreamController
 
 # Font packages
@@ -158,6 +158,7 @@ PACKAGES_GSHELL += gnome-shell-extension-sound-output-device-chooser gnome-shell
 PACKAGES_GSHELL += gnome-shell-extension-blur-my-shell gnome-shell-extension-user-theme
 PACKAGES_GSHELL += gnome-shell-extension-no-overview
 
+# GNOME shell extensions
 EXT_GSHELL := https\://extensions.gnome.org/extension/1401/bluetooth-quick-connect
 EXT_GSHELL += https\://extensions.gnome.org/extension/3780/ddterm
 EXT_GSHELL += https\://extensions.gnome.org/extension/7065/tiling-shell
@@ -183,10 +184,10 @@ EXT_ULAUNCHER += ulauncher-obsidian.git ulauncher-numconverter.git ulauncher-lis
 EXT_INTELLIJ := ru.adelf.idea.dotenv lermitage.intellij.battery.status Docker name.kropp.intellij.makefile
 EXT_INTELLIJ += com.jetbrains.packagesearch.intellij-plugin com.jetbrains.plugins.ini4idea
 
-# micro extensions
+# `micro` editor extensions
 EXT_MICRO += $(addprefix micro_,editorconfig fzf filemanager)
 
-# vivaldi configuration files
+# Vivaldi configuration files
 VIVALDI_CONF_FILES := $(shell find $(VIVALDI_CF_SRC_DIR) -type f -print)
 VIVALDI_CONF_DEST_FILES := $(patsubst $(VIVALDI_CF_SRC_DIR)/%,$(VIVALDI_CF_DEST_DIR)/%,$(VIVALDI_CONF_FILES))
 
@@ -194,17 +195,17 @@ VIVALDI_CONF_DEST_FILES := $(patsubst $(VIVALDI_CF_SRC_DIR)/%,$(VIVALDI_CF_DEST_
 EXT_PASS := symlink.bash age.bash ln.bash file.bash update.bash tessen.bash meta.bash
 EXT_PASS_DEST_FILES := $(addprefix $(PASS_EXT)/,$(EXT_PASS))
 
-# List of editors
+# Editors
 EDITORS := /usr/bin/vi /usr/bin/nano /usr/bin/micro
 
 # Backup configuration files
 BACKUP_CONF_FILES := $(shell find $(HOME_BACKUP_CF_SRC_DIR) -type f -print)
 BACKUP_CONF_DEST_FILES := $(patsubst $(HOME_BACKUP_CF_SRC_DIR)/%,$(HOME_BACKUP_CF_DEST_DIR)/%,$(BACKUP_CONF_FILES))
 
-# List of backup configuration names
+# Backup configuration names
 BACKUP_CONFIGS :=home nebula
 
-# List of backup environment names
+# Backup environment names
 BACKUP_ENVS:=primary secondary cloud
 
 ########################################################################################################################
