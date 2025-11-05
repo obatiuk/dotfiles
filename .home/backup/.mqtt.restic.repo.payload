@@ -112,7 +112,7 @@ cat <<EOF
 			"payload_on": true,
             "payload_off": false,
 			"name": "Index Repair Suggested",
-			"icon": "mdi:wrench",
+			"device_class": "problem",
 			"value_template":"{{value_json.suggest_repair_index}}",
 			"unique_id":"${HASS_REPO_COMPONENT_ID_PREFIX}_suggest_repair_index",
             "state_topic": "${HASS_REPO_STATE_TOPIC}"
@@ -122,7 +122,7 @@ cat <<EOF
 			"payload_on": true,
             "payload_off": false,
 			"name": "Pruning Suggested",
-			"icon": "mdi:wrench",
+			"device_class": "problem",
 			"value_template":"{{value_json.suggest_prune}}",
 			"unique_id":"${HASS_REPO_COMPONENT_ID_PREFIX}_suggest_prune",
             "state_topic": "${HASS_REPO_STATE_TOPIC}"
