@@ -17,13 +17,13 @@ function _err { echo "ERROR: " "$@" 1>&2; }
 # Attempts to acquire exclusive file lock. If busy, the process will wait until the lock is released
 # Usage: _get_lock <file_descriptor_number>
 function _get_lock {
-    local FILE_DESCRIPTOR_NUMBER="${1}"
-    if ! flock -n "${FILE_DESCRIPTOR_NUMBER}"; then
-        echo "Target environment '${BACKUP_ENV_NAME}' is currently locked by another process (Lock FD: ${FILE_DESCRIPTOR_NUMBER}). Waiting..."
-        flock "${FILE_DESCRIPTOR_NUMBER}"
+    local _fd="${1}"
+    if ! flock -n "${_fd}"; then
+        echo "Target environment '${BACKUP_ENV_NAME}' is currently locked by another process (Lock FD: ${_fd}). Waiting..."
+        flock "${_fd}"
         echo "Lock acquired after waiting. Resuming script..."
     else
-        echo "Acquired exclusive lock on '${BACKUP_ENV_NAME}'. (Lock FD: ${FILE_DESCRIPTOR_NUMBER})."
+        echo "Acquired exclusive lock on '${BACKUP_ENV_NAME}'. (Lock FD: ${_fd})."
     fi
 }
 
@@ -137,7 +137,6 @@ source "${HOME}/.home/backup/.mqtt.restic.backup.payload"
 REQUIRED_VARS=(
     "BACKUP_ENV_NAME"
     "BACKUP_CONF_NAME"
-    "RESTIC_LOCK_FD"
     "RESTIC_LOCK_FILE"
 	"RESTIC_ARGS_BACKUP"
 	"RESTIC_ARGS_COMPARE"
