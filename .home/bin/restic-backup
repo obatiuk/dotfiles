@@ -23,14 +23,14 @@ function _get_lock {
         flock "${_fd}"
         echo "Lock acquired after waiting. Resuming script..."
     else
-        echo "Acquired exclusive lock on '${BACKUP_ENV_NAME}'. (Lock FD: ${_fd})."
+        echo "Acquired exclusive lock on '${BACKUP_ENV_NAME}' environment. (Lock FD: ${_fd})."
     fi
 }
 
 # Executes the restic backup command
 function _do_backup {
     echo "Starting backup ..."
-    restic backup ${RESTIC_ARGS_BACKUP}
+    ${RESTIC_COMMAND} backup ${RESTIC_ARGS_BACKUP}
 }
 
 # Sends a notification via notify-send
@@ -52,20 +52,20 @@ function _notify {
 function _show_diff {
     echo "Displaying diff between the two most recent snapshots ..."
     # shellcheck disable=SC2046
-    restic diff $(restic snapshots ${RESTIC_ARGS_COMPARE} --json | jq -r '.[-2:][].id')
+    ${RESTIC_COMMAND} diff $(restic snapshots ${RESTIC_ARGS_COMPARE} --json | jq -r '.[-2:][].id')
 }
 
 # Prunes the repository according to the forget policy.
 function _prune_repository {
     echo "Pruning repository ..."
-    restic forget --prune ${RESTIC_ARGS_PRUNE}
+     ${RESTIC_COMMAND} forget --prune ${RESTIC_ARGS_PRUNE}
 }
 
 # Unlocks the restic repository
 # shellcheck disable=SC2329,SC2317
 function _unlock_repository {
     echo "Unlocking restic repository ..."
-    restic unlock
+    ${RESTIC_COMMAND} unlock
 }
 
 # Display usage instructions
@@ -122,6 +122,8 @@ echo "Loading backup configuration file '${_conf_file}' ..."
 # shellcheck source=/dev/null
 source "${_conf_file}"
 echo "Backup configuration file '${_conf_file}' was loaded successfully."
+
+: "${RESTIC_COMMAND:=restic}"
 
 echo "Loading MQTT environment file ..."
 # shellcheck source=/dev/null
@@ -191,11 +193,10 @@ exec {RESTIC_LOCK_FD}>"${RESTIC_LOCK_FILE}" || { _err "Unable to open or create 
     # Clean-up function run on EXIT or INT
     # shellcheck disable=SC2329,SC2317
     function _exit {
-        _sig=$?
-        if [ "${_sig}" = 130 ]; then
-            _err "Interrupted by user (SIGINT). Unlocking repository and exiting."
+		if [ ${_result} -ne 0 ]; then
+			# Unlock repository on any backup failure
             _unlock_repository
-        fi
+		fi
         # The flock file descriptor will close automatically when the subshell exits
         exit ${_result}
     }
@@ -206,7 +207,7 @@ exec {RESTIC_LOCK_FD}>"${RESTIC_LOCK_FILE}" || { _err "Unable to open or create 
 	echo "Backing up data ..."
 
     _do_backup
-    _result=${?} # Save the restic exit code
+    _result=$? # Save the restic exit code
 
     # Do not continue if backup failed
     if [ ${_result} -ne 0 ]; then
@@ -232,8 +233,8 @@ exec {RESTIC_LOCK_FD}>"${RESTIC_LOCK_FILE}" || { _err "Unable to open or create 
     echo "Reporting successful backup results and updated statistics ..."
 
     # Combine and report restic snapshot stats
-    { restic --no-lock snapshots ${RESTIC_ARGS_SNAPSHOT_STATS} latest --json | jq '.[0].summary'; \
-      restic --no-lock stats ${RESTIC_ARGS_SNAPSHOT_STATS} latest --json; } \
+    {  ${RESTIC_COMMAND} --no-lock snapshots ${RESTIC_ARGS_SNAPSHOT_STATS} latest --json | jq '.[0].summary'; \
+       ${RESTIC_COMMAND} --no-lock stats ${RESTIC_ARGS_SNAPSHOT_STATS} latest --json; } \
         | jq -s "add" | mosquitto_pub ${MQTT_PUB_ARGS} -r -t "${HASS_BACKUP_STATS_TOPIC}" -s
 
     # The subshell exits with the restic backup result
@@ -241,7 +242,7 @@ exec {RESTIC_LOCK_FD}>"${RESTIC_LOCK_FILE}" || { _err "Unable to open or create 
 )
 
 # Catch the exit code from the subshell
-result=${?}
+result=$?
 
 # Report error if the subshell failed
 if [ ${result} -ne 0 ]; then

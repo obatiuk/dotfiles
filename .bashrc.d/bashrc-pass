@@ -64,5 +64,6 @@ function pg {
     else
         # The sed command filters the 'Reading...' line from 'pass-gen' output.
         pass-gen | sed '/^Reading.*/d;q' | pass add -e "$@"
+        pass edit "$@"
     fi
 }

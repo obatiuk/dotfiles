@@ -30,6 +30,11 @@ space := $(subst ,, )
 dash := -
 slash := /
 
+define NEWLINE :=
+
+
+endef
+
 export XDG_CONFIG_HOME ?= $(HOME)/.config
 export XDG_DATA_HOME ?= $(HOME)/.local/share
 export XDG_CACHE_HOME ?= $(HOME)/.cache
@@ -97,8 +102,8 @@ define dnf
 		$(if $(findstring $(slash),$($@_PACKAGE)), \
 			$(eval $@_PACKAGE = $(subst .rpm,$(space),$(lastword $(subst $(slash),$(space),$(pkg)))))) \
 		$(if $(findstring B,$(firstword -$(MAKEFLAGS))), \
-			sudo dnf -y install $($@_SOURCE);, \
-			rpm -q $($@_PACKAGE) >& /dev/null || sudo dnf -y install $($@_SOURCE);))
+			sudo dnf -y install $($@_SOURCE);$(NEWLINE), \
+			rpm -q $($@_PACKAGE) >& /dev/null || sudo dnf -y install $($@_SOURCE);$(NEWLINE)))
 endef
 
 define clone
@@ -129,7 +134,7 @@ PACKAGES_RPM += gvfs-mtp screen progress pv tio dialog catimg cifs-utils sharuti
 PACKAGES_RPM += restic rsync rclone micro wget xsensors lm_sensors curl jq libnotify glow libsecret
 PACKAGES_RPM += unrar lynx crudini sysstat p7zip nmap cabextract iotop qrencode uuid tcpdump
 PACKAGES_RPM += git diffutils git-lfs git-extras git-credential-libsecret git-crypt bat mc gh perl-Image-ExifTool
-PACKAGES_RPM += calibre ebook-tools clamav clamav-freshclam mdns-scan
+PACKAGES_RPM += calibre ebook-tools clamav clamav-freshclam mdns-scan fping
 PACKAGES_RPM += fedora-workstation-repositories gnome-monitor-config
 PACKAGES_RPM += adwaita-icon-theme adwaita-cursor-theme dconf
 PACKAGES_RPM += python3 python3-pip python3-devel python3-virtualenv
@@ -203,7 +208,7 @@ BACKUP_CONF_FILES := $(shell find $(HOME_BACKUP_CF_SRC_DIR) -type f -print)
 BACKUP_CONF_DEST_FILES := $(patsubst $(HOME_BACKUP_CF_SRC_DIR)/%,$(HOME_BACKUP_CF_DEST_DIR)/%,$(BACKUP_CONF_FILES))
 
 # Backup configuration names
-BACKUP_CONFIGS :=home nebula
+BACKUP_CONFIGS :=home nebula system
 
 # Backup environment names
 BACKUP_ENVS:=primary secondary cloud
@@ -558,7 +563,7 @@ proton-mail-bridge: | pass
 
 INSTALL += editor-alternatives
 editor-alternatives: micro
-	@$(foreach editor, $(EDITORS), sudo alternatives --install '$(EDITOR_BIN)' editor '$(editor)' 0;)
+	@$(foreach editor, $(EDITORS), sudo alternatives --install '$(EDITOR_BIN)' editor '$(editor)' 0;$(NEWLINE))
 	@sudo alternatives --set editor '/usr/bin/micro'
 
 INSTALL += firewall-profiles
@@ -1083,6 +1088,11 @@ $(HOME_BIN)/restic-check: $(DOTFILES)/.home/bin/restic-check | restic jq mosquit
 	@ln -svfn $< $@
 	@chmod +x $<
 
+FILES += $(HOME_BIN)/hass-retrieve-roomba-token
+$(HOME_BIN)/hass-retrieve-roomba-token: $(DOTFILES)/.home/bin/hass-retrieve-roomba-token | docker pass
+	@ln -svfn $< $@
+	@chmod +x $<
+
 FILES += $(XDG_CONFIG_HOME)/gtk-2.0/gtkrc
 $(XDG_CONFIG_HOME)/gtk-2.0/gtkrc: $(DOTFILES)/.config/gtk-2.0/gtkrc | gnome-desktop
 	 @ln -svfn $< $@
@@ -1160,7 +1170,7 @@ FILES += /etc/systemd/resolved.conf.d/dnssec.conf
 		# Created by dotfiles setup script on $$(date -I) by ${USER}
 		#
 		[Resolve]
-		DNSSEC=true
+		DNSSEC=false
 	EOF
 	@sudo systemctl restart systemd-resolved
 
@@ -1585,7 +1595,7 @@ UPDATE += update-micro-plugins
 update-micro-plugins: | micro
 	@echo -e "\n*******************************************************************************************************"
 	@$(call log,$(INFO), "\\nUpdating micro plugins ...\\n")
-	@$(foreach plugin, $(EXT_MICRO), $$(command -v micro) -plugin update $(subst micro_,,$(plugin);))
+	@$(foreach plugin, $(EXT_MICRO), $$(command -v micro) -plugin update $(subst micro_,,$(plugin);$(NEWLINE)))
 
 UPDATE += update-firmware
 update-firmware: | fwupd
@@ -1753,25 +1763,13 @@ stats-restic-$(1)-$(2)-no-deps:
 	@$(HOME_BIN)/restic-stats --backup-conf-name "$(1)" --env-file "$(HOME_BACKUP)/.env.restic.$(2)"
 
 BACKUP += backup-$(1)-$(2)
-backup-$(1)-$(2): $(HOME_BIN)/restic-backup $(HOME_BIN)/restic-stats backup-restic-$(1)-$(2)-no-deps
+backup-$(1)-$(2): $(HOME_BACKUP)/.conf.backup.$(1) $(HOME_BACKUP)/.env.restic.$(2) $(HOME_BIN)/restic-backup $(HOME_BIN)/restic-stats backup-restic-$(1)-$(2)-no-deps
 endef
 
 # Generate dynamic backup rules for every pair of backup config and environment (e.g. <conf>-<env>)
 $(foreach config, $(BACKUP_CONFIGS),\
  	$(foreach env, $(BACKUP_ENVS),\
  		$(eval $(call restic-backup-rule-set,$(config),$(env)))))
-
-BACKUP += backup-system-primary
-backup-system-primary: pass restic fastfetch redhat-lsb diffutils
-	@$(HOME_BIN)/backup-system-restic --env-file "$(HOME)/.home/backup/legacy/.env.backup.primary"
-
-BACKUP += backup-system-secondary
-backup-system-secondary: pass restic fastfetch redhat-lsb diffutils
-	@$(HOME_BIN)/backup-system-restic --env-file "$(HOME)/.home/backup/legacy/.env.backup.secondary"
-
-BACKUP += backup-system-cloud
-backup-system-cloud: pass restic fastfetch redhat-lsb diffutils
-	@$(HOME_BIN)/backup-system-restic --env-file "$(HOME)/.home/backup/legacy/.env.backup.cloud"
 
 BACKUP += backup-pass
 backup-pass: git pass pass-extensions

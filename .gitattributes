@@ -3,7 +3,7 @@
 **/*/gnome-clocks.ini filter=git-crypt diff=git-crypt
 .password-store/.gitignore filter=git-crypt diff=git-crypt
 **/*/.browserpass.json filter=git-crypt diff=git-crypt
-**/*/lst.exclude.home filter=git-crypt diff=git-crypt
+**/*/lst.exclude.* filter=git-crypt diff=git-crypt
 **/*/rclone.conf filter=git-crypt diff=git-crypt
 *.png -text diff=exif
 *.webp -text diff=exif

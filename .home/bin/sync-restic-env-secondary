@@ -19,7 +19,7 @@ _restic_server_port=$(pass meta ${_restic_pass_file} server_port)
 _restic_rest_username=$(pass meta ${_restic_pass_file} server_username)
 _restic_rest_password=$(pass meta ${_restic_pass_file} server_password)
 _restic_password=$(pass show ${_restic_pass_file} | head -n 1)
-_restic_repository=rest:https://${_restic_server_host}:${_restic_server_port}/
+_restic_repository="rest:https://${_restic_server_host}:${_restic_server_port}/"
 
 if [ -z "${_restic_repository}" ] || [ -z "${_restic_password}" ]; then
     echo "ERROR: Failed to retrieve critical restic secrets. Check path: ${_restic_pass_file}" >&2

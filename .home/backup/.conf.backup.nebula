@@ -63,7 +63,7 @@ fi
 _tag_keep="keep"
 _tag_os_name="openwrt"
 _tag_os_version="${_tag_os_name}:${_os_ver// /-}"
-_backup_tags="--tag system --tag stream --tag ${_tag_os_name} --tag ${_tag_os_version}"
+_backup_tags="--tag system,stream,${_tag_os_name},${_tag_os_version}"
 
 # Arguments used for the 'restic backup' command
 RESTIC_ARGS_BACKUP="--verbose --exclude-caches --cleanup-cache --no-cache \
@@ -81,10 +81,7 @@ RESTIC_ARGS_PRUNE="--keep-last 10 --keep-daily 7 --keep-weekly 4 --keep-monthly 
     --group-by host,tags \
     --host ${ROUTER_HOST_NAME} \
     --keep-tag ${_tag_keep} \
-    --tag system \
-    --tag stream \
-    --tag ${_tag_os_name} \
-    --tag ${_tag_os_version}"
+    ${_backup_tags}"
 
 # Arguments for getting statistics on the latest snapshot
 RESTIC_ARGS_SNAPSHOT_STATS="--host ${ROUTER_HOST_NAME} ${_backup_tags}"
