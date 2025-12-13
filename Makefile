@@ -136,7 +136,7 @@ PACKAGES_RPM += unrar lynx crudini sysstat p7zip nmap cabextract iotop qrencode 
 PACKAGES_RPM += git diffutils git-lfs git-extras git-credential-libsecret git-crypt bat mc gh perl-Image-ExifTool
 PACKAGES_RPM += calibre ebook-tools clamav clamav-freshclam mdns-scan fping
 PACKAGES_RPM += fedora-workstation-repositories gnome-monitor-config
-PACKAGES_RPM += adwaita-icon-theme adwaita-cursor-theme dconf
+PACKAGES_RPM += adwaita-icon-theme adwaita-cursor-theme dconf adoptium-temurin-java-repository java-latest-openjdk
 PACKAGES_RPM += python3 python3-pip python3-devel python3-virtualenv
 
 # DNF plugins
@@ -621,6 +621,15 @@ INSTALL += rasdaemon
 rasdaemon:
 	@$(call dnf, $@)
 	@sudo systemctl enable --now $@
+
+INSTALL += jre
+jre:
+	@$(call dnf, java-latest-openjdk)
+	@sudo alternatives --set java /usr/lib/jvm/java-latest-openjdk/bin/java
+
+INSTALL += kse
+kse: | jre
+	@$(call dnf,https://github.com/kaikramer/keystore-explorer/releases/download/v5.6.0/kse-5.6.0-1.noarch.rpm)
 
 ########################################################################################################################
 #
@@ -1714,7 +1723,7 @@ CHECK += check-release-eol
 check-release-eol: /etc/os-release
 	-@[ "$(OS_RELEASE_EOL)" \< "$$(date +%Y-%m-%d)" ] \
 	 && $(call log,$(ERR),"\\n\\n\\nCritical: Current date $$(date +%Y-%m-%d) is AFTER the support end date: \
-	 $(OS_RELEASE_EOL). Update your OS ASAP\x21\\n\\n")
+	 $(OS_RELEASE_EOL). Update your OS ASAP\x21\\n\\n") || true
 
 CHECK += check-fwupd-security
 check-fwupd-security: | fwupd
@@ -1745,6 +1754,10 @@ $(foreach env, $(BACKUP_ENVS),\
 CHECK += check-rasdaemon
 check-rasdaemon: | rasdaemon
 	@sudo ras-mc-ctl --summary
+
+CHECK += check-firewalld-config
+check-firewalld-config:
+	@sudo firewall-cmd --check-config
 
 ########################################################################################################################
 #
