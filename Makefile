@@ -1184,14 +1184,8 @@ FILES += /etc/systemd/resolved.conf.d/dnssec.conf
 	@sudo systemctl restart systemd-resolved
 
 FILES += /etc/udev/rules.d/60-streamdeck.rules
-/etc/udev/rules.d/60-streamdeck.rules:
-	@sudo install -m 644 -D /dev/stdin $@ <<- EOF
-		#
-		# Created by dotfiles setup script on $$(date -I) by ${USER}
-		#
-		SUBSYSTEM=="usb", ATTRS{idVendor}=="0fd9", ATTRS{idProduct}=="0063", TAG+="uaccess"
-		KERNEL=="uinput", SUBSYSTEM=="misc", OPTIONS+="static_node=uinput", TAG+="uaccess", GROUP="input", MODE="0660"
-	EOF
+/etc/udev/rules.d/60-streamdeck.rules: $(DOTFILES)/etc/udev/rules.d/60-streamdeck.rules
+	@sudo install -m 644 $< $@
 	@sudo udevadm control --reload-rules && sudo udevadm trigger
 
 FILES += $(XDG_CONFIG_HOME)/wget/wgetrc
@@ -1428,24 +1422,8 @@ $(XDG_CONFIG_HOME)/systemd/user/restic-check-monthly@.timer: | $(HOME_BIN)/resti
 	@systemctl --user daemon-reload
 
 FILES += /etc/polkit-1/rules.d/10-admin-auth-ignore-inhibit.rules
-/etc/polkit-1/rules.d/10-admin-auth-ignore-inhibit.rules:
-	@sudo install -m 644 -D /dev/stdin $@ <<- EOF
-		// Request admin authentication to ignore inhibitors.
-		// Should prevent running backups from interruption.
-		polkit.addRule(function(action, subject) {
-			if (action.id == "org.freedesktop.login1.power-off-ignore-inhibit" ||
-				action.id == "org.freedesktop.login1.power-off-multiple-sessions" ||
-				action.id == "org.freedesktop.login1.reboot-ignore-inhibit" ||
-				action.id == "org.freedesktop.login1.reboot-multiple-sessions" ||
-				action.id == "org.freedesktop.login1.suspend-ignore-inhibit" ||
-				action.id == "org.freedesktop.login1.suspend-multiple-sessions" ||
-				action.id == "org.freedesktop.login1.hibernate-ignore-inhibit" ||
-				action.id == "org.freedesktop.login1.hibernate-multiple-sessions"
-			) {
-				return polkit.Result.AUTH_ADMIN;
-			}
-		});
-	EOF
+/etc/polkit-1/rules.d/10-admin-auth-ignore-inhibit.rules: $(DOTFILES)/etc/polkit-1/rules.d/10-admin-auth-ignore-inhibit.rules
+	@sudo install -m 644 -D $< $@
 
 FILES += $(XDG_CONFIG_HOME)/Code/User/settings.json
 $(XDG_CONFIG_HOME)/Code/User/settings.json: $(DOTFILES)/.config/Code/User/settings.json
@@ -1468,24 +1446,14 @@ $(XDG_CONFIG_HOME)/rclone/rclone.conf: $(DOTFILES)/.config/rclone/rclone.conf
 	@ln -svfn $< $@
 
 FILES += /etc/polkit-1/rules.d/70-allow-usbguard.rules
-/etc/polkit-1/rules.d/70-allow-usbguard.rules:
-	@sudo install -m 644 -D /dev/stdin $@ <<- EOF
-		// Allow users in wheel group to communicate with USBGuard
-		polkit.addRule(function(action, subject) {
-			if ((action.id == "org.usbguard.Policy1.listRules" ||
-				 action.id == "org.usbguard.Policy1.appendRule" ||
-				 action.id == "org.usbguard.Policy1.removeRule" ||
-				 action.id == "org.usbguard.Devices1.applyDevicePolicy" ||
-				 action.id == "org.usbguard.Devices1.listDevices" ||
-				 action.id == "org.usbguard1.getParameter" ||
-				 action.id == "org.usbguard1.setParameter") &&
-				subject.active == true && subject.local == true &&
-				subject.isInGroup("wheel")) {
-					return polkit.Result.YES;
-			}
-		});
-	EOF
+/etc/polkit-1/rules.d/70-allow-usbguard.rules: $(DOTFILES)/etc/polkit-1/rules.d/70-allow-usbguard.rules
+	@sudo install -m 644 $< $@
 
+# (source: https://codeberg.org/fabiscafe/game-devices-udev/src/branch/main/71-sony-controllers.rules)
+FILES += /etc/udev/rules.d/71-sony-controllers.rules
+/etc/udev/rules.d/71-sony-controllers.rules: $(DOTFILES)/etc/udev/rules.d/71-sony-controllers.rules
+	@sudo install -m 644 $< $@
+	@sudo udevadm control --reload-rules && sudo udevadm trigger
 
 ########################################################################################################################
 #
@@ -1509,14 +1477,9 @@ PATCH += /etc/sysconfig/lm_sensors
 	@sudo sensors-detect
 
 # Possible fix for mouse lagging (e.g. disable autosuspend for Dell Universal Receiver)
-PATCH += /etc/udev/rules.d/50-usb_power_save.rules
-/etc/udev/rules.d/50-usb_power_save.rules:
-	@sudo install -D /dev/stdin $@ <<- EOF
-		#
-		# Created by dotfiles setup script on $$(date -I) by ${USER}
-		#
-		ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="413c", ATTR{idProduct}=="2514", TEST=="power/autosuspend", ATTR{power/autosuspend}="-1"
-		EOF
+PATCH += /etc/udev/rules.d/50-usb-power-save.rules
+/etc/udev/rules.d/50-usb-power-save.rules: $(DOTFILES)/etc/udev/rules.d/50-usb-power-save.rules
+	@sudo install -m 644 $< $@
 	@sudo udevadm control --reload-rules && sudo udevadm trigger
 
 # Fix for the NVIDIA suspend issue
