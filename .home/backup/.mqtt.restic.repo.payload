@@ -75,6 +75,7 @@ cat <<EOF
             "entity_category": "diagnostic",
             "state_class": "measurement",
             "unit_of_measurement": "%",
+            "icon": "mdi:percent-circle",
             "suggested_display_precision": 2,
             "value_template":"{{value_json.compression_space_saving}}",
             "unique_id":"${HASS_REPO_COMPONENT_ID_PREFIX}_compression_space_saving"
