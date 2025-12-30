@@ -578,8 +578,7 @@ backup-services: rclone | $(XDG_CONFIG_HOME)/systemd/user/restic-backup@.service
 	$(XDG_CONFIG_HOME)/systemd/user/restic-check@.service \
 	$(XDG_CONFIG_HOME)/systemd/user/restic-backup-daily@.timer \
 	$(XDG_CONFIG_HOME)/systemd/user/restic-backup-monthly@.timer \
-	$(XDG_CONFIG_HOME)/systemd/user/restic-check-monthly@.timer \
-	$(XDG_CONFIG_HOME)/rclone/rclone.conf
+	$(XDG_CONFIG_HOME)/systemd/user/restic-check-monthly@.timer
 
 	@systemctl --user enable 'restic-stats@home-primary.service'
 	@systemctl --user enable 'restic-stats@home-secondary.service'
@@ -1437,11 +1436,6 @@ $(XDG_CONFIG_HOME)/glow/glow.yml: $(DOTFILES)/.config/glow/glow.yml | glow
 
 FILES += $(BACKUP_CONF_DEST_FILES)
 $(HOME_BACKUP_CF_DEST_DIR)/%: $(HOME_BACKUP_CF_SRC_DIR)/%
-	@install -d $(@D)
-	@ln -svfn $< $@
-
-FILES += $(XDG_CONFIG_HOME)/rclone/rclone.conf
-$(XDG_CONFIG_HOME)/rclone/rclone.conf: $(DOTFILES)/.config/rclone/rclone.conf
 	@install -d $(@D)
 	@ln -svfn $< $@
 
