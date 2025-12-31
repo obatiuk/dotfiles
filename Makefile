@@ -127,22 +127,23 @@ endef
 #
 
 # All RPM packages that do not require manual installation steps
-PACKAGES_RPM := rpm dnf redhat-lsb rpmconf pwgen systemd pam-u2f pamu2fcfg xdg-user-dirs audit golang akmods mokutil
-PACKAGES_RPM += iwl*-firmware fwupd bluez bash bash-completion avahi avahi-tools samba-client tree brightnessctl
+PACKAGES_RPM := rpm dnf5 redhat-lsb rpmconf pwgen systemd pam-u2f pamu2fcfg xdg-user-dirs audit golang akmods mokutil
+PACKAGES_RPM += fwupd bluez bash bash-completion avahi avahi-tools samba-client tree brightnessctl
 PACKAGES_RPM += hplip hplip-gui xsane ffmpeg feh nano htop btop fzf less xdg-utils httpie lynis cheat tldr
 PACKAGES_RPM += ImageMagick baobab gimp gparted gnome-terminal seahorse cups duf ssh-audit coreutils openssl
 PACKAGES_RPM += libreoffice-core libreoffice-writer libreoffice-calc libreoffice-filters minder firefox vlc
 PACKAGES_RPM += gnome-pomodoro gnome-clocks fd-find ydiff webp-pixbuf-loader tuned usbguard-selinux usbguard-notifier
 PACKAGES_RPM += usbguard-dbus fastfetch bc usbutils pciutils acpi policycoreutils-devel pass-otp pass-audit
-PACKAGES_RPM += gnupg2 pinentry-gtk pinentry-tty pinentry-gnome3 gedit gedit-plugins gedit-plugin-editorconfig
+PACKAGES_RPM += gnupg2 pinentry-tty pinentry-gnome3 gedit gedit-plugins gedit-plugin-editorconfig
 PACKAGES_RPM += gvfs-mtp screen progress pv tio dialog catimg cifs-utils sharutils binutils odt2txt
-PACKAGES_RPM += restic rsync rclone micro wget xsensors lm_sensors curl jq libnotify glow libsecret
-PACKAGES_RPM += unrar lynx crudini sysstat p7zip nmap cabextract iotop qrencode uuid tcpdump
+PACKAGES_RPM += restic rsync rclone micro wget2 xsensors lm_sensors curl jq libnotify glow libsecret
+PACKAGES_RPM += unrar lynx crudini sysstat p7zip nmap cabextract iotop-c qrencode uuid tcpdump
 PACKAGES_RPM += git diffutils git-lfs git-extras git-credential-libsecret git-crypt bat mc gh perl-Image-ExifTool
-PACKAGES_RPM += calibre ebook-tools clamav clamav-freshclam mdns-scan fping
+PACKAGES_RPM += calibre ebook-tools clamav clamav-freshclam mdns-scan fping gettext-envsubst
 PACKAGES_RPM += fedora-workstation-repositories gnome-monitor-config java-latest-openjdk java-21-openjdk java-25-openjdk
 PACKAGES_RPM += adwaita-icon-theme adwaita-cursor-theme dconf adoptium-temurin-java-repository
 PACKAGES_RPM += python3 python3-pip python3-devel python3-virtualenv
+PACKAGES_RPM += iwlwifi-dvm-firmware iwlwifi-mld-firmware iwlwifi-mvm-firmware
 
 # DNF plugins
 PLUGINS_DNF := dnf-plugins-core dnf-plugin-diff python3-dnf-plugin-tracer dnf-plugin-system-upgrade
@@ -471,7 +472,7 @@ authselect: | pam-u2f ecryptfs-utils
 	@$(call dnf,$@)
 	@authselect check \
 		&& sudo authselect select sssd with-ecryptfs with-fingerprint with-pam-u2f without-nullok -b \
-		|| $(call log,$(ERR),'Current authselect configuration is NOT valid. Aborting to avoid more damage.');
+		|| $(call log,$(ERR),"Current authselect configuration is NOT valid. Aborting to avoid more damage.");
 
 INSTALL += gnome-shell-extensions-bin
 gnome-shell-extensions-bin: | gnome-desktop git
@@ -512,7 +513,7 @@ steam: | flatpak /etc/yum.repos.d/rpmfusion-nonfree.repo
 
 INSTALL += snapd
 snapd:
-	@$(call dnf, $@)
+	@$(call dnf,$@)
 	@sudo ln -svnf /var/lib/snapd/snap /snap
 	@# A manual fix for the broken snap when `/usr/lib/snapd` link exists
 	@# (see https://discussion.fedoraproject.org/t/snap-stopped-working-on-f41/161371 and
@@ -544,7 +545,7 @@ browserpass: | git coreutils golang pass pass-extensions $(PASS_HOME)/.browserpa
 
 INSTALL += geoclue2
 geoclue2: | crudini
-	@$(call dnf, $@)
+	@$(call dnf,$@)
 	@sudo crudini --ini-options=nospace --set /etc/geoclue/geoclue.conf wifi enable true
 	@sudo crudini --ini-options=nospace --set /etc/geoclue/geoclue.conf wifi url 'https://beacondb.net/v1/geolocate'
 	@sudo systemctl restart geoclue
@@ -558,7 +559,7 @@ proton-mail-bridge: | pass
 
 INSTALL += editor-alternatives
 editor-alternatives: micro
-	@$(foreach editor, $(EDITORS), sudo alternatives --install '$(EDITOR_BIN)' editor '$(editor)' 0;$(NEWLINE))
+	@$(foreach editor,$(EDITORS),sudo alternatives --install '$(EDITOR_BIN)' editor '$(editor)' 0;$(NEWLINE))
 	@sudo alternatives --set editor '/usr/bin/micro'
 
 INSTALL += firewall-profiles
@@ -601,7 +602,7 @@ backup-services: rclone | $(XDG_CONFIG_HOME)/systemd/user/restic-backup@.service
 
 INSTALL += mosquitto
 mosquitto:
-	@$(call dnf, $@)
+	@$(call dnf,$@)
 
 	@# Disable mosquitto services, we need only mosquitto_pub/sub binaries
 	@sudo systemctl stop $@
@@ -609,11 +610,11 @@ mosquitto:
 
 INSTALL += usbguard
 usbguard: | usbguard-selinux usbguard-notifier usbguard-dbus /fsroot/etc/polkit-1/rules.d/70-allow-usbguard.rules
-	@$(call dnf, $@)
+	@$(call dnf,$@)
 
 INSTALL += rasdaemon
 rasdaemon:
-	@$(call dnf, $@)
+	@$(call dnf,$@)
 	@sudo systemctl enable --now $@
 
 INSTALL += jre
@@ -1135,7 +1136,7 @@ $(HOME_BACKUP_CF_DEST_DIR)/%: $(HOME_BACKUP_CF_SRC_DIR)/%
 	@ln -svfn $< $@
 
 FILES += $(XDG_CONFIG_HOME)/wget/wgetrc
-$(XDG_CONFIG_HOME)/wget/wgetrc: $(FSHOME)/.config/wget/wgetrc.template | wget $(BASHRCD)/bashrc-xdg
+$(XDG_CONFIG_HOME)/wget/wgetrc: $(FSHOME)/.config/wget/wgetrc.template | wget $(BASHRCD)/bashrc-xdg gettext-envsubst
 	@install -d $(@D)
 	@install -d $(XDG_CACHE_HOME)/wget
 	@envsubst '$$TODAY $$USER $$XDG_CACHE_HOME' < $< | install -m 644 -D /dev/stdin $@
@@ -1226,7 +1227,7 @@ $(XDG_DATA_HOME)/python/history: $(BASHRCD)/bashrc-xdg
 FILES += $(XDG_CONFIG_HOME)/systemd/user/restic-backup@.service
 $(XDG_CONFIG_HOME)/systemd/user/restic-backup@.service: \
 	$(FSHOME)/.config/systemd/user/restic-backup@.service.template \
-	| $(HOME_BIN)/restic-backup
+	| $(HOME_BIN)/restic-backup gettext-envsubst
 	@WORKDIR=$(DOTFILES) envsubst '$$TODAY $$USER $$WORKDIR' < $< | install -m 644 -D /dev/stdin $@
 	@systemd-analyze verify $@
 	@systemctl --user daemon-reload
@@ -1234,7 +1235,7 @@ $(XDG_CONFIG_HOME)/systemd/user/restic-backup@.service: \
 FILES += $(XDG_CONFIG_HOME)/systemd/user/restic-stats@.service
 $(XDG_CONFIG_HOME)/systemd/user/restic-stats@.service: \
 	$(FSHOME)/.config/systemd/user/restic-stats@.service.template \
-	| $(HOME_BIN)/restic-stats $(XDG_CONFIG_HOME)/systemd/user/restic-backup@.service
+	| $(HOME_BIN)/restic-stats $(XDG_CONFIG_HOME)/systemd/user/restic-backup@.service gettext-envsubst
 	@WORKDIR=$(DOTFILES) envsubst '$$TODAY $$USER $$WORKDIR' < $< | install -m 644 -D /dev/stdin $@
 	@systemd-analyze verify $@
 	@systemctl --user daemon-reload
@@ -1242,7 +1243,7 @@ $(XDG_CONFIG_HOME)/systemd/user/restic-stats@.service: \
 FILES += $(XDG_CONFIG_HOME)/systemd/user/restic-check@.service
 $(XDG_CONFIG_HOME)/systemd/user/restic-check@.service: \
 	$(FSHOME)/.config/systemd/user/restic-check@.service.template \
-	| $(HOME_BIN)/restic-check
+	| $(HOME_BIN)/restic-check gettext-envsubst
 	@WORKDIR=$(DOTFILES) envsubst '$$TODAY $$USER $$WORKDIR' < $< | install -m 644 -D /dev/stdin $@
 	@systemd-analyze verify $@
 	@systemctl --user daemon-reload
@@ -1250,7 +1251,7 @@ $(XDG_CONFIG_HOME)/systemd/user/restic-check@.service: \
 FILES += $(XDG_CONFIG_HOME)/systemd/user/restic-backup-daily@.timer
 $(XDG_CONFIG_HOME)/systemd/user/restic-backup-daily@.timer: \
 	$(FSHOME)/.config/systemd/user/restic-backup-daily@.timer.template \
-	| $(XDG_CONFIG_HOME)/systemd/user/restic-backup@.service
+	| $(XDG_CONFIG_HOME)/systemd/user/restic-backup@.service gettext-envsubst
 	@envsubst '$$TODAY $$USER' < $< | install -m 644 -D /dev/stdin $@
 	@systemd-analyze verify $@
 	@systemctl --user daemon-reload
@@ -1258,7 +1259,7 @@ $(XDG_CONFIG_HOME)/systemd/user/restic-backup-daily@.timer: \
 FILES += $(XDG_CONFIG_HOME)/systemd/user/restic-backup-monthly@.timer
 $(XDG_CONFIG_HOME)/systemd/user/restic-backup-monthly@.timer: \
 	$(FSHOME)/.config/systemd/user/restic-backup-monthly@.timer.template \
-	| $(XDG_CONFIG_HOME)/systemd/user/restic-backup@.service
+	| $(XDG_CONFIG_HOME)/systemd/user/restic-backup@.service gettext-envsubst
 	@envsubst '$$TODAY $$USER' < $< | install -m 644 -D /dev/stdin $@
 	@systemd-analyze verify $@
 	@systemctl --user daemon-reload
@@ -1266,7 +1267,7 @@ $(XDG_CONFIG_HOME)/systemd/user/restic-backup-monthly@.timer: \
 FILES += $(XDG_CONFIG_HOME)/systemd/user/restic-check-monthly@.timer
 $(XDG_CONFIG_HOME)/systemd/user/restic-check-monthly@.timer: \
 	$(FSHOME)/.config/systemd/user/restic-check-monthly@.timer.template \
-	| $(HOME_BIN)/restic-check
+	| $(HOME_BIN)/restic-check gettext-envsubst
 	@envsubst '$$TODAY $$USER' < $< | install -m 644 -D /dev/stdin $@
 	@systemd-analyze verify $@
 	@systemctl --user daemon-reload
@@ -1304,13 +1305,13 @@ FILES += /etc/yum.repos.d/vivaldi-fedora.repo
 	@sudo dnf config-manager --add-repo https://repo.vivaldi.com/stable/vivaldi-fedora.repo
 
 FILES += /etc/yum.repos.d/opera.repo
-/etc/yum.repos.d/opera.repo: $(FSETC)/yum.repos.d/opera.repo.template
+/etc/yum.repos.d/opera.repo: $(FSETC)/yum.repos.d/opera.repo.template | gettext-envsubst
 	-@sudo rpm --import https://rpm.opera.com/rpmrepo.key
 	@sudo install -d $(@D)
 	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -D /dev/stdin $@
 
 FILES += /etc/yum.repos.d/keybase.repo
-/etc/yum.repos.d/keybase.repo: $(FSETC)/yum.repos.d/keybase.repo.template
+/etc/yum.repos.d/keybase.repo: $(FSETC)/yum.repos.d/keybase.repo.template | gettext-envsubst
 	@sudo install -d $(@D)
 	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -D /dev/stdin $@
 
@@ -1337,21 +1338,22 @@ FILES += /etc/yum.repos.d/_copr\:copr.fedorainfracloud.org\:dusansimic\:themes.r
 	@sudo dnf copr enable -y dusansimic/themes
 
 FILES += /etc/NetworkManager/conf.d/00-randomize-mac.conf
-/etc/NetworkManager/conf.d/00-randomize-mac.conf: $(FSETC)/NetworkManager/conf.d/00-randomize-mac.conf.template
+/etc/NetworkManager/conf.d/00-randomize-mac.conf: $(FSETC)/NetworkManager/conf.d/00-randomize-mac.conf.template \
+	| gettext-envsubst
 	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -D /dev/stdin $@
 	@sudo systemctl restart NetworkManager
 
 FILES += /etc/systemd/logind.conf.d/power.conf
-/etc/systemd/logind.conf.d/power.conf: $(FSETC)/systemd/logind.conf.d/power.conf.template
+/etc/systemd/logind.conf.d/power.conf: $(FSETC)/systemd/logind.conf.d/power.conf.template | gettext-envsubst
 	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -D /dev/stdin $@
 
 FILES += /etc/systemd/resolved.conf.d/dnssec.conf
-/etc/systemd/resolved.conf.d/dnssec.conf: $(FSETC)/systemd/resolved.conf.d/dnssec.conf.template
+/etc/systemd/resolved.conf.d/dnssec.conf: $(FSETC)/systemd/resolved.conf.d/dnssec.conf.template | gettext-envsubst
 	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -D /dev/stdin $@
 	@sudo systemctl restart systemd-resolved
 
 FILES += /etc/udev/rules.d/60-streamdeck.rules
-/etc/udev/rules.d/60-streamdeck.rules: $(FSETC)/udev/rules.d/60-streamdeck.rules.template
+/etc/udev/rules.d/60-streamdeck.rules: $(FSETC)/udev/rules.d/60-streamdeck.rules.template | gettext-envsubst
 	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -D /dev/stdin $@
 	@sudo udevadm control --reload-rules && sudo udevadm trigger
 
@@ -1362,20 +1364,22 @@ FILES += /etc/pki/akmods/certs/public_key.der
 
 FILES += /etc/polkit-1/rules.d/10-admin-auth-ignore-inhibit.rules
 /etc/polkit-1/rules.d/10-admin-auth-ignore-inhibit.rules: \
-	$(FSETC)/polkit-1/rules.d/10-admin-auth-ignore-inhibit.rules.template
+	$(FSETC)/polkit-1/rules.d/10-admin-auth-ignore-inhibit.rules.template | gettext-envsubst
 	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -D /dev/stdin $@
 
 FILES += /etc/polkit-1/rules.d/70-allow-usbguard.rules
-/etc/polkit-1/rules.d/70-allow-usbguard.rules: $(FSETC)/polkit-1/rules.d/70-allow-usbguard.rules.template
+/etc/polkit-1/rules.d/70-allow-usbguard.rules: $(FSETC)/polkit-1/rules.d/70-allow-usbguard.rules.template \
+	| gettext-envsubst
 	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -D /dev/stdin $@
 
 FILES += /etc/udev/rules.d/71-sony-controllers.rules
-/etc/udev/rules.d/71-sony-controllers.rules: $(FSETC)/udev/rules.d/71-sony-controllers.rules.template
+/etc/udev/rules.d/71-sony-controllers.rules: $(FSETC)/udev/rules.d/71-sony-controllers.rules.template \
+	| gettext-envsubst
 	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -D /dev/stdin $@
 	@sudo udevadm control --reload-rules && sudo udevadm trigger
 
 FILES += /etc/logrotate.d/dnf
-/etc/logrotate.d/dnf: $(FSETC)/logrotate.d/dnf.template
+/etc/logrotate.d/dnf: $(FSETC)/logrotate.d/dnf.template | gettext-envsubst
 	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -D /dev/stdin $@
 
 ########################################################################################################################
@@ -1401,14 +1405,14 @@ PATCH += /etc/sysconfig/lm_sensors
 
 # Potential fix for mouse lag (e.g., disabling autosuspend for the Dell Universal Receiver)
 PATCH += /etc/udev/rules.d/50-usb-power-save.rules
-/etc/udev/rules.d/50-usb-power-save.rules: $(FSETC)/udev/rules.d/50-usb-power-save.rules.template
+/etc/udev/rules.d/50-usb-power-save.rules: $(FSETC)/udev/rules.d/50-usb-power-save.rules.template | gettext-envsubst
 	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -D /dev/stdin $@
 	@sudo udevadm control --reload-rules && sudo udevadm trigger
 
 # Fix for the NVIDIA suspend issue
 # (see https://forums.developer.nvidia.com/t/trouble-suspending-with-510-39-01-linux-5-16-0-freezing-of-tasks-failed-after-20-009-seconds/200933/11)
 PATCH += patch-gnome-suspend
-patch-gnome-suspend:
+patch-gnome-suspend: | gettext-envsubst
 	@envsubst '$$TODAY $$USER' < $(FSETC)/systemd/system/gnome-shell-suspend.service.template \
 		| sudo install -m 644 -D /dev/stdin /etc/systemd/system/gnome-shell-suspend.service
 
@@ -1457,7 +1461,7 @@ UPDATE += update-micro-plugins
 update-micro-plugins: | micro
 	@echo -e "\n*******************************************************************************************************"
 	@$(call log,$(INFO), "\\nUpdating micro plugins ...\\n")
-	@$(foreach plugin, $(EXT_MICRO), $$(command -v micro) -plugin update $(subst micro_,,$(plugin);$(NEWLINE)))
+	@$(foreach plugin,$(EXT_MICRO),$$(command -v micro) -plugin update $(subst micro_,,$(plugin);$(NEWLINE)))
 
 UPDATE += update-firmware
 update-firmware: | fwupd
@@ -1542,7 +1546,9 @@ check-security-updates:
 
 CHECK += check-dnf-autoremove
 check-dnf-autoremove:
-	@if [ $$(sudo dnf list -q --autoremove | wc -l) -gt 0 ]; then $(call log,$(WARN),"Warning: There are candidate rpm packages for auto-removal"); fi
+	@if [ $$(sudo dnf list -q --autoremove | wc -l) -gt 0 ]; then
+	@	$(call log,$(WARN),"Warning: There are candidate rpm packages for auto-removal");
+	@fi
 
 CHECK += check-dnf-needs-restarting
 check-dnf-needs-restarting:
@@ -1611,6 +1617,14 @@ check-rasdaemon: | rasdaemon
 CHECK += check-firewalld-config
 check-firewalld-config:
 	@sudo firewall-cmd --check-config
+
+CHECK += check-missing-packages
+check-missing-packages:
+	@# Check that defined packages are installed and correctly named
+	@$(foreach package,$(PACKAGES_RPM),\
+		rpm -q $(package) > /dev/null || \
+			{ $(call log,$(ERR),"Error: Package [$(package)] is defined\x2C but not installed \
+				or has a different name\x21"); exit 1;}$(NEWLINE))
 
 ########################################################################################################################
 #
@@ -1681,6 +1695,12 @@ backup-router: backup-nebula-primary backup-nebula-secondary backup-nebula-cloud
 
 .PHONY: backup-system
 backup-system: backup-system-primary backup-system-secondary backup-system-cloud
+
+.PHONY: wget
+wget: wget2
+
+.PHONY: dnf
+dnf: dnf5
 
 ########################################################################################################################
 #
