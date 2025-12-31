@@ -1,3 +1,8 @@
+#
+# Created by dotfiles setup script on ${TODAY} by ${USER}
+#
+# Source: https://codeberg.org/fabiscafe/game-devices-udev/src/branch/main/71-sony-controllers.rules
+
 # Sony PlayStation Strikepack; USB
 ACTION!="remove", KERNEL=="hidraw*", ATTRS{idVendor}=="054c", ATTRS{idProduct}=="05c5", MODE="0660", TAG+="uaccess"
 

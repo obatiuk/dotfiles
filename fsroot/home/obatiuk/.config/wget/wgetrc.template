@@ -1,0 +1,4 @@
+#
+# Created by dotfiles setup script on ${TODAY} by ${USER}
+#
+--hsts-file=${XDG_CACHE_HOME}/wget/hsts

@@ -1,0 +1,18 @@
+#
+# Created by dotfiles setup script on ${TODAY} by ${USER}
+#
+
+[Unit]
+Description=Publishes next backup run and repository statistics for %i
+After=network.target restic-backup@%i.service
+ConditionUser=!root
+
+[Service]
+Type=simple
+RuntimeDirectory=restic-stats/%i
+IOSchedulingClass=idle
+Restart=no
+ExecStart=/usr/bin/make -C ${WORKDIR} stats-restic-%i-no-deps
+
+[Install]
+WantedBy=restic-backup@%i.service

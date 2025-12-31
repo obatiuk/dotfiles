@@ -1,0 +1,6 @@
+#
+# Created by dotfiles setup script on ${TODAY} by ${USER}
+#
+[Login]
+HandlePowerKey=ignore
+HandleLidSwitchExternalPower=ignore

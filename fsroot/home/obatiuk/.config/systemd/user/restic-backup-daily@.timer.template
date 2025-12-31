@@ -1,0 +1,16 @@
+#
+# Created by dotfiles setup script on ${TODAY} by ${USER}
+#
+
+[Unit]
+Description=Daily backup of %i
+
+[Timer]
+OnBootSec=15min
+RandomizedDelaySec=30min
+OnCalendar=daily
+Persistent=true
+Unit=restic-backup@%i.service
+
+[Install]
+WantedBy=timers.target

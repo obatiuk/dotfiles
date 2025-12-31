@@ -1,0 +1,18 @@
+#
+# Created by dotfiles setup script on ${TODAY} by ${USER}
+#
+
+[Unit]
+Description=Verifies '%i' repository integrity and publishes the result
+After=network.target
+ConditionUser=!root
+
+[Service]
+Type=simple
+RuntimeDirectory=restic-check/%i
+IOSchedulingClass=idle
+Restart=no
+ExecStart=/usr/bin/make -C ${WORKDIR} check-restic-%i-no-deps
+
+[Install]
+WantedBy=default.target

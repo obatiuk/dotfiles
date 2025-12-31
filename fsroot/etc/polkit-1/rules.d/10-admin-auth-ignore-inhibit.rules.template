@@ -1,3 +1,7 @@
+//
+// Created by dotfiles setup script on ${TODAY} by ${USER}
+//
+
 // Request admin authentication to ignore inhibitors.
 // Should prevent running backups from interruption.
 polkit.addRule(function(action, subject) {

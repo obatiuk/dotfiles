@@ -1,0 +1,21 @@
+#
+# Created by dotfiles setup script on ${TODAY} by ${USER}
+#
+
+[Unit]
+Description=Runs restic backup for %i
+After=network.target
+ConditionUser=!root
+
+[Service]
+# The 'oneshot' type is required; without it, dependent services will not wait for completion
+# (See systemd documentation for details on Type=oneshot)
+Type=oneshot
+RuntimeDirectory=restic-backup/%i
+IOSchedulingClass=idle
+Restart=no
+ExecStart=/usr/bin/gnome-session-inhibit \
+    --inhibit logout:suspend:idle \
+    --app-id org.gnome.Terminal.desktop \
+    --reason "Automatic restic backup (%i) is running" \
+     /usr/bin/make -C ${WORKDIR} backup-restic-%i-no-deps

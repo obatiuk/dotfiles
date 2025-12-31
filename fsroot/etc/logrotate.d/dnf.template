@@ -1,0 +1,11 @@
+#
+# Create by dotfiles setup script on ${TODAY} by ${USER}
+#
+
+/var/log/hawkey.log /var/log/dnf.librepo.log /var/log/dnf.rpm.log /var/log/dnf.log {
+    missingok
+    notifempty
+    rotate 4
+    weekly
+    create 0600 root root
+}

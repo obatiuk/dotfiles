@@ -40,8 +40,9 @@ export XDG_DATA_HOME ?= $(HOME)/.local/share
 export XDG_CACHE_HOME ?= $(HOME)/.cache
 export XDG_PICTURES_DIR ?= $(HOME)/Private/Pictures
 export NVM_DIR ?= $(XDG_DATA_HOME)/nvm
+export NOW := $(shell date +%Y-%m-%d_%H:%M:%S)
+export TODAY := $(shell date -I)
 
-NOW := $(shell date +%Y-%m-%d_%H:%M:%S)
 MODEL := $(shell (if command -v hostnamectl > /dev/null 2>&1; \
 	then hostnamectl | grep 'Hardware Model:' | sed 's/^.*: //'; \
 	else sudo dmidecode -s system-product-name ; fi) | tr "[:upper:]" "[:lower:]" | sed 's/ /-/g')
@@ -52,6 +53,12 @@ NVM_CMD = . $(NVM_PATH)/nvm.sh && nvm
 
 MAKEFILE_NAME := $(abspath $(lastword $(MAKEFILE_LIST)))
 DOTFILES := $(abspath $(dir $(MAKEFILE_NAME)))
+FSROOT := $(abspath $(DOTFILES)/fsroot)
+FSHOME := $(abspath $(FSROOT)/home/obatiuk)
+FSETC := $(abspath $(FSROOT)/etc)
+INCLUDE = $(abspath $(DOTFILES)/include)
+DEVICE = $(abspath $(DOTFILES)/device)
+
 DOTHOME := $(abspath $(HOME)/.home)
 BASHRCD := $(abspath $(HOME)/.bashrc.d)
 HOME_BIN := $(abspath $(DOTHOME)/bin)
@@ -59,12 +66,10 @@ HOME_OPT := $(abspath $(DOTHOME)/opt)
 HOME_BACKUP := $(abspath $(DOTHOME)/backup)
 PASS_HOME := $(abspath $(HOME)/.password-store)
 PASS_EXT := $(abspath $(PASS_HOME)/.extensions)
-INCLUDE = $(abspath $(DOTFILES)/include)
-DEVICE = $(abspath $(DOTFILES)/device)
 
-VIVALDI_CF_SRC_DIR := $(DOTFILES)/.config/vivaldi/CustomUIModifications
+VIVALDI_CF_SRC_DIR := $(FSHOME)/.config/vivaldi/CustomUIModifications
 VIVALDI_CF_DEST_DIR := $(XDG_CONFIG_HOME)/vivaldi/CustomUIModifications
-HOME_BACKUP_CF_SRC_DIR :=  $(DOTFILES)/.home/backup
+HOME_BACKUP_CF_SRC_DIR :=  $(FSHOME)/.home/backup
 HOME_BACKUP_CF_DEST_DIR := $(HOME_BACKUP)
 ULAUNCHER_EXT_DIR := $(XDG_DATA_HOME)/ulauncher/extensions
 
@@ -78,7 +83,7 @@ BACKUP =
 
 ARC_THEME_SOURCE ?= git
 
-EDITOR_BIN := /usr/bin/editor
+EDITOR_BIN := $(shell command -v editor)
 
 ########################################################################################################################
 #
@@ -302,16 +307,19 @@ docker: /etc/yum.repos.d/docker-ce.repo | systemd
 INSTALL += ql700
 ql700: | cups
 	@$(call dnf,https://download.brother.com/welcome/dlfp002191/ql700pdrv-3.1.5-0.i386.rpm)
-	# Fix QL-700 brother printer access when SELinux is enabled
-	# Source:
-	# - http://support.brother.com/g/s/id/linux/en/faq_prn.html?c=us_ot&lang=en&comple=on&redirect=on#f00115
-	# - http://www.pclinuxos.com/forum/index.php?topic=138727.0
+	@# Fix QL-700 brother printer access when SELinux is enabled
+	@# Source:
+	@# - http://support.brother.com/g/s/id/linux/en/faq_prn.html?c=us_ot&lang=en&comple=on&redirect=on#f00115
+	@# - http://www.pclinuxos.com/forum/index.php?topic=138727.0
 	@sudo restorecon -RFv /usr/lib/cups/filter/*
 	@sudo setsebool -P cups_execmem 1
 	@sudo setsebool mmap_low_allowed 1
 
 INSTALL += video-codecs
-video-codecs: | /etc/yum.repos.d/rpmfusion-free.repo /etc/yum.repos.d/rpmfusion-nonfree.repo /etc/yum.repos.d/fedora-cisco-openh264.repo
+video-codecs: | /etc/yum.repos.d/rpmfusion-free.repo \
+	/etc/yum.repos.d/rpmfusion-nonfree.repo \
+	/etc/yum.repos.d/fedora-cisco-openh264.repo
+
 	@sudo dnf -y --setopt=strict=0 install \
 		gstreamer{1,}-{ffmpeg,libav,vaapi,plugins-{good,ugly,bad{,-free,-nonfree,-freeworld,-extras}}}
 	@sudo dnf -y install *openh264
@@ -389,7 +397,7 @@ arc-theme: | gnome-desktop git install-arc-theme-git build-arc-theme-git
 .PHONY: install-arc-theme-git
 install-arc-theme-git:
 	-@sudo dnf -y remove arc-theme
-	# install pre-requisites
+	@# install prerequisites
 	@$(call dnf,optipng gnome-themes-extra gtk-murrine-engine meson inkscape sassc glib2-devel gdk-pixbuf2 \
 		gtk3-devel gtk4-devel autoconf automake)
 
@@ -427,7 +435,7 @@ clean-arc-theme-git:
 	@meson compile --clean -C $(HOME_OPT)/arc-theme/build
 
 else
-# Install `arc-theme` from the official repository. Updates will be tracked by default
+# Install `arc-theme` from the official repository
 INSTALL += arc-theme
 arc-theme:
 	@$(call dnf,arc-theme)
@@ -506,30 +514,17 @@ INSTALL += snapd
 snapd:
 	@$(call dnf, $@)
 	@sudo ln -svnf /var/lib/snapd/snap /snap
-	# A manual fix for the broken snap when `/usr/lib/snapd` link exists
-	# (see https://discussion.fedoraproject.org/t/snap-stopped-working-on-f41/161371 and
-	# https://github.com/canonical/snapd/commit/858801cf47fe5e8dc6307e4cf02191b7157fc0c2)
+	@# A manual fix for the broken snap when `/usr/lib/snapd` link exists
+	@# (see https://discussion.fedoraproject.org/t/snap-stopped-working-on-f41/161371 and
+	@# https://github.com/canonical/snapd/commit/858801cf47fe5e8dc6307e4cf02191b7157fc0c2)
 	@sudo [ -L '/usr/lib/snapd' ] && sudo rm -rfi '/usr/lib/snapd'
 	@sudo snap set system refresh.retain=2
 	@sudo systemctl restart $@
 
 INSTALL += logrotate
-logrotate:
+logrotate: /etc/logrotate.d/dnf
 	@$(call dnf,$@)
 	@sudo systemctl enable --now $@.timer
-	# Add missing logrotate rules (F39)
-	@sudo install -DC /dev/stdin /etc/logrotate.d/dnf <<- EOF
-	#
-	# Updated by dotfiles setup script on $$(date -I) by ${USER}
-	#
-	/var/log/hawkey.log /var/log/dnf.librepo.log /var/log/dnf.rpm.log /var/log/dnf.log {
-		missingok
-		notifempty
-		rotate 4
-		weekly
-		create 0600 root root
-	}
-	EOF
 
 INSTALL += browserpass-bin
 browserpass-bin:
@@ -608,12 +603,12 @@ INSTALL += mosquitto
 mosquitto:
 	@$(call dnf, $@)
 
-	# Disable mosquitto services, we need only mosquitto_pub/sub binaries
+	@# Disable mosquitto services, we need only mosquitto_pub/sub binaries
 	@sudo systemctl stop $@
 	@sudo systemctl disable $@
 
 INSTALL += usbguard
-usbguard: | usbguard-selinux usbguard-notifier usbguard-dbus /etc/polkit-1/rules.d/70-allow-usbguard.rules
+usbguard: | usbguard-selinux usbguard-notifier usbguard-dbus /fsroot/etc/polkit-1/rules.d/70-allow-usbguard.rules
 	@$(call dnf, $@)
 
 INSTALL += rasdaemon
@@ -664,7 +659,7 @@ gnome-key-binding-settings: | gnome-desktop $(HOME_BIN)/dell-kvm-switch-input ul
 	@gsettings set org.gnome.settings-daemon.plugins.media-keys screensaver "['<Super>l']"
 	@gsettings set org.gnome.settings-daemon.plugins.media-keys control-center "['<Super>s']"
 
-	# Possible fix for a sporadic flight-mode toggle
+	@# Possible fix for a sporadic flight-mode toggle
 	@gsettings set org.gnome.settings-daemon.plugins.media-keys rfkill []
 	@gsettings set org.gnome.settings-daemon.plugins.media-keys rfkill-bluetooth []
 	@gsettings set org.gnome.settings-daemon.plugins.media-keys rfkill-bluetooth-static []
@@ -766,7 +761,6 @@ gnome-desktop-settings: | gnome-desktop fonts
 		'cc.arduino.IDE2.desktop', 'calibre-gui.desktop', 'com.valvesoftware.Steam.desktop', 'slack_slack.desktop', \
 		 'wine-Programs-reMarkable-reMarkable.desktop']"
 
-# GNOME display settings
 INSTALL += gnome-display-settings
 gnome-display-settings: | gnome-desktop
 	@gsettings set org.gnome.mutter experimental-features "['scale-monitor-framebuffer']"
@@ -829,8 +823,8 @@ gnome-privacy-settings: | gnome-desktop
 	@gsettings set org.gnome.desktop.privacy remove-old-temp-files true
 	@gsettings set org.gnome.desktop.privacy remove-old-trash-files false
 
-	# Disable unusable `usb-protection` GNOME settings until this bug is fixed:
-	# https://gitlab.gnome.org/GNOME/gnome-settings-daemon/-/issues/735
+	@# Disable unusable `usb-protection` GNOME settings until this bug is fixed:
+	@# https://gitlab.gnome.org/GNOME/gnome-settings-daemon/-/issues/735
 	@gsettings set org.gnome.desktop.privacy usb-protection false
 	@gsettings set org.gnome.desktop.privacy usb-protection-level 'lockscreen'
 
@@ -903,7 +897,9 @@ $(EXT_GSHELL): | gnome-desktop dconf gnome-shell-extensions-bin
 	@$(eval __ext=$(subst $(slash),$(space),$(subst https://extensions.gnome.org/extension/,,$(strip $@))))
 	@$(eval __ext_id=$(word 1, $(__ext)))
 	@$(eval __ext_name=$(word 2, $(__ext)))
-	@if [ -f $(INCLUDE)/gnome-shell-extension-$(__ext_name).ini ]; then dconf load '/' < $(INCLUDE)/gnome-shell-extension-$(__ext_name).ini; fi
+	@if [ -f $(INCLUDE)/gnome-shell-extension-$(__ext_name).ini ]; then
+	@	dconf load '/' < $(INCLUDE)/gnome-shell-extension-$(__ext_name).ini;
+	@fi
 	@$(HOME_BIN)/install-gnome-extensions --enable $(__ext_id)
 
 INSTALL += $(EXT_VSCODE)
@@ -923,219 +919,199 @@ $(EXT_MICRO): | micro fzf
 # Files
 #
 
-FILES += /etc/yum.repos.d/_copr\:copr.fedorainfracloud.org\:hyperreal\:better_fonts.repo
-/etc/yum.repos.d/_copr\:copr.fedorainfracloud.org\:hyperreal\:better_fonts.repo:
-	@sudo dnf copr enable hyperreal/better_fonts
-	# Delete previously used copr repository (if available)
-	-@sudo rm -fv /etc/yum.repos.d/_copr\:copr.fedorainfracloud.org\:chriscowleyunix\:better_fonts.repo
-	-@sudo rm -fv /etc/yum.repos.d/_copr\:copr.fedorainfracloud.org\:gombosg\:better_fonts.repo
-
-FILES += /etc/yum.repos.d/docker-ce.repo
-/etc/yum.repos.d/docker-ce.repo: | dnf-plugins
-	@sudo dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
-
-FILES += /etc/yum.repos.d/google-chrome.repo
-/etc/yum.repos.d/google-chrome.repo: | dnf-plugins fedora-workstation-repositories
-	@sudo dnf config-manager --set-enabled google-chrome
-
-FILES += /etc/yum.repos.d/vivaldi-fedora.repo
-/etc/yum.repos.d/vivaldi-fedora.repo: | dnf-plugins
-	@sudo dnf config-manager --add-repo https://repo.vivaldi.com/stable/vivaldi-fedora.repo
-
-FILES += /etc/yum.repos.d/opera.repo
-/etc/yum.repos.d/opera.repo:
-	-@sudo rpm --import https://rpm.opera.com/rpmrepo.key
-	@sudo install -m 644 -D /dev/stdin $@ <<- EOF
-		#
-		# Created by dotfiles setup script on $$(date -I) by ${USER}
-		#
-		[opera]
-		name=Opera packages
-		type=rpm-md
-		baseurl=https://rpm.opera.com/rpm
-		enabled=1
-		gpgcheck=1
-		gpgkey=https://rpm.opera.com/rpmrepo.key
-	EOF
-
-FILES += /etc/yum.repos.d/keybase.repo
-/etc/yum.repos.d/keybase.repo:
-	@sudo install -m 644 -D /dev/stdin $@ <<- EOF
-		#
-		# Created by dotfiles setup script on $$(date -I) by ${USER}
-		#
-		[keybase]
-		name=keybase
-		baseurl=http://prerelease.keybase.io/rpm/x86_64
-		enabled=1
-		gpgcheck=1
-		gpgkey=https://keybase.io/docs/server_security/code_signing_key.asc
-	EOF
-
-FILES += /etc/yum.repos.d/rpmfusion-free.repo
-/etc/yum.repos.d/rpmfusion-free.repo:
-	@$(call dnf,\
-		https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(shell rpm -E %fedora).noarch.rpm)
-
-FILES += /etc/yum.repos.d/rpmfusion-nonfree.repo
-/etc/yum.repos.d/rpmfusion-nonfree.repo:
-	@$(call dnf,\
-		https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(shell rpm -E %fedora).noarch.rpm)
-
-FILES += /etc/yum.repos.d/fedora-cisco-openh264.repo
-/etc/yum.repos.d/fedora-cisco-openh264.repo: | dnf-plugins
-	@sudo dnf config-manager --set-enabled fedora-cisco-openh264
-
-FILES += /etc/yum.repos.d/_copr\:copr.fedorainfracloud.org\:rockowitz\:ddcutil.repo
-/etc/yum.repos.d/_copr\:copr.fedorainfracloud.org\:rockowitz\:ddcutil.repo:
-	@sudo dnf copr enable -y rockowitz/ddcutil
-
-FILES += /etc/yum.repos.d/_copr\:copr.fedorainfracloud.org\:dusansimic\:themes.repo
-/etc/yum.repos.d/_copr\:copr.fedorainfracloud.org\:dusansimic\:themes.repo:
-	@sudo dnf copr enable -y dusansimic/themes
+#
+# /home
+#
 
 FILES += $(HOME)/.bashrc
-$(HOME)/.bashrc: $(DOTFILES)/.bashrc
+$(HOME)/.bashrc: $(FSHOME)/.bashrc
 	@install -d $(@D)
 	@ln -svnf $< $@
 
 FILES += $(HOME)/.bash_profile
-$(HOME)/.bash_profile: $(DOTFILES)/.bash_profile
+$(HOME)/.bash_profile: $(FSHOME)/.bash_profile
 	@install -d $(@D)
 	@ln -svnf $< $@
 
 FILES += $(HOME)/.bash_logout
-$(HOME)/.bash_logout: $(DOTFILES)/.bash_logout
+$(HOME)/.bash_logout: $(FSHOME)/.bash_logout
 	@install -d $(@D)
 	@ln -svnf $< $@
 
 FILES += $(BASHRCD)/bashrc-git
-$(BASHRCD)/bashrc-git: $(DOTFILES)/.bashrc.d/bashrc-git | git
+$(BASHRCD)/bashrc-git: $(FSHOME)/.bashrc.d/bashrc-git
 	@install -d $(@D)
 	@ln -svnf $< $@
 
 FILES += $(BASHRCD)/bashrc-base
-$(BASHRCD)/bashrc-base: $(DOTFILES)/.bashrc.d/bashrc-base | git
+$(BASHRCD)/bashrc-base: $(FSHOME)/.bashrc.d/bashrc-base
 	@install -d $(@D)
 	@ln -svnf $< $@
 
 FILES += $(BASHRCD)/bashrc-fonts
-$(BASHRCD)/bashrc-fonts: $(DOTFILES)/.bashrc.d/bashrc-fonts | fonts
+$(BASHRCD)/bashrc-fonts: $(FSHOME)/.bashrc.d/bashrc-fonts
 	@install -d $(@D)
 	@ln -svnf $< $@
 
 FILES += $(BASHRCD)/bashrc-xdg
-$(BASHRCD)/bashrc-xdg: $(DOTFILES)/.bashrc.d/bashrc-xdg | xdg-utils
+$(BASHRCD)/bashrc-xdg: $(FSHOME)/.bashrc.d/bashrc-xdg
 	@install -d $(@D)
 	@ln -svnf $< $@
 
 FILES += $(BASHRCD)/bashrc-dev
-$(BASHRCD)/bashrc-dev: $(DOTFILES)/.bashrc.d/bashrc-dev
+$(BASHRCD)/bashrc-dev: $(FSHOME)/.bashrc.d/bashrc-dev
 	@install -d $(@D)
 	@ln -svnf $< $@
 
 FILES += $(BASHRCD)/bashrc-pass
-$(BASHRCD)/bashrc-pass: $(DOTFILES)/.bashrc.d/bashrc-pass | pass pass-extensions
+$(BASHRCD)/bashrc-pass: $(FSHOME)/.bashrc.d/bashrc-pass
 	@install -d $(@D)
 	@ln -svnf $< $@
 
 FILES += $(BASHRCD)/bashrc-steam
-$(BASHRCD)/bashrc-steam: $(DOTFILES)/.bashrc.d/bashrc-steam
+$(BASHRCD)/bashrc-steam: $(FSHOME)/.bashrc.d/bashrc-steam
 	@install -d $(@D)
 	@ln -svnf $< $@
 
 FILES += $(HOME)/.face.icon
-$(HOME)/.face.icon: $(DOTFILES)/.face.icon
+$(HOME)/.face.icon: $(FSHOME)/.face.icon
 	@ln -svnf $< $@
 
+FILES += $(HOME)/.editorconfig
+$(HOME)/.editorconfig : $(FSHOME)/.editorconfig
+	@ln -svfn $< $@
+
+FILES += $(HOME)/.trackerignore
+$(HOME)/.trackerignore: $(FSHOME)/.trackerignore | disable-gnome-tracker
+	@ln -svnf $< $@
+
+FILES += $(HOME)/.passgenrc
+$(HOME)/.passgenrc : $(FSHOME)/.passgenrc | pass
+	@ln -svfn $< $@
+
 FILES += $(XDG_CONFIG_HOME)/git/config
-$(XDG_CONFIG_HOME)/git/config: $(DOTFILES)/.config/git/config | git git-lfs git-credential-libsecret \
+$(XDG_CONFIG_HOME)/git/config: $(FSHOME)/.config/git/config | git git-lfs git-credential-libsecret \
 		git-split-diffs bat meld perl-Image-ExifTool
 	@install -d $(@D)
 	@ln -svfn $< $@
 
-FILES += $(HOME)/.trackerignore
-$(HOME)/.trackerignore: $(DOTFILES)/.trackerignore | disable-gnome-tracker
-	@ln -svnf $< $@
-
-FILES += $(HOME)/.editorconfig
-$(HOME)/.editorconfig : $(DOTFILES)/.editorconfig
-	@ln -svfn $< $@
-
-FILES += $(HOME)/.passgenrc
-$(HOME)/.passgenrc : $(DOTFILES)/.passgenrc | pass
-	@ln -svfn $< $@
-
 FILES += $(HOME_BIN)/dell-kvm-switch-input
-$(HOME_BIN)/dell-kvm-switch-input: $(DOTFILES)/.home/bin/dell-kvm-switch-input | ddcutil
+$(HOME_BIN)/dell-kvm-switch-input: $(FSHOME)/.home/bin/dell-kvm-switch-input | ddcutil
+	@install -d $(@D)
 	@ln -svfn $< $@
 	@chmod +x $<
 
 FILES += $(HOME_BIN)/switch-monitor
-$(HOME_BIN)/switch-monitor: $(DOTFILES)/.home/bin/switch-monitor | gnome-monitor-config
+$(HOME_BIN)/switch-monitor: $(FSHOME)/.home/bin/switch-monitor | gnome-monitor-config
+	@install -d $(@D)
 	@ln -svfn $< $@
 	@chmod +x $<
 
 FILES += $(HOME_BIN)/start-steam
-$(HOME_BIN)/start-steam: $(DOTFILES)/.home/bin/start-steam | $(HOME_BIN)/switch-monitor
+$(HOME_BIN)/start-steam: $(FSHOME)/.home/bin/start-steam | $(HOME_BIN)/switch-monitor
+	@install -d $(@D)
 	@ln -svfn $< $@
 	@chmod +x $<
 
 FILES += $(HOME_BIN)/restic-backup
-$(HOME_BIN)/restic-backup: $(DOTFILES)/.home/bin/restic-backup | restic jq curl redhat-lsb diffutils mosquitto libsecret $(BACKUP_CONF_DEST_FILES)
+$(HOME_BIN)/restic-backup: $(FSHOME)/.home/bin/restic-backup | restic jq curl redhat-lsb \
+	diffutils mosquitto libsecret $(BACKUP_CONF_DEST_FILES)
+	@install -d $(@D)
 	@ln -svfn $< $@
 	@chmod +x $<
 
 FILES += $(HOME_BIN)/restic-stats
-$(HOME_BIN)/restic-stats: $(DOTFILES)/.home/bin/restic-stats | restic jq curl mosquitto libsecret $(BACKUP_CONF_DEST_FILES)
+$(HOME_BIN)/restic-stats: $(FSHOME)/.home/bin/restic-stats | restic jq curl mosquitto libsecret \
+	$(BACKUP_CONF_DEST_FILES)
+	@install -d $(@D)
 	@ln -svfn $< $@
 	@chmod +x $<
 
 FILES += $(HOME_BIN)/restic-check
-$(HOME_BIN)/restic-check: $(DOTFILES)/.home/bin/restic-check | restic jq mosquitto libsecret $(BACKUP_CONF_DEST_FILES)
+$(HOME_BIN)/restic-check: $(FSHOME)/.home/bin/restic-check | restic jq mosquitto libsecret \
+	$(BACKUP_CONF_DEST_FILES)
+	@install -d $(@D)
 	@ln -svfn $< $@
 	@chmod +x $<
 
 FILES += $(HOME_BIN)/hass-retrieve-roomba-token
-$(HOME_BIN)/hass-retrieve-roomba-token: $(DOTFILES)/.home/bin/hass-retrieve-roomba-token | docker pass
+$(HOME_BIN)/hass-retrieve-roomba-token: $(FSHOME)/.home/bin/hass-retrieve-roomba-token | docker pass
+	@install -d $(@D)
+	@ln -svfn $< $@
+	@chmod +x $<
+
+FILES += $(HOME_BIN)/sync-mqtt-env-primary
+$(HOME_BIN)/sync-mqtt-env-primary: $(FSHOME)/.home/bin/sync-mqtt-env-primary | libsecret pass
+	@install -d $(@D)
+	@ln -svfn $< $@
+	@chmod +x $<
+
+FILES += $(HOME_BIN)/sync-nebula-creds
+$(HOME_BIN)/sync-nebula-creds: $(FSHOME)/.home/bin/sync-nebula-creds | libsecret pass
+	@install -d $(@D)
+	@ln -svfn $< $@
+	@chmod +x $<
+
+FILES += $(HOME_BIN)/sync-restic-env-cloud
+$(HOME_BIN)/sync-restic-env-cloud: $(FSHOME)/.home/bin/sync-restic-env-cloud | libsecret pass
+	@install -d $(@D)
+	@ln -svfn $< $@
+	@chmod +x $<
+
+FILES += $(HOME_BIN)/sync-restic-env-primary
+$(HOME_BIN)/sync-restic-env-primary: $(FSHOME)/.home/bin/sync-restic-env-primary | libsecret pass
+	@install -d $(@D)
+	@ln -svfn $< $@
+	@chmod +x $<
+
+FILES += $(HOME_BIN)/sync-restic-env-secondary
+$(HOME_BIN)/sync-restic-env-secondary: $(FSHOME)/.home/bin/sync-restic-env-secondary | libsecret pass
+	@install -d $(@D)
 	@ln -svfn $< $@
 	@chmod +x $<
 
 FILES += $(XDG_CONFIG_HOME)/gtk-2.0/gtkrc
-$(XDG_CONFIG_HOME)/gtk-2.0/gtkrc: $(DOTFILES)/.config/gtk-2.0/gtkrc | gnome-desktop
+$(XDG_CONFIG_HOME)/gtk-2.0/gtkrc: $(FSHOME)/.config/gtk-2.0/gtkrc
+	 @install -d $(@D)
 	 @ln -svfn $< $@
 
 FILES += $(XDG_CONFIG_HOME)/gtk-3.0/settings.ini
-$(XDG_CONFIG_HOME)/gtk-3.0/settings.ini: $(DOTFILES)/.config/gtk-3.0/settings.ini | gnome-desktop
+$(XDG_CONFIG_HOME)/gtk-3.0/settings.ini: $(FSHOME)/.config/gtk-3.0/settings.ini
 	@install -d $(@D)
 	@ln -svfn $< $@
 
 FILES += $(XDG_CONFIG_HOME)/gtk-3.0/gtk.css
-$(XDG_CONFIG_HOME)/gtk-3.0/gtk.css: $(DOTFILES)/.config/gtk-3.0/gtk.css | gnome-desktop
+$(XDG_CONFIG_HOME)/gtk-3.0/gtk.css: $(FSHOME)/.config/gtk-3.0/gtk.css
 	@install -d $(@D)
 	@ln -svfn $< $@
 
 FILES += $(XDG_CONFIG_HOME)/gtk-3.0/bookmarks
-$(XDG_CONFIG_HOME)/gtk-3.0/bookmarks: | gnome-desktop
-	@install -m 644 -D /dev/stdin $@ <<- EOF
-		file://$(HOME)/Private/Sync
-		file://$(HOME)/Projects
-		file://$(HOME)/Temp
-		file://$(HOME)/Documents/Private/Notes/Default/Files
-	EOF
+$(XDG_CONFIG_HOME)/gtk-3.0/bookmarks: $(FSHOME)/.config/gtk-3.0/bookmarks
+	@install -d $(@D)
+	@ln -svfn $< $@
 
 FILES += $(XDG_CONFIG_HOME)/gtk-4.0/settings.ini
-$(XDG_CONFIG_HOME)/gtk-4.0/settings.ini: $(DOTFILES)/.config/gtk-4.0/settings.ini | gnome-desktop
+$(XDG_CONFIG_HOME)/gtk-4.0/settings.ini: $(FSHOME)/.config/gtk-4.0/settings.ini
 	@install -d $(@D)
 	@ln -svfn $< $@
 
 FILES += $(XDG_CONFIG_HOME)/user-dirs.dirs
-$(XDG_CONFIG_HOME)/user-dirs.dirs: $(DOTFILES)/.config/user-dirs.dirs | xdg-user-dirs
+$(XDG_CONFIG_HOME)/user-dirs.dirs: $(FSHOME)/.config/user-dirs.dirs | xdg-user-dirs
 	@install -d $(@D)
 	@ln -svnf $< $@
 
+FILES += $(XDG_CONFIG_HOME)/micro/bindings.json
+$(XDG_CONFIG_HOME)/micro/bindings.json: $(FSHOME)/.config/micro/bindings.json | micro
+	@install -d $(@D)
+	@ln -svfn $< $@
+
+FILES += $(XDG_CONFIG_HOME)/micro/settings.json
+$(XDG_CONFIG_HOME)/micro/settings.json: $(FSHOME)/.config/micro/settings.json | micro
+	@install -d $(@D)
+	@ln -svfn $< $@
+
 FILES += $(XDG_CONFIG_HOME)/mc/ini
-$(XDG_CONFIG_HOME)/mc/ini: $(DOTFILES)/.config/mc/ini | mc
+$(XDG_CONFIG_HOME)/mc/ini: $(FSHOME)/.config/mc/ini | mc
 	@install -d $(@D)
 	@ln -svfn $< $@
 
@@ -1144,57 +1120,29 @@ $(VIVALDI_CF_DEST_DIR)/%: $(VIVALDI_CF_SRC_DIR)/%
 	@install -d $(@D)
 	@ln -svfn $< $@
 
-FILES += /etc/NetworkManager/conf.d/00-randomize-mac.conf
-/etc/NetworkManager/conf.d/00-randomize-mac.conf: | gnome-desktop
-	@install -m 644 -D /dev/stdin $@ <<- EOF
-		#
-		# Created by dotfiles setup script on $$(date -I) by ${USER}
-		#
-		[device]
-		wifi.scan-rand-mac-address=yes
+FILES += $(XDG_CONFIG_HOME)/Code/User/settings.json
+$(XDG_CONFIG_HOME)/Code/User/settings.json: $(FSHOME)/.config/Code/User/settings.json
+	@install -d $(@D)
+	@ln -svfn $< $@
 
-		[connection]
-		wifi.cloned-mac-address=random
-		ethernet.cloned-mac-address=random
-		connection.stable-id=\$${CONNECTION}/\$${BOOT}
-	EOF
-	@sudo systemctl restart NetworkManager
+FILES += $(XDG_CONFIG_HOME)/glow/glow.yml
+$(XDG_CONFIG_HOME)/glow/glow.yml: $(FSHOME)/.config/glow/glow.yml | glow
+	@install -d $(@D)
+	@ln -svfn $< $@
 
-FILES += /etc/systemd/logind.conf.d/power.conf
-/etc/systemd/logind.conf.d/power.conf: | systemd
-	@sudo install -D /dev/stdin $@ <<- EOF
-		#
-		# Created by dotfiles setup script on $$(date -I) by ${USER}
-		#
-		[Login]
-		HandlePowerKey=ignore
-		HandleLidSwitchExternalPower=ignore
-	EOF
-
-FILES += /etc/systemd/resolved.conf.d/dnssec.conf
-/etc/systemd/resolved.conf.d/dnssec.conf: | systemd
-	@sudo install -D /dev/stdin $@ <<- EOF
-		#
-		# Created by dotfiles setup script on $$(date -I) by ${USER}
-		#
-		[Resolve]
-		DNSSEC=false
-	EOF
-	@sudo systemctl restart systemd-resolved
-
-FILES += /etc/udev/rules.d/60-streamdeck.rules
-/etc/udev/rules.d/60-streamdeck.rules: $(DOTFILES)/etc/udev/rules.d/60-streamdeck.rules
-	@sudo install -m 644 $< $@
-	@sudo udevadm control --reload-rules && sudo udevadm trigger
+FILES += $(BACKUP_CONF_DEST_FILES)
+$(HOME_BACKUP_CF_DEST_DIR)/%: $(HOME_BACKUP_CF_SRC_DIR)/%
+	@install -d $(@D)
+	@ln -svfn $< $@
 
 FILES += $(XDG_CONFIG_HOME)/wget/wgetrc
-$(XDG_CONFIG_HOME)/wget/wgetrc: | wget $(BASHRCD)/bashrc-xdg
+$(XDG_CONFIG_HOME)/wget/wgetrc: $(FSHOME)/.config/wget/wgetrc.template | wget $(BASHRCD)/bashrc-xdg
 	@install -d $(@D)
 	@install -d $(XDG_CACHE_HOME)/wget
-	@echo -e "#\n# Created by dotfiles setup script on $$(date -I) by ${USER} \n#\n--hsts-file=$(XDG_CACHE_HOME)/wget/hsts" > $@
+	@envsubst '$$TODAY $$USER $$XDG_CACHE_HOME' < $< | install -m 644 -D /dev/stdin $@
 
 FILES += $(XDG_DATA_HOME)/backgrounds/current
-$(XDG_DATA_HOME)/backgrounds/current: $(DOTFILES)/.local/share/backgrounds/morphogenesis-d.svg
+$(XDG_DATA_HOME)/backgrounds/current: $(FSHOME)/.local/share/backgrounds/morphogenesis-d.svg
 	@install -d $(@D)
 	@ln -svfn $< $@
 
@@ -1210,11 +1158,11 @@ $(PASS_HOME)/.gitattributes: | pass git
 	@pass git config log.showsignature false
 
 FILES += $(PASS_HOME)/.gitignore
-$(PASS_HOME)/.gitignore: $(DOTFILES)/.password-store/.gitignore | pass
-	@install -D $< $@
+$(PASS_HOME)/.gitignore: $(FSHOME)/.password-store/.gitignore | pass
+	@install -m 600 -D $< $@
 
 FILES += $(PASS_HOME)/.browserpass.json
-$(PASS_HOME)/.browserpass.json: $(DOTFILES)/.password-store/.browserpass.json | pass
+$(PASS_HOME)/.browserpass.json: $(FSHOME)/.password-store/.browserpass.json | pass
 	@install -d $(@D)
 	@ln -svfn $< $@
 
@@ -1250,7 +1198,8 @@ $(PASS_EXT)/update.bash: | git pass
 	@install -d $(@D)
 	@install -d $(XDG_DATA_HOME)/bash-completion/completions
 	@ln -svfn $(HOME_OPT)/pass-update.git/update.bash $@
-	@ln -svfn $(HOME_OPT)/pass-update.git/share/bash-completion/completions/pass-update $(XDG_DATA_HOME)/bash-completion/completions/pass-update
+	@ln -svfn $(HOME_OPT)/pass-update.git/share/bash-completion/completions/pass-update \
+		$(XDG_DATA_HOME)/bash-completion/completions/pass-update
 
 FILES += $(PASS_EXT)/tessen.bash
 $(PASS_EXT)/tessen.bash: | git pass
@@ -1258,7 +1207,8 @@ $(PASS_EXT)/tessen.bash: | git pass
 	@install -d $(@D)
 	@install -d $(XDG_DATA_HOME)/bash-completion/completions
 	@ln -svfn $(HOME_OPT)/pass-tessen.git/tessen.bash $@
-	@ln -svfn $(HOME_OPT)/pass-tessen.git/completion/pass-tessen.bash-completion $(XDG_DATA_HOME)/bash-completion/completions/pass-tessen
+	@ln -svfn $(HOME_OPT)/pass-tessen.git/completion/pass-tessen.bash-completion \
+		$(XDG_DATA_HOME)/bash-completion/completions/pass-tessen
 
 FILES += $(PASS_EXT)/meta.bash
 $(PASS_EXT)/meta.bash: | git pass
@@ -1266,17 +1216,8 @@ $(PASS_EXT)/meta.bash: | git pass
 	@install -d $(@D)
 	@install -d $(XDG_DATA_HOME)/bash-completion/completions
 	@ln -svfn $(HOME_OPT)/pass-extension-meta.git/src/meta.bash $@
-	@ln -svfn $(HOME_OPT)/pass-extension-meta.git/completion/pass-meta.bash.completion $(XDG_DATA_HOME)/bash-completion/completions/pass-meta
-
-FILES += /usr/local/bin/pass-gen
-/usr/local/bin/pass-gen: | git pass .passgenrc
-	@$(call clone,pass-gen.git)
-	@sudo make -C $(HOME_OPT)/pass-gen.git install
-
-# FIXME: permission denied, should be rewritten
-FILES += /etc/pki/akmods/certs/public_key.der
-/etc/pki/akmods/certs/public_key.der: | akmods mokutil openssl
-	@sudo kmodgenca -a
+	@ln -svfn $(HOME_OPT)/pass-extension-meta.git/completion/pass-meta.bash.completion \
+ 		$(XDG_DATA_HOME)/bash-completion/completions/pass-meta
 
 FILES += $(XDG_DATA_HOME)/python/history
 $(XDG_DATA_HOME)/python/history: $(BASHRCD)/bashrc-xdg
@@ -1284,240 +1225,197 @@ $(XDG_DATA_HOME)/python/history: $(BASHRCD)/bashrc-xdg
 	@touch $@
 
 FILES += $(XDG_CONFIG_HOME)/systemd/user/restic-backup@.service
-$(XDG_CONFIG_HOME)/systemd/user/restic-backup@.service: | $(HOME_BIN)/restic-backup
-	@install -m 644 -D /dev/stdin $@ <<- EOF
-		#
-		# Created by dotfiles setup script on $$(date -I) by ${USER}
-		#
-		[Unit]
-		Description=Runs restic backup for %i
-		After=network.target
-		ConditionUser=!root
-
-		[Service]
-		# The 'oneshot' type is required; without it, dependent services will not wait for completion
-		# (See systemd documentation for details on Type=oneshot)
-		Type=oneshot
-		RuntimeDirectory=restic-backup/%i
-		IOSchedulingClass=idle
-		Restart=no
-		ExecStart=/usr/bin/gnome-session-inhibit --inhibit logout:suspend:idle --app-id org.gnome.Terminal.desktop --reason "Automatic restic backup (%i) is running" /usr/bin/make -C $(DOTFILES) backup-restic-%i-no-deps
-	EOF
+$(XDG_CONFIG_HOME)/systemd/user/restic-backup@.service: \
+	$(FSHOME)/.config/systemd/user/restic-backup@.service.template \
+	| $(HOME_BIN)/restic-backup
+	@WORKDIR=$(DOTFILES) envsubst '$$TODAY $$USER $$WORKDIR' < $< | install -m 644 -D /dev/stdin $@
 	@systemd-analyze verify $@
 	@systemctl --user daemon-reload
 
 FILES += $(XDG_CONFIG_HOME)/systemd/user/restic-stats@.service
-$(XDG_CONFIG_HOME)/systemd/user/restic-stats@.service: | $(HOME_BIN)/restic-stats $(XDG_CONFIG_HOME)/systemd/user/restic-backup@.service
-	@install -m 644 -D /dev/stdin $@ <<- EOF
-		#
-		# Created by dotfiles setup script on $$(date -I) by ${USER}
-		#
-		[Unit]
-		Description=Publishes next backup run and repository statistics for %i
-		After=network.target restic-backup@%i.service
-		ConditionUser=!root
-
-		[Service]
-		Type=simple
-		RuntimeDirectory=restic-stats/%i
-		IOSchedulingClass=idle
-		Restart=no
-		ExecStart=/usr/bin/make -C $(DOTFILES) stats-restic-%i-no-deps
-
-		[Install]
-		WantedBy=restic-backup@%i.service
-	EOF
+$(XDG_CONFIG_HOME)/systemd/user/restic-stats@.service: \
+	$(FSHOME)/.config/systemd/user/restic-stats@.service.template \
+	| $(HOME_BIN)/restic-stats $(XDG_CONFIG_HOME)/systemd/user/restic-backup@.service
+	@WORKDIR=$(DOTFILES) envsubst '$$TODAY $$USER $$WORKDIR' < $< | install -m 644 -D /dev/stdin $@
 	@systemd-analyze verify $@
 	@systemctl --user daemon-reload
 
 FILES += $(XDG_CONFIG_HOME)/systemd/user/restic-check@.service
-$(XDG_CONFIG_HOME)/systemd/user/restic-check@.service: | $(HOME_BIN)/restic-check
-	@install -m 644 -D /dev/stdin $@ <<- EOF
-		#
-		# Created by dotfiles setup script on $$(date -I) by ${USER}
-		#
-		[Unit]
-		Description=Verifies '%i' repository integrity and publishes the result
-		After=network.target
-		ConditionUser=!root
-
-		[Service]
-		Type=simple
-		RuntimeDirectory=restic-check/%i
-		IOSchedulingClass=idle
-		Restart=no
-		ExecStart=/usr/bin/make -C $(DOTFILES) check-restic-%i-no-deps
-
-		[Install]
-		WantedBy=default.target
-	EOF
+$(XDG_CONFIG_HOME)/systemd/user/restic-check@.service: \
+	$(FSHOME)/.config/systemd/user/restic-check@.service.template \
+	| $(HOME_BIN)/restic-check
+	@WORKDIR=$(DOTFILES) envsubst '$$TODAY $$USER $$WORKDIR' < $< | install -m 644 -D /dev/stdin $@
 	@systemd-analyze verify $@
 	@systemctl --user daemon-reload
 
 FILES += $(XDG_CONFIG_HOME)/systemd/user/restic-backup-daily@.timer
-$(XDG_CONFIG_HOME)/systemd/user/restic-backup-daily@.timer: | $(XDG_CONFIG_HOME)/systemd/user/restic-backup@.service
-	@install -m 644 -D /dev/stdin $@ <<- EOF
-		#
-		# Created by dotfiles setup script on $$(date -I) by ${USER}
-		#
-		[Unit]
-		Description=Daily backup of %i
-
-		[Timer]
-		OnBootSec=15min
-		RandomizedDelaySec=30min
-		OnCalendar=daily
-		Persistent=true
-		Unit=restic-backup@%i.service
-
-		[Install]
-		WantedBy=timers.target
-	EOF
+$(XDG_CONFIG_HOME)/systemd/user/restic-backup-daily@.timer: \
+	$(FSHOME)/.config/systemd/user/restic-backup-daily@.timer.template \
+	| $(XDG_CONFIG_HOME)/systemd/user/restic-backup@.service
+	@envsubst '$$TODAY $$USER' < $< | install -m 644 -D /dev/stdin $@
 	@systemd-analyze verify $@
 	@systemctl --user daemon-reload
 
 FILES += $(XDG_CONFIG_HOME)/systemd/user/restic-backup-monthly@.timer
-$(XDG_CONFIG_HOME)/systemd/user/restic-backup-monthly@.timer: | $(XDG_CONFIG_HOME)/systemd/user/restic-backup@.service
-	@install -m 644 -D /dev/stdin $@ <<- EOF
-		#
-		# Created by dotfiles setup script on $$(date -I) by ${USER}
-		#
-		[Unit]
-		Description=Monthly backup of %i
-
-		[Timer]
-		OnBootSec=15min
-		RandomizedDelaySec=1h
-		OnCalendar=monthly
-		Persistent=true
-		Unit=restic-backup@%i.service
-
-		[Install]
-		WantedBy=timers.target
-	EOF
+$(XDG_CONFIG_HOME)/systemd/user/restic-backup-monthly@.timer: \
+	$(FSHOME)/.config/systemd/user/restic-backup-monthly@.timer.template \
+	| $(XDG_CONFIG_HOME)/systemd/user/restic-backup@.service
+	@envsubst '$$TODAY $$USER' < $< | install -m 644 -D /dev/stdin $@
 	@systemd-analyze verify $@
 	@systemctl --user daemon-reload
 
 FILES += $(XDG_CONFIG_HOME)/systemd/user/restic-check-monthly@.timer
-$(XDG_CONFIG_HOME)/systemd/user/restic-check-monthly@.timer: | $(HOME_BIN)/restic-check
-	@install -m 644 -D /dev/stdin $@ <<- EOF
-		#
-		# Created by dotfiles setup script on $$(date -I) by ${USER}
-		#
-		[Unit]
-		Description=Monthly check for %i
-
-		[Timer]
-		OnBootSec=15min
-		RandomizedDelaySec=1h
-		OnCalendar=monthly
-		Persistent=true
-		Unit=restic-check@%i.service
-
-		[Install]
-		WantedBy=timers.target
-	EOF
+$(XDG_CONFIG_HOME)/systemd/user/restic-check-monthly@.timer: \
+	$(FSHOME)/.config/systemd/user/restic-check-monthly@.timer.template \
+	| $(HOME_BIN)/restic-check
+	@envsubst '$$TODAY $$USER' < $< | install -m 644 -D /dev/stdin $@
 	@systemd-analyze verify $@
 	@systemctl --user daemon-reload
 
+#
+# /usr
+#
+
+FILES += /usr/local/bin/pass-gen
+/usr/local/bin/pass-gen: | git pass $(FSHOME)/.passgenrc
+	@$(call clone,pass-gen.git)
+	@sudo make -C $(HOME_OPT)/pass-gen.git install
+
+
+#
+#  /etc
+#
+
+FILES += /etc/yum.repos.d/_copr\:copr.fedorainfracloud.org\:hyperreal\:better_fonts.repo
+/etc/yum.repos.d/_copr\:copr.fedorainfracloud.org\:hyperreal\:better_fonts.repo:
+	@sudo dnf copr enable -y hyperreal/better_fonts
+	@# Delete previously used copr repository (if available)
+	-@sudo dnf copr remove chriscowleyunix/better_fonts
+	-@sudo dnf copr remove gombosg/better_fonts
+
+FILES += /etc/yum.repos.d/docker-ce.repo
+/etc/yum.repos.d/docker-ce.repo: | dnf-plugins
+	@sudo dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
+
+FILES += /etc/yum.repos.d/google-chrome.repo
+/etc/yum.repos.d/google-chrome.repo: | dnf-plugins fedora-workstation-repositories
+	@sudo dnf config-manager --set-enabled google-chrome
+
+FILES += /etc/yum.repos.d/vivaldi-fedora.repo
+/etc/yum.repos.d/vivaldi-fedora.repo: | dnf-plugins
+	@sudo dnf config-manager --add-repo https://repo.vivaldi.com/stable/vivaldi-fedora.repo
+
+FILES += /etc/yum.repos.d/opera.repo
+/etc/yum.repos.d/opera.repo: $(FSETC)/yum.repos.d/opera.repo.template
+	-@sudo rpm --import https://rpm.opera.com/rpmrepo.key
+	@sudo install -d $(@D)
+	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -D /dev/stdin $@
+
+FILES += /etc/yum.repos.d/keybase.repo
+/etc/yum.repos.d/keybase.repo: $(FSETC)/yum.repos.d/keybase.repo.template
+	@sudo install -d $(@D)
+	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -D /dev/stdin $@
+
+FILES += /etc/yum.repos.d/rpmfusion-free.repo
+/etc/yum.repos.d/rpmfusion-free.repo:
+	@$(call dnf,\
+		https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(shell rpm -E %fedora).noarch.rpm)
+
+FILES += /etc/yum.repos.d/rpmfusion-nonfree.repo
+/etc/yum.repos.d/rpmfusion-nonfree.repo:
+	@$(call dnf,\
+		https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(shell rpm -E %fedora).noarch.rpm)
+
+FILES += /etc/yum.repos.d/fedora-cisco-openh264.repo
+/etc/yum.repos.d/fedora-cisco-openh264.repo: | dnf-plugins
+	@sudo dnf config-manager --set-enabled fedora-cisco-openh264
+
+FILES += /etc/yum.repos.d/_copr\:copr.fedorainfracloud.org\:rockowitz\:ddcutil.repo
+/etc/yum.repos.d/_copr\:copr.fedorainfracloud.org\:rockowitz\:ddcutil.repo:
+	@sudo dnf copr enable -y rockowitz/ddcutil
+
+FILES += /etc/yum.repos.d/_copr\:copr.fedorainfracloud.org\:dusansimic\:themes.repo
+/etc/yum.repos.d/_copr\:copr.fedorainfracloud.org\:dusansimic\:themes.repo:
+	@sudo dnf copr enable -y dusansimic/themes
+
+FILES += /etc/NetworkManager/conf.d/00-randomize-mac.conf
+/etc/NetworkManager/conf.d/00-randomize-mac.conf: $(FSETC)/NetworkManager/conf.d/00-randomize-mac.conf.template
+	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -D /dev/stdin $@
+	@sudo systemctl restart NetworkManager
+
+FILES += /etc/systemd/logind.conf.d/power.conf
+/etc/systemd/logind.conf.d/power.conf: $(FSETC)/systemd/logind.conf.d/power.conf.template
+	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -D /dev/stdin $@
+
+FILES += /etc/systemd/resolved.conf.d/dnssec.conf
+/etc/systemd/resolved.conf.d/dnssec.conf: $(FSETC)/systemd/resolved.conf.d/dnssec.conf.template
+	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -D /dev/stdin $@
+	@sudo systemctl restart systemd-resolved
+
+FILES += /etc/udev/rules.d/60-streamdeck.rules
+/etc/udev/rules.d/60-streamdeck.rules: $(FSETC)/udev/rules.d/60-streamdeck.rules.template
+	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -D /dev/stdin $@
+	@sudo udevadm control --reload-rules && sudo udevadm trigger
+
+FILES += /etc/pki/akmods/certs/public_key.der
+/etc/pki/akmods/certs/public_key.der: | akmods mokutil openssl
+	@# Safe to run multiple times. It will not recreate existing keys
+	@sudo kmodgenca -a
+
 FILES += /etc/polkit-1/rules.d/10-admin-auth-ignore-inhibit.rules
-/etc/polkit-1/rules.d/10-admin-auth-ignore-inhibit.rules: $(DOTFILES)/etc/polkit-1/rules.d/10-admin-auth-ignore-inhibit.rules
-	@sudo install -m 644 -D $< $@
-
-FILES += $(XDG_CONFIG_HOME)/Code/User/settings.json
-$(XDG_CONFIG_HOME)/Code/User/settings.json: $(DOTFILES)/.config/Code/User/settings.json
-	@install -d $(@D)
-	@ln -svfn $< $@
-
-FILES += $(XDG_CONFIG_HOME)/glow/glow.yml
-$(XDG_CONFIG_HOME)/glow/glow.yml: $(DOTFILES)/.config/glow/glow.yml | glow
-	@install -d $(@D)
-	@ln -svfn $< $@
-
-FILES += $(BACKUP_CONF_DEST_FILES)
-$(HOME_BACKUP_CF_DEST_DIR)/%: $(HOME_BACKUP_CF_SRC_DIR)/%
-	@install -d $(@D)
-	@ln -svfn $< $@
+/etc/polkit-1/rules.d/10-admin-auth-ignore-inhibit.rules: \
+	$(FSETC)/polkit-1/rules.d/10-admin-auth-ignore-inhibit.rules.template
+	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -D /dev/stdin $@
 
 FILES += /etc/polkit-1/rules.d/70-allow-usbguard.rules
-/etc/polkit-1/rules.d/70-allow-usbguard.rules: $(DOTFILES)/etc/polkit-1/rules.d/70-allow-usbguard.rules
-	@sudo install -m 644 $< $@
+/etc/polkit-1/rules.d/70-allow-usbguard.rules: $(FSETC)/polkit-1/rules.d/70-allow-usbguard.rules.template
+	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -D /dev/stdin $@
 
-# (source: https://codeberg.org/fabiscafe/game-devices-udev/src/branch/main/71-sony-controllers.rules)
 FILES += /etc/udev/rules.d/71-sony-controllers.rules
-/etc/udev/rules.d/71-sony-controllers.rules: $(DOTFILES)/etc/udev/rules.d/71-sony-controllers.rules
-	@sudo install -m 644 $< $@
+/etc/udev/rules.d/71-sony-controllers.rules: $(FSETC)/udev/rules.d/71-sony-controllers.rules.template
+	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -D /dev/stdin $@
 	@sudo udevadm control --reload-rules && sudo udevadm trigger
+
+FILES += /etc/logrotate.d/dnf
+/etc/logrotate.d/dnf: $(FSETC)/logrotate.d/dnf.template
+	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -D /dev/stdin $@
 
 ########################################################################################################################
 #
 # Patches
 #
 
-# Set correct timezone and enable synchronization
+# Set correct timezone and enable date/time synchronization
 PATCH += patch-time-sync
 patch-time-sync: | systemd
 	@timedatectl set-timezone 'America/New_York'
 	@timedatectl set-ntp true
 
-# Make sure that the system is configured to maintain the RTC in universal time
+# Ensure the system is configured to maintain the RTC in Universal Time (UTC).
 PATCH += patch-local-rtc
 patch-local-rtc: | systemd
 	@if [ "$$(timedatectl show -p LocalRTC --value)" == "yes" ]; then timedatectl set-local-rtc 0 --adjust-system-clock; fi
 
-# Detect modules to be loaded by lm_sensors
+# Initial setup to detect which sensors can be reported
 PATCH += /etc/sysconfig/lm_sensors
 /etc/sysconfig/lm_sensors: | lm_sensors
 	@sudo sensors-detect
 
-# Possible fix for mouse lagging (e.g. disable autosuspend for Dell Universal Receiver)
+# Potential fix for mouse lag (e.g., disabling autosuspend for the Dell Universal Receiver)
 PATCH += /etc/udev/rules.d/50-usb-power-save.rules
-/etc/udev/rules.d/50-usb-power-save.rules: $(DOTFILES)/etc/udev/rules.d/50-usb-power-save.rules
-	@sudo install -m 644 $< $@
+/etc/udev/rules.d/50-usb-power-save.rules: $(FSETC)/udev/rules.d/50-usb-power-save.rules.template
+	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -D /dev/stdin $@
 	@sudo udevadm control --reload-rules && sudo udevadm trigger
 
 # Fix for the NVIDIA suspend issue
 # (see https://forums.developer.nvidia.com/t/trouble-suspending-with-510-39-01-linux-5-16-0-freezing-of-tasks-failed-after-20-009-seconds/200933/11)
 PATCH += patch-gnome-suspend
 patch-gnome-suspend:
-	@sudo install -m 644 -CD /dev/stdin /etc/systemd/system/gnome-shell-suspend.service <<- EOF
-		#
-		# Created by dotfiles setup script on $$(date -I) by ${USER}
-		#
-		[Unit]
-		Description=Suspend gnome-shell
-		Before=systemd-suspend.service
-		Before=systemd-hibernate.service
-		Before=nvidia-suspend.service
-		Before=nvidia-hibernate.service
+	@envsubst '$$TODAY $$USER' < $(FSETC)/systemd/system/gnome-shell-suspend.service.template \
+		| sudo install -m 644 -D /dev/stdin /etc/systemd/system/gnome-shell-suspend.service
 
-		[Service]
-		Type=oneshot
-		ExecStart=/usr/bin/killall -STOP gnome-shell
-
-		[Install]
-		WantedBy=systemd-suspend.service
-		WantedBy=systemd-hibernate.service
-	EOF
-
-	@sudo install -m 644 -CD /dev/stdin /etc/systemd/system/gnome-shell-resume.service <<- EOF
-		#
-		# Created by dotfiles setup script on $$(date -I) by ${USER}
-		#
-		[Unit]
-		Description=Resume gnome-shell
-		After=systemd-suspend.service
-		After=systemd-hibernate.service
-		After=nvidia-resume.service
-
-		[Service]
-		Type=oneshot
-		ExecStart=/usr/bin/killall -CONT gnome-shell
-
-		[Install]
-		WantedBy=systemd-suspend.service
-		WantedBy=systemd-hibernate.service
-	EOF
+	@envsubst '$$TODAY $$USER' < $(FSETC)/systemd/system/gnome-shell-resume.service.template \
+		| sudo install -m 644 -D /dev/stdin /etc/systemd/system/gnome-shell-resume.service
 
 	@sudo systemctl daemon-reload
 	@sudo systemctl enable gnome-shell-suspend
@@ -1613,9 +1511,9 @@ setup-private-home: ecryptfs-utils authselect
 SETUP += setup-auth-keys
 setup-auth-keys: pam-u2f pamu2fcfg authselect
 	@# TODO: add implementation
-	# Fix for the journal warning:
-	# "Permissions 0664 for '/home/user/.config/Yubico/u2f_keys' are too open. Please change the file mode bits to
-	# 0644 or more restrictive. This may become an error in the future!"
+	@# Fix for the journal warning:
+	@# "Permissions 0664 for '/home/user/.config/Yubico/u2f_keys' are too open. Please change the file mode bits to
+	@# 0644 or more restrictive. This may become an error in the future!"
 	@chmod 0644 $(HOME)/.config/Yubico/u2f_keys
 
 SETUP += setup-mok-keys

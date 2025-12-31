@@ -1,1 +1,5 @@
+#
+# Created by dotfiles setup script on ${TODAY} by ${USER}
+#
+
 ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="413c", ATTR{idProduct}=="2514", TEST=="power/autosuspend", ATTR{power/autosuspend}="-1"
