@@ -332,7 +332,7 @@ gnome-desktop:
 	@# Force group installation if -B flag is present
 	@$(if $(findstring B,$(firstword -$(MAKEFLAGS))), \
 		@sudo dnf -y group install $@, \
-		@dnf group list --installed --hidden | grep $@ > /dev/null || sudo dnf -y group install $@)
+		@dnf group list --installed --hidden | grep $@ > /dev/null || sudo dnf -y group install $@;)
 
 INSTALL += google-chrome
 google-chrome: | gnome-desktop /etc/yum.repos.d/google-chrome.repo
