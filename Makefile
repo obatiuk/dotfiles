@@ -609,7 +609,7 @@ mosquitto:
 	@sudo systemctl disable $@
 
 INSTALL += usbguard
-usbguard: | usbguard-selinux usbguard-notifier usbguard-dbus /fsroot/etc/polkit-1/rules.d/70-allow-usbguard.rules
+usbguard: | usbguard-selinux usbguard-notifier usbguard-dbus /etc/polkit-1/rules.d/70-allow-usbguard.rules
 	@$(call dnf,$@)
 
 INSTALL += rasdaemon
