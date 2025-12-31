@@ -393,7 +393,7 @@ ifeq ($(ARC_THEME_SOURCE),git)
 # `arc-theme` package from the official repository doesn't have latest patches
 # Use patched Arc themes version from git: https://github.com/jnsh/arc-theme/blob/master/INSTALL.md
 INSTALL += arc-theme
-arc-theme: | gnome-desktop git install-arc-theme-git build-arc-theme-git
+arc-theme: | gnome-desktop git install-arc-theme-git build-arc-theme-git clean-arc-theme-git
 
 .PHONY: install-arc-theme-git
 install-arc-theme-git:
@@ -429,7 +429,7 @@ build-arc-theme-git:
 	fi
 
 UPDATE += update-arc-theme-git
-update-arc-theme-git: | git build-arc-theme-git
+update-arc-theme-git: | git build-arc-theme-git clean-arc-theme-git
 
 CLEAN += clean-arc-theme-git
 clean-arc-theme-git:
@@ -461,7 +461,7 @@ tuned-ppd: | tuned
 INSTALL += pass
 pass: | git
 	@$(call dnf,$@)
-	@install -m 744 -d $(HOME)/.password-store
+	@install -d $(HOME)/.password-store
 
 INSTALL += pass-extensions
 pass-extensions: | pass pass-otp pass-audit $(EXT_PASS_DEST_FILES)
@@ -527,10 +527,10 @@ logrotate: /etc/logrotate.d/dnf
 	@$(call dnf,$@)
 	@sudo systemctl enable --now $@.timer
 
-INSTALL += browserpass-bin
-browserpass-bin:
+.PHONY: browserpass-bin
+browserpass-bin: | git coreutils golang
 	@$(call clone,browserpass-native.git)
-	@make $(HOME_OPT)/browserpass-native.git browserpass configure
+	@make -C $(HOME_OPT)/browserpass-native.git browserpass configure
 	@sudo make -C $(HOME_OPT)/browserpass-native.git install
 	@make -C $(HOME_OPT)/browserpass-native.git hosts-chrome-user hosts-firefox-user hosts-vivaldi-user \
 		policies-chrome-user policies-vivaldi-user
@@ -540,8 +540,7 @@ clean-browserpass:
 	@make -C $(HOME_OPT)/browserpass-native.git clean
 
 INSTALL += browserpass
-browserpass: | git coreutils golang pass pass-extensions $(PASS_HOME)/.browserpass.json vivaldi google-chrome firefox \
-	browserpass-bin clean-browserpass
+browserpass: | pass pass-extensions $(PASS_HOME)/.browserpass.json browserpass-bin clean-browserpass
 
 INSTALL += geoclue2
 geoclue2: | crudini
@@ -608,9 +607,12 @@ mosquitto:
 	@sudo systemctl stop $@
 	@sudo systemctl disable $@
 
+.PHONY: usbguard-bin
+usbguard-bin:
+	@$(call dnf,usbguard)
+
 INSTALL += usbguard
-usbguard: | usbguard-selinux usbguard-notifier usbguard-dbus /etc/polkit-1/rules.d/70-allow-usbguard.rules
-	@$(call dnf,$@)
+usbguard: | usbguard-bin usbguard-selinux usbguard-notifier usbguard-dbus /etc/polkit-1/rules.d/70-allow-usbguard.rules
 
 INSTALL += rasdaemon
 rasdaemon:
