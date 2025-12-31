@@ -140,8 +140,8 @@ PACKAGES_RPM += restic rsync rclone micro wget xsensors lm_sensors curl jq libno
 PACKAGES_RPM += unrar lynx crudini sysstat p7zip nmap cabextract iotop qrencode uuid tcpdump
 PACKAGES_RPM += git diffutils git-lfs git-extras git-credential-libsecret git-crypt bat mc gh perl-Image-ExifTool
 PACKAGES_RPM += calibre ebook-tools clamav clamav-freshclam mdns-scan fping
-PACKAGES_RPM += fedora-workstation-repositories gnome-monitor-config
-PACKAGES_RPM += adwaita-icon-theme adwaita-cursor-theme dconf adoptium-temurin-java-repository java-latest-openjdk
+PACKAGES_RPM += fedora-workstation-repositories gnome-monitor-config java-latest-openjdk java-21-openjdk java-25-openjdk
+PACKAGES_RPM += adwaita-icon-theme adwaita-cursor-theme dconf adoptium-temurin-java-repository
 PACKAGES_RPM += python3 python3-pip python3-devel python3-virtualenv
 
 # DNF plugins
@@ -617,9 +617,8 @@ rasdaemon:
 	@sudo systemctl enable --now $@
 
 INSTALL += jre
-jre:
-	@$(call dnf, java-latest-openjdk)
-	@sudo alternatives --set java /usr/lib/jvm/java-latest-openjdk/bin/java
+jre: java-21-openjdk
+	@sudo alternatives --set java /usr/lib/jvm/$</bin/java
 
 INSTALL += kse
 kse: | jre
@@ -1280,7 +1279,6 @@ FILES += /usr/local/bin/pass-gen
 /usr/local/bin/pass-gen: | git pass $(FSHOME)/.passgenrc
 	@$(call clone,pass-gen.git)
 	@sudo make -C $(HOME_OPT)/pass-gen.git install
-
 
 #
 #  /etc
