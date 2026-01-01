@@ -48,30 +48,26 @@ MODEL := $(shell (if command -v hostnamectl > /dev/null 2>&1; \
 	else sudo dmidecode -s system-product-name ; fi) | tr "[:upper:]" "[:lower:]" | sed 's/ /-/g')
 OS_RELEASE_EOL=$(shell grep -o 'SUPPORT_END=.*' /etc/os-release | sed 's/SUPPORT_END=//' )
 
-NVM_PATH = $(NVM_DIR)
-NVM_CMD = . $(NVM_PATH)/nvm.sh && nvm
-
-MAKEFILE_NAME := $(abspath $(lastword $(MAKEFILE_LIST)))
-DOTFILES := $(abspath $(dir $(MAKEFILE_NAME)))
-FSROOT := $(abspath $(DOTFILES)/fsroot)
-FSHOME := $(abspath $(FSROOT)/home/obatiuk)
-FSETC := $(abspath $(FSROOT)/etc)
-INCLUDE = $(abspath $(DOTFILES)/include)
-DEVICE = $(abspath $(DOTFILES)/device)
+DF_MAKEFILE_NAME := $(abspath $(lastword $(MAKEFILE_LIST)))
+DF_ROOT := $(abspath $(dir $(DF_MAKEFILE_NAME)))
+DF_FSROOT := $(abspath $(DF_ROOT)/fsroot)
+DF_FSHOME := $(abspath $(DF_FSROOT)/home/obatiuk)
+DF_FSETC := $(abspath $(DF_FSROOT)/etc)
+DF_INCLUDE = $(abspath $(DF_ROOT)/include)
+DF_DEVICE = $(abspath $(DF_ROOT)/device)
+DF_VIVALDI_CONF := $(DF_FSHOME)/.config/vivaldi/CustomUIModifications
+DF_BACKUP_CONF :=  $(DF_FSHOME)/.home/backup
 
 DOTHOME := $(abspath $(HOME)/.home)
 BASHRCD := $(abspath $(HOME)/.bashrc.d)
-HOME_BIN := $(abspath $(DOTHOME)/bin)
-HOME_OPT := $(abspath $(DOTHOME)/opt)
-HOME_BACKUP := $(abspath $(DOTHOME)/backup)
+DOTHOME_BIN := $(abspath $(DOTHOME)/bin)
+DOTHOME_OPT := $(abspath $(DOTHOME)/opt)
+DOTHOME_BACKUP := $(abspath $(DOTHOME)/backup)
 PASS_HOME := $(abspath $(HOME)/.password-store)
 PASS_EXT := $(abspath $(PASS_HOME)/.extensions)
-
-VIVALDI_CF_SRC_DIR := $(FSHOME)/.config/vivaldi/CustomUIModifications
-VIVALDI_CF_DEST_DIR := $(XDG_CONFIG_HOME)/vivaldi/CustomUIModifications
-HOME_BACKUP_CF_SRC_DIR :=  $(FSHOME)/.home/backup
-HOME_BACKUP_CF_DEST_DIR := $(HOME_BACKUP)
-ULAUNCHER_EXT_DIR := $(XDG_DATA_HOME)/ulauncher/extensions
+ULAUNCHER_EXT := $(XDG_DATA_HOME)/ulauncher/extensions
+VIVALDI_CONF := $(XDG_CONFIG_HOME)/vivaldi/CustomUIModifications
+BACKUP_CONF := $(DOTHOME_BACKUP)
 
 INSTALL =
 PATCH =
@@ -91,7 +87,7 @@ EDITOR_BIN := $(shell command -v editor)
 #
 
 # Include model-specific patches
--include $(DEVICE)/$(MODEL)/$(MODEL).mk
+-include $(DF_DEVICE)/$(MODEL)/$(MODEL).mk
 
 ########################################################################################################################
 #
@@ -112,9 +108,9 @@ define dnf
 endef
 
 define clone
-	install -d $(HOME_OPT)
-	if [ ! -d $(HOME_OPT)/$(1) ]; then git clone 'https://github.com/obatiuk/$(1)' $(HOME_OPT)/$(1); fi
-	git -C $(HOME_OPT)/$(1) pull
+	install -d $(DOTHOME_OPT)
+	if [ ! -d $(DOTHOME_OPT)/$(1) ]; then git clone 'https://github.com/obatiuk/$(1)' $(DOTHOME_OPT)/$(1); fi
+	git -C $(DOTHOME_OPT)/$(1) pull
 endef
 
 define log
@@ -127,47 +123,46 @@ endef
 #
 
 # All RPM packages that do not require manual installation steps
-PACKAGES_RPM := rpm dnf5 redhat-lsb rpmconf pwgen systemd pam-u2f pamu2fcfg xdg-user-dirs audit golang akmods mokutil
-PACKAGES_RPM += fwupd bluez bash bash-completion avahi avahi-tools samba-client tree brightnessctl
-PACKAGES_RPM += hplip hplip-gui xsane ffmpeg feh nano htop btop fzf less xdg-utils httpie lynis cheat tldr
-PACKAGES_RPM += ImageMagick baobab gimp gparted gnome-terminal seahorse cups duf ssh-audit coreutils openssl
-PACKAGES_RPM += libreoffice-core libreoffice-writer libreoffice-calc libreoffice-filters minder firefox vlc
-PACKAGES_RPM += gnome-pomodoro gnome-clocks fd-find ydiff webp-pixbuf-loader tuned usbguard-selinux usbguard-notifier
-PACKAGES_RPM += usbguard-dbus fastfetch bc usbutils pciutils acpi policycoreutils-devel pass-otp pass-audit
-PACKAGES_RPM += gnupg2 pinentry-tty pinentry-gnome3 gedit gedit-plugins gedit-plugin-editorconfig
-PACKAGES_RPM += gvfs-mtp screen progress pv tio dialog catimg cifs-utils sharutils binutils odt2txt
-PACKAGES_RPM += restic rsync rclone micro wget2 xsensors lm_sensors curl jq libnotify glow libsecret
-PACKAGES_RPM += unrar lynx crudini sysstat p7zip nmap cabextract iotop-c qrencode uuid tcpdump
-PACKAGES_RPM += git diffutils git-lfs git-extras git-credential-libsecret git-crypt bat mc gh perl-Image-ExifTool
-PACKAGES_RPM += calibre ebook-tools clamav clamav-freshclam mdns-scan fping gettext-envsubst
-PACKAGES_RPM += fedora-workstation-repositories gnome-monitor-config java-latest-openjdk java-21-openjdk java-25-openjdk
-PACKAGES_RPM += adwaita-icon-theme adwaita-cursor-theme dconf adoptium-temurin-java-repository
-PACKAGES_RPM += python3 python3-pip python3-devel python3-virtualenv
-PACKAGES_RPM += iwlwifi-dvm-firmware iwlwifi-mld-firmware iwlwifi-mvm-firmware
+PKG_RPM := rpm dnf5 dnf-utils redhat-lsb rpmconf pwgen systemd pam-u2f pamu2fcfg xdg-user-dirs audit golang akmods
+PKG_RPM += fwupd bluez bash bash-completion avahi avahi-tools samba-client tree brightnessctl mokutil
+PKG_RPM += hplip hplip-gui xsane ffmpeg feh nano htop btop fzf less xdg-utils httpie lynis cheat tldr
+PKG_RPM += ImageMagick baobab gimp gparted gnome-terminal seahorse cups duf ssh-audit coreutils openssl
+PKG_RPM += libreoffice-core libreoffice-writer libreoffice-calc libreoffice-filters minder firefox vlc
+PKG_RPM += gnome-pomodoro gnome-clocks fd-find ydiff webp-pixbuf-loader tuned usbguard-selinux usbguard-notifier
+PKG_RPM += usbguard-dbus fastfetch bc usbutils pciutils acpi policycoreutils-devel pass-otp pass-audit
+PKG_RPM += gnupg2 pinentry-tty pinentry-gnome3 gedit gedit-plugins gedit-plugin-editorconfig
+PKG_RPM += gvfs-mtp screen progress pv tio dialog catimg cifs-utils sharutils binutils odt2txt
+PKG_RPM += restic rsync rclone micro wget2 xsensors lm_sensors curl jq libnotify glow libsecret
+PKG_RPM += unrar lynx crudini sysstat p7zip nmap cabextract iotop-c qrencode uuid tcpdump
+PKG_RPM += git diffutils git-lfs git-extras git-credential-libsecret git-crypt bat mc gh perl-Image-ExifTool
+PKG_RPM += calibre ebook-tools clamav clamav-freshclam mdns-scan fping gettext-envsubst steam-devices
+PKG_RPM += fedora-workstation-repositories gnome-monitor-config java-latest-openjdk java-21-openjdk java-25-openjdk
+PKG_RPM += adwaita-icon-theme adwaita-cursor-theme dconf adoptium-temurin-java-repository
+PKG_RPM += python3 python3-pip python3-devel python3-virtualenv
+PKG_RPM += iwlwifi-dvm-firmware iwlwifi-mld-firmware iwlwifi-mvm-firmware
 
 # DNF plugins
-PLUGINS_DNF := dnf-plugins-core dnf-plugin-diff python3-dnf-plugin-tracer dnf-plugin-system-upgrade
-PLUGINS_DNF += remove-retired-packages dracut-config-rescue clean-rpm-gpg-pubkey python3-dnf-plugin-show-leaves
-PLUGINS_DNF += python3-dnf-plugin-rpmconf needs-restarting
+EXT_DNF := dnf-plugins-core dnf-plugin-diff python3-dnf-plugin-tracer python3-dnf-plugin-rpmconf
+EXT_DNF += remove-retired-packages dracut-config-rescue clean-rpm-gpg-pubkey python3-dnf-plugin-show-leaves
 
 # All `snap` packages that do not require manual installation steps
-PACKAGES_SNAP := chromium-ffmpeg brave intellij-idea-community slack
+PKG_SNAP := chromium-ffmpeg brave intellij-idea-community slack
 
 # All **user** `flatpak` that do not require manual installation steps
-PACKAGES_FLATPAK := org.gnupg.GPA org.gtk.Gtk3theme.Arc-Darker be.alexandervanhee.gradia com.core447.StreamController
+PKG_FLATPAK := org.gnupg.GPA org.gtk.Gtk3theme.Arc-Darker be.alexandervanhee.gradia com.core447.StreamController
 
 # Font packages
-PACKAGES_FONTS := google-droid-sans-fonts google-droid-serif-fonts google-droid-sans-mono-fonts
-PACKAGES_FONTS += google-roboto-fonts adobe-source-code-pro-fonts dejavu-sans-fonts dejavu-sans-mono-fonts
-PACKAGES_FONTS += dejavu-serif-fonts liberation-fonts-common liberation-mono-fonts liberation-narrow-fonts
-PACKAGES_FONTS += liberation-sans-fonts liberation-serif-fonts jetbrains-mono-fonts-all fontawesome4-fonts
+PKG_FONT := google-droid-sans-fonts google-droid-serif-fonts google-droid-sans-mono-fonts
+PKG_FONT += google-roboto-fonts adobe-source-code-pro-fonts dejavu-sans-fonts dejavu-sans-mono-fonts
+PKG_FONT += dejavu-serif-fonts liberation-fonts-common liberation-mono-fonts liberation-narrow-fonts
+PKG_FONT += liberation-sans-fonts liberation-serif-fonts jetbrains-mono-fonts-all fontawesome4-fonts
 
-# GNOME Shell extensions
-PACKAGES_GSHELL := gnome-shell-extension-dash-to-dock gnome-shell-extension-appindicator
-PACKAGES_GSHELL += gnome-shell-extension-frippery-move-clock gnome-shell-extension-gsconnect
-PACKAGES_GSHELL += gnome-shell-extension-sound-output-device-chooser gnome-shell-extension-freon
-PACKAGES_GSHELL += gnome-shell-extension-blur-my-shell gnome-shell-extension-user-theme
-PACKAGES_GSHELL += gnome-shell-extension-no-overview
+# GNOME Shell extensions (rpm packages)
+PKG_GSHELL := gnome-shell-extension-dash-to-dock gnome-shell-extension-appindicator
+PKG_GSHELL += gnome-shell-extension-frippery-move-clock gnome-shell-extension-gsconnect
+PKG_GSHELL += gnome-shell-extension-sound-output-device-chooser gnome-shell-extension-freon
+PKG_GSHELL += gnome-shell-extension-blur-my-shell gnome-shell-extension-user-theme
+PKG_GSHELL += gnome-shell-extension-no-overview
 
 # GNOME shell extensions
 EXT_GSHELL := https\://extensions.gnome.org/extension/1401/bluetooth-quick-connect
@@ -198,26 +193,27 @@ EXT_INTELLIJ += com.jetbrains.packagesearch.intellij-plugin com.jetbrains.plugin
 # `micro` editor extensions
 EXT_MICRO += $(addprefix micro_,editorconfig fzf filemanager)
 
-# Vivaldi configuration files
-VIVALDI_CONF_FILES := $(shell find $(VIVALDI_CF_SRC_DIR) -type f -print)
-VIVALDI_CONF_DEST_FILES := $(patsubst $(VIVALDI_CF_SRC_DIR)/%,$(VIVALDI_CF_DEST_DIR)/%,$(VIVALDI_CONF_FILES))
-
 # pass extensions
 EXT_PASS := symlink.bash age.bash ln.bash file.bash update.bash tessen.bash meta.bash
-EXT_PASS_DEST_FILES := $(addprefix $(PASS_EXT)/,$(EXT_PASS))
+
+# Backup configuration names
+CONF_BACKUP := home nebula system
+
+# Backup environment names
+ENV_BACKUP:= primary secondary cloud
+
+# Vivaldi configuration files
+FILES_VIVALDI := $(shell find $(DF_VIVALDI_CONF) -type f -print)
+
+# Backup configuration files
+FILES_BACKUP_CONF := $(shell find $(DF_BACKUP_CONF) -type f -print)
+
+VIVALDI_CONF_FILES := $(patsubst $(DF_VIVALDI_CONF)/%,$(VIVALDI_CONF)/%,$(FILES_VIVALDI))
+EXT_PASS_FILES := $(addprefix $(PASS_EXT)/,$(EXT_PASS))
+BACKUP_CONF_FILES := $(patsubst $(DF_BACKUP_CONF)/%,$(BACKUP_CONF)/%,$(FILES_BACKUP_CONF))
 
 # Editors
 EDITORS := /usr/bin/vi /usr/bin/nano /usr/bin/micro
-
-# Backup configuration files
-BACKUP_CONF_FILES := $(shell find $(HOME_BACKUP_CF_SRC_DIR) -type f -print)
-BACKUP_CONF_DEST_FILES := $(patsubst $(HOME_BACKUP_CF_SRC_DIR)/%,$(HOME_BACKUP_CF_DEST_DIR)/%,$(BACKUP_CONF_FILES))
-
-# Backup configuration names
-BACKUP_CONFIGS :=home nebula system
-
-# Backup environment names
-BACKUP_ENVS:=primary secondary cloud
 
 ########################################################################################################################
 #
@@ -225,14 +221,13 @@ BACKUP_ENVS:=primary secondary cloud
 #
 
 INSTALL += dnf-plugins
-dnf-plugins: $(PLUGINS_DNF)
+dnf-plugins: $(EXT_DNF)
 
 INSTALL += dnf-settings
-dnf-settings: | crudini
-	@sudo crudini --ini-options=nospace --set /etc/dnf/dnf.conf main fastestmirror 1
-	@sudo crudini --ini-options=nospace --set /etc/dnf/dnf.conf main max_parallel_downloads 10
-	@sudo crudini --ini-options=nospace --set /etc/dnf/dnf.conf main deltarpm true
-	@sudo crudini --ini-options=nospace --set /etc/dnf/dnf.conf main ip_resolve 4
+dnf-settings: /etc/dnf/dnf.conf crudini
+	@sudo crudini --ini-options=nospace --set $< main fastestmirror 1
+	@sudo crudini --ini-options=nospace --set $< main max_parallel_downloads 10
+	@sudo crudini --ini-options=nospace --set $< main ip_resolve 4
 
 INSTALL += ecryptfs-utils
 ecryptfs-utils:
@@ -249,7 +244,7 @@ fonts-ms:
 	@$(call dnf,http://sourceforge.net/projects/mscorefonts2/files/rpms/msttcore-fonts-installer-2.6-1.noarch.rpm)
 
 INSTALL += fonts
-fonts: $(PACKAGES_FONTS) fonts-better fonts-ms
+fonts: $(PKG_FONT) fonts-better fonts-ms
 
 INSTALL += flatpak
 flatpak: gnome-desktop
@@ -262,34 +257,18 @@ flatpak: gnome-desktop
 	@flatpak --user remote-modify --no-filter --enable flathub
 	@flatpak install --system org.gtk.Gtk3theme.Arc-Darker
 
-INSTALL += nvm
-nvm: | git
-	@install -d $(NVM_PATH)
-	@PROFILE=/dev/null bash -c 'curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash'
+INSTALL += nodejs-lts
+nodejs-lts: | $(NVM_DIR)/nvm.sh
+	@[ -n "$$( source $(NVM_DIR)/nvm.sh && nvm ls | grep -v 'N/A' | grep -o 'lts/[a-zA-Z]*' | head -n 1)" ] \
+		|| { . $(NVM_DIR)/nvm.sh && nvm install --lts; }
 
-INSTALL += npm
-npm: | nvm
-	@. $(NVM_PATH)/nvm.sh && nvm install --lts
-
-INSTALL +=git-split-diffs
-git-split-diffs: npm
-	@. $(NVM_PATH)/nvm.sh && npm install -g git-split-diffs
-
-# Disable GNOME search engine
-INSTALL += disable-gnome-tracker
-disable-gnome-tracker: | gnome-desktop gnome-tracker-settings
-	-@sudo systemctl --user mask \
-		tracker-extract-3.service \
-		tracker-miner-fs-3.service \
-		tracker-miner-rss-3.service \
-		tracker-writeback-3.service \
-		tracker-xdg-portal-3.service \
-		tracker-miner-fs-control-3.service
-	-@tracker3 reset -s -r || true
+INSTALL += git-split-diffs
+git-split-diffs: | nodejs
+	@. $(NVM_DIR)/nvm.sh && npm list -g $@ > /dev/null || { . $(NVM_DIR)/nvm.sh && npm install -g $@; }
 
 INSTALL += docker
 docker: /etc/yum.repos.d/docker-ce.repo | systemd
-	@sudo dnf -y remove --exclude=container-selinux \
+	-@sudo dnf -y remove --exclude=container-selinux \
 		docker \
 		docker-client \
 		docker-client-latest \
@@ -320,7 +299,6 @@ INSTALL += video-codecs
 video-codecs: | /etc/yum.repos.d/rpmfusion-free.repo \
 	/etc/yum.repos.d/rpmfusion-nonfree.repo \
 	/etc/yum.repos.d/fedora-cisco-openh264.repo
-
 	@sudo dnf -y --setopt=strict=0 install \
 		gstreamer{1,}-{ffmpeg,libav,vaapi,plugins-{good,ugly,bad{,-free,-nonfree,-freeworld,-extras}}}
 	@sudo dnf -y install *openh264
@@ -343,7 +321,7 @@ vivaldi-bin: | gnome-desktop /etc/yum.repos.d/vivaldi-fedora.repo
 	@$(call dnf,vivaldi-stable)
 
 INSTALL += vivaldi
-vivaldi: | vivaldi-bin $(VIVALDI_CONF_DEST_FILES)
+vivaldi: | vivaldi-bin $(VIVALDI_CONF_FILES)
 
 INSTALL += opera
 opera: | gnome-desktop /etc/yum.repos.d/opera.repo
@@ -384,7 +362,7 @@ INSTALL += gnome-themes
 gnome-themes: | gnome-desktop adwaita-icon-theme adwaita-cursor-theme morewaita-icon-theme arc-theme
 
 INSTALL += gnome-shell-extensions
-gnome-shell-extensions: | gnome-desktop $(PACKAGES_GSHELL) $(EXT_GSHELL)
+gnome-shell-extensions: | gnome-desktop $(PKG_GSHELL) $(EXT_GSHELL)
 	@gsettings set org.gnome.shell disable-user-extensions false
 	-@gnome-extensions disable 'window-list@gnome-shell-extensions.gcampax.github.com'
 	-@gnome-extensions disable 'places-menu@gnome-shell-extensions.gcampax.github.com'
@@ -405,21 +383,21 @@ install-arc-theme-git:
 # Using SELF_CALL=xxx to avoid `inkscape` segfaults during build (https://gitlab.com/inkscape/inkscape/-/issues/4716)
 .PHONY: build-arc-theme-git
 build-arc-theme-git:
-	@install -d $(HOME_OPT)
+	@install -d $(DOTHOME_OPT)
 	@rebuild_theme=false
-	@if [ ! -d $(HOME_OPT)/arc-theme ]; then
-		git clone https://github.com/obatiuk/arc-theme --depth 1 $(HOME_OPT)/arc-theme
+	@if [ ! -d $(DOTHOME_OPT)/arc-theme ]; then
+		git clone https://github.com/obatiuk/arc-theme --depth 1 $(DOTHOME_OPT)/arc-theme
 		rebuild_theme=true
 	fi
-	@git -C $(HOME_OPT)/arc-theme remote update
-	@has_changes=$$(git -C $(HOME_OPT)/arc-theme status -uno | grep -q 'Your branch is behind' && echo 'true' || echo 'false')
+	@git -C $(DOTHOME_OPT)/arc-theme remote update
+	@has_changes=$$(git -C $(DOTHOME_OPT)/arc-theme status -uno | grep -q 'Your branch is behind' && echo 'true' || echo 'false')
 	@if [ $${rebuild_theme} == true ] || [ $${has_changes} == true ]; then
-		git -C $(HOME_OPT)/arc-theme pull
+		git -C $(DOTHOME_OPT)/arc-theme pull
 		meson setup --reconfigure --prefix=$(HOME)/.local \
 			-Dvariants=dark,darker \
 			-Dthemes=gnome-shell,gtk2,gtk3,gtk4 \
-			$(HOME_OPT)/arc-theme/build $(HOME_OPT)/arc-theme
-		SELF_CALL=true bash -c 'meson install -C $(HOME_OPT)/arc-theme/build'
+			$(DOTHOME_OPT)/arc-theme/build $(DOTHOME_OPT)/arc-theme
+		SELF_CALL=true bash -c 'meson install -C $(DOTHOME_OPT)/arc-theme/build'
 		install -d $(HOME)/.themes
 		for theme in Arc{,-Dark,-Darker,-Lighter}{,-solid}; do
 			if [ -d $(XDG_DATA_HOME)/themes/$${theme} ]; then
@@ -433,14 +411,14 @@ update-arc-theme-git: | git build-arc-theme-git clean-arc-theme-git
 
 CLEAN += clean-arc-theme-git
 clean-arc-theme-git:
-	@meson compile --clean -C $(HOME_OPT)/arc-theme/build
+	@meson compile --clean -C $(DOTHOME_OPT)/arc-theme/build
 
 else
 # Install `arc-theme` from the official repository
 INSTALL += arc-theme
 arc-theme:
 	@$(call dnf,arc-theme)
-	@rm -rf $(HOME_OPT)/arc-theme
+	@rm -rf $(DOTHOME_OPT)/arc-theme
 	@rm -rf $(XDG_DATA_HOME)/themes/Arc{,-Dark,-Darker,-Lighter}{,-solid}
 	@rm -rf $(HOME)/.themes/Arc{,-Dark,-Darker,-Lighter}{,-solid}
 endif
@@ -464,7 +442,7 @@ pass: | git
 	@install -d $(HOME)/.password-store
 
 INSTALL += pass-extensions
-pass-extensions: | pass pass-otp pass-audit $(EXT_PASS_DEST_FILES)
+pass-extensions: | pass pass-otp pass-audit $(EXT_PASS_FILES)
 
 INSTALL += authselect
 authselect: | pam-u2f ecryptfs-utils
@@ -473,16 +451,6 @@ authselect: | pam-u2f ecryptfs-utils
 	@authselect check \
 		&& sudo authselect select sssd with-ecryptfs with-fingerprint with-pam-u2f without-nullok -b \
 		|| $(call log,$(ERR),"Current authselect configuration is NOT valid. Aborting to avoid more damage.");
-
-INSTALL += gnome-shell-extensions-bin
-gnome-shell-extensions-bin: | gnome-desktop git
-	@$(call clone,install-gnome-extensions.git)
-	@ln -snvf $(HOME_OPT)/install-gnome-extensions.git/install-gnome-extensions.sh $(HOME_BIN)/install-gnome-extensions
-	@chmod u+x $(HOME_BIN)/install-gnome-extensions
-
-UPDATE += update-gnome-shell-extensions-bin
-update-gnome-shell-extensions-bin:
-	@if [ -d $(HOME_OPT)/install-gnome-extensions.git ]; then git -C $(HOME_OPT)/install-gnome-extensions.git pull; fi
 
 INSTALL += pip
 pip: | python3 python3-pip
@@ -496,15 +464,14 @@ smartmontools:
 INSTALL += meld
 meld: | gnome-desktop dconf
 	@$(call dnf,$@)
-	@dconf load '/' < $(INCLUDE)/meld.ini
+	@dconf load '/' < $(DF_INCLUDE)/meld.ini
 
 INSTALL += obsidian
 obsidian: | flatpak
 	#@flatpak install md.obsidian.Obsidian - disabled for now to keep current locked version
 
 INSTALL += steam
-steam: | flatpak /etc/yum.repos.d/rpmfusion-nonfree.repo
-	@$(call dnf,steam-devices)
+steam: | flatpak steam-devices /etc/yum.repos.d/rpmfusion-nonfree.repo
 	@flatpak install --user flathub com.valvesoftware.Steam \
 		com.valvesoftware.Steam.CompatibilityTool.Proton \
 		com.valvesoftware.Steam.Utility.gamescope \
@@ -530,14 +497,14 @@ logrotate: /etc/logrotate.d/dnf
 .PHONY: browserpass-bin
 browserpass-bin: | git coreutils golang
 	@$(call clone,browserpass-native.git)
-	@make -C $(HOME_OPT)/browserpass-native.git browserpass configure
-	@sudo make -C $(HOME_OPT)/browserpass-native.git install
-	@make -C $(HOME_OPT)/browserpass-native.git hosts-chrome-user hosts-firefox-user hosts-vivaldi-user \
+	@make -C $(DOTHOME_OPT)/browserpass-native.git browserpass configure
+	@sudo make -C $(DOTHOME_OPT)/browserpass-native.git install
+	@make -C $(DOTHOME_OPT)/browserpass-native.git hosts-chrome-user hosts-firefox-user hosts-vivaldi-user \
 		policies-chrome-user policies-vivaldi-user
 
 CLEAN += clean-browserpass
 clean-browserpass:
-	@make -C $(HOME_OPT)/browserpass-native.git clean
+	@make -C $(DOTHOME_OPT)/browserpass-native.git clean
 
 INSTALL += browserpass
 browserpass: | pass pass-extensions $(PASS_HOME)/.browserpass.json browserpass-bin clean-browserpass
@@ -633,7 +600,7 @@ kse: | jre
 #
 
 INSTALL += gnome-key-binding-settings
-gnome-key-binding-settings: | gnome-desktop $(HOME_BIN)/dell-kvm-switch-input ulauncher
+gnome-key-binding-settings: | gnome-desktop $(DOTHOME_BIN)/dell-kvm-switch-input ulauncher
 	@$(eval custom0=/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/)
 	@$(eval custom1=/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/)
 	@$(eval custom2=/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2/)
@@ -646,7 +613,7 @@ gnome-key-binding-settings: | gnome-desktop $(HOME_BIN)/dell-kvm-switch-input ul
 	@gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:$(custom0) binding '<Super>t'
 
 	@gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:$(custom1) name 'Dell KVM - Switch Input'
-	@gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:$(custom1) command '$(HOME_BIN)/dell-kvm-switch-input'
+	@gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:$(custom1) command '$(DOTHOME_BIN)/dell-kvm-switch-input'
 	@gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:$(custom1) binding '<Alt>i'
 
 	@gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:$(custom2) name 'Display Ulauncer'
@@ -839,70 +806,70 @@ gnome-privacy-settings: | gnome-desktop
 
 INSTALL += gnome-gedit-settings
 gnome-gedit-settings: | gedit dconf
-	@dconf load '/' < $(INCLUDE)/gnome-gedit.ini
+	@dconf load '/' < $(DF_INCLUDE)/gnome-gedit.ini
 
 INSTALL += gnome-tracker-settings
 gnome-tracker-settings: | dconf
-	@dconf load '/' < $(INCLUDE)/gnome-tracker.ini
+	@dconf load '/' < $(DF_INCLUDE)/gnome-tracker.ini
 
 INSTALL += gnome-terminal-settings
 gnome-terminal-settings: | gnome-terminal dconf
-	@dconf load '/' < $(INCLUDE)/gnome-terminal.ini
+	@dconf load '/' < $(DF_INCLUDE)/gnome-terminal.ini
 
 INSTALL += gnome-pomodoro-settings
 gnome-pomodoro-settings: | gnome-pomodoro dconf
-	@dconf load '/' < $(INCLUDE)/gnome-pomodoro.ini
+	@dconf load '/' < $(DF_INCLUDE)/gnome-pomodoro.ini
 
 INSTALL += gnome-clocks-settings
 gnome-clocks-settings: | gnome-clocks dconf
-	@dconf load '/' < $(INCLUDE)/gnome-clocks.ini
+	@dconf load '/' < $(DF_INCLUDE)/gnome-clocks.ini
 
 ########################################################################################################################
 #
 # Bulk installation rules
 #
 
-INSTALL += $(PLUGINS_DNF)
-$(PLUGINS_DNF):
+INSTALL += $(EXT_DNF)
+$(EXT_DNF):
 	@$(call dnf,$@)
 
-INSTALL += $(PACKAGES_RPM)
-$(PACKAGES_RPM): | gnome-desktop
+INSTALL += $(PKG_RPM)
+$(PKG_RPM): | gnome-desktop
 	@$(call dnf,$@)
 
-INSTALL += $(PACKAGES_FONTS)
-$(PACKAGES_FONTS):
+INSTALL += $(PKG_FONT)
+$(PKG_FONT):
 	@$(call dnf,$@)
 
-INSTALL += $(PACKAGES_GSHELL)
-$(PACKAGES_GSHELL): | gnome-desktop
+INSTALL += $(PKG_GSHELL)
+$(PKG_GSHELL): | gnome-desktop
 	@$(call dnf,$@)
-	@if [ -f $(INCLUDE)/$@.ini ]; then dconf load '/' < $(INCLUDE)/$@.ini; fi
+	@if [ -f $(DF_INCLUDE)/$@.ini ]; then dconf load '/' < $(DF_INCLUDE)/$@.ini; fi
 
-INSTALL += $(PACKAGES_SNAP)
-$(PACKAGES_SNAP): | snapd
+INSTALL += $(PKG_SNAP)
+$(PKG_SNAP): | snapd
 	@sudo snap install $@
 
-INSTALL += $(PACKAGES_FLATPAK)
-$(PACKAGES_FLATPAK): | flatpak
+INSTALL += $(PKG_FLATPAK)
+$(PKG_FLATPAK): | flatpak
 	@flatpak install --user $@
 
 INSTALL += $(EXT_ULAUNCHER)
 $(EXT_ULAUNCHER): | git ulauncher
 	@$(call clone,$@)
-	@install -d $(ULAUNCHER_EXT_DIR)
-	@ln -svfn $(HOME_OPT)/$@ $(ULAUNCHER_EXT_DIR)/$(subst .git,,$@)
+	@install -d $(ULAUNCHER_EXT)
+	@ln -svfn $(DOTHOME_OPT)/$@ $(ULAUNCHER_EXT)/$(subst .git,,$@)
 
 INSTALL += $(EXT_GSHELL)
-$(EXT_GSHELL): | gnome-desktop dconf gnome-shell-extensions-bin
-	@install -d $(HOME_OPT)
+$(EXT_GSHELL): $(DOTHOME_BIN)/install-gnome-extensions | gnome-desktop dconf
+	@install -d $(DOTHOME_OPT)
 	@$(eval __ext=$(subst $(slash),$(space),$(subst https://extensions.gnome.org/extension/,,$(strip $@))))
 	@$(eval __ext_id=$(word 1, $(__ext)))
 	@$(eval __ext_name=$(word 2, $(__ext)))
-	@if [ -f $(INCLUDE)/gnome-shell-extension-$(__ext_name).ini ]; then
-	@	dconf load '/' < $(INCLUDE)/gnome-shell-extension-$(__ext_name).ini;
+	@if [ -f $(DF_INCLUDE)/gnome-shell-extension-$(__ext_name).ini ]; then
+	@	dconf load '/' < $(DF_INCLUDE)/gnome-shell-extension-$(__ext_name).ini;
 	@fi
-	@$(HOME_BIN)/install-gnome-extensions --enable $(__ext_id)
+	@$< --enable $(__ext_id)
 
 INSTALL += $(EXT_VSCODE)
 $(EXT_VSCODE): | snap code
@@ -926,225 +893,225 @@ $(EXT_MICRO): | micro fzf
 #
 
 FILES += $(HOME)/.bashrc
-$(HOME)/.bashrc: $(FSHOME)/.bashrc
+$(HOME)/.bashrc: $(DF_FSHOME)/.bashrc
 	@install -d $(@D)
 	@ln -svnf $< $@
 
 FILES += $(HOME)/.bash_profile
-$(HOME)/.bash_profile: $(FSHOME)/.bash_profile
+$(HOME)/.bash_profile: $(DF_FSHOME)/.bash_profile
 	@install -d $(@D)
 	@ln -svnf $< $@
 
 FILES += $(HOME)/.bash_logout
-$(HOME)/.bash_logout: $(FSHOME)/.bash_logout
+$(HOME)/.bash_logout: $(DF_FSHOME)/.bash_logout
 	@install -d $(@D)
 	@ln -svnf $< $@
 
 FILES += $(BASHRCD)/bashrc-git
-$(BASHRCD)/bashrc-git: $(FSHOME)/.bashrc.d/bashrc-git
+$(BASHRCD)/bashrc-git: $(DF_FSHOME)/.bashrc.d/bashrc-git
 	@install -d $(@D)
 	@ln -svnf $< $@
 
 FILES += $(BASHRCD)/bashrc-base
-$(BASHRCD)/bashrc-base: $(FSHOME)/.bashrc.d/bashrc-base
+$(BASHRCD)/bashrc-base: $(DF_FSHOME)/.bashrc.d/bashrc-base
 	@install -d $(@D)
 	@ln -svnf $< $@
 
 FILES += $(BASHRCD)/bashrc-fonts
-$(BASHRCD)/bashrc-fonts: $(FSHOME)/.bashrc.d/bashrc-fonts
+$(BASHRCD)/bashrc-fonts: $(DF_FSHOME)/.bashrc.d/bashrc-fonts
 	@install -d $(@D)
 	@ln -svnf $< $@
 
 FILES += $(BASHRCD)/bashrc-xdg
-$(BASHRCD)/bashrc-xdg: $(FSHOME)/.bashrc.d/bashrc-xdg
+$(BASHRCD)/bashrc-xdg: $(DF_FSHOME)/.bashrc.d/bashrc-xdg
 	@install -d $(@D)
 	@ln -svnf $< $@
 
 FILES += $(BASHRCD)/bashrc-dev
-$(BASHRCD)/bashrc-dev: $(FSHOME)/.bashrc.d/bashrc-dev
+$(BASHRCD)/bashrc-dev: $(DF_FSHOME)/.bashrc.d/bashrc-dev
 	@install -d $(@D)
 	@ln -svnf $< $@
 
 FILES += $(BASHRCD)/bashrc-pass
-$(BASHRCD)/bashrc-pass: $(FSHOME)/.bashrc.d/bashrc-pass
+$(BASHRCD)/bashrc-pass: $(DF_FSHOME)/.bashrc.d/bashrc-pass
 	@install -d $(@D)
 	@ln -svnf $< $@
 
 FILES += $(BASHRCD)/bashrc-steam
-$(BASHRCD)/bashrc-steam: $(FSHOME)/.bashrc.d/bashrc-steam
+$(BASHRCD)/bashrc-steam: $(DF_FSHOME)/.bashrc.d/bashrc-steam
 	@install -d $(@D)
 	@ln -svnf $< $@
 
 FILES += $(HOME)/.face.icon
-$(HOME)/.face.icon: $(FSHOME)/.face.icon
+$(HOME)/.face.icon: $(DF_FSHOME)/.face.icon
 	@ln -svnf $< $@
 
 FILES += $(HOME)/.editorconfig
-$(HOME)/.editorconfig : $(FSHOME)/.editorconfig
+$(HOME)/.editorconfig : $(DF_FSHOME)/.editorconfig
 	@ln -svfn $< $@
 
 FILES += $(HOME)/.trackerignore
-$(HOME)/.trackerignore: $(FSHOME)/.trackerignore | disable-gnome-tracker
+$(HOME)/.trackerignore: $(DF_FSHOME)/.trackerignore | disable-gnome-tracker
 	@ln -svnf $< $@
 
 FILES += $(HOME)/.passgenrc
-$(HOME)/.passgenrc : $(FSHOME)/.passgenrc | pass
+$(HOME)/.passgenrc : $(DF_FSHOME)/.passgenrc | pass
 	@ln -svfn $< $@
 
 FILES += $(XDG_CONFIG_HOME)/git/config
-$(XDG_CONFIG_HOME)/git/config: $(FSHOME)/.config/git/config | git git-lfs git-credential-libsecret \
+$(XDG_CONFIG_HOME)/git/config: $(DF_FSHOME)/.config/git/config | git git-lfs git-credential-libsecret \
 		git-split-diffs bat meld perl-Image-ExifTool
 	@install -d $(@D)
 	@ln -svfn $< $@
 
-FILES += $(HOME_BIN)/dell-kvm-switch-input
-$(HOME_BIN)/dell-kvm-switch-input: $(FSHOME)/.home/bin/dell-kvm-switch-input | ddcutil
+FILES += $(DOTHOME_BIN)/dell-kvm-switch-input
+$(DOTHOME_BIN)/dell-kvm-switch-input: $(DF_FSHOME)/.home/bin/dell-kvm-switch-input | ddcutil
 	@install -d $(@D)
 	@ln -svfn $< $@
 	@chmod +x $<
 
-FILES += $(HOME_BIN)/switch-monitor
-$(HOME_BIN)/switch-monitor: $(FSHOME)/.home/bin/switch-monitor | gnome-monitor-config
+FILES += $(DOTHOME_BIN)/switch-monitor
+$(DOTHOME_BIN)/switch-monitor: $(DF_FSHOME)/.home/bin/switch-monitor | gnome-monitor-config
 	@install -d $(@D)
 	@ln -svfn $< $@
 	@chmod +x $<
 
-FILES += $(HOME_BIN)/start-steam
-$(HOME_BIN)/start-steam: $(FSHOME)/.home/bin/start-steam | $(HOME_BIN)/switch-monitor
+FILES += $(DOTHOME_BIN)/start-steam
+$(DOTHOME_BIN)/start-steam: $(DF_FSHOME)/.home/bin/start-steam | $(DOTHOME_BIN)/switch-monitor
 	@install -d $(@D)
 	@ln -svfn $< $@
 	@chmod +x $<
 
-FILES += $(HOME_BIN)/restic-backup
-$(HOME_BIN)/restic-backup: $(FSHOME)/.home/bin/restic-backup | restic jq curl redhat-lsb \
-	diffutils mosquitto libsecret $(BACKUP_CONF_DEST_FILES)
+FILES += $(DOTHOME_BIN)/restic-backup
+$(DOTHOME_BIN)/restic-backup: $(DF_FSHOME)/.home/bin/restic-backup | restic jq curl redhat-lsb \
+	diffutils mosquitto libsecret $(BACKUP_CONF_FILES)
 	@install -d $(@D)
 	@ln -svfn $< $@
 	@chmod +x $<
 
-FILES += $(HOME_BIN)/restic-stats
-$(HOME_BIN)/restic-stats: $(FSHOME)/.home/bin/restic-stats | restic jq curl mosquitto libsecret \
-	$(BACKUP_CONF_DEST_FILES)
+FILES += $(DOTHOME_BIN)/restic-stats
+$(DOTHOME_BIN)/restic-stats: $(DF_FSHOME)/.home/bin/restic-stats | restic jq curl mosquitto libsecret \
+	$(BACKUP_CONF_FILES)
 	@install -d $(@D)
 	@ln -svfn $< $@
 	@chmod +x $<
 
-FILES += $(HOME_BIN)/restic-check
-$(HOME_BIN)/restic-check: $(FSHOME)/.home/bin/restic-check | restic jq mosquitto libsecret \
-	$(BACKUP_CONF_DEST_FILES)
+FILES += $(DOTHOME_BIN)/restic-check
+$(DOTHOME_BIN)/restic-check: $(DF_FSHOME)/.home/bin/restic-check | restic jq mosquitto libsecret \
+	$(BACKUP_CONF_FILES)
 	@install -d $(@D)
 	@ln -svfn $< $@
 	@chmod +x $<
 
-FILES += $(HOME_BIN)/hass-retrieve-roomba-token
-$(HOME_BIN)/hass-retrieve-roomba-token: $(FSHOME)/.home/bin/hass-retrieve-roomba-token | docker pass
+FILES += $(DOTHOME_BIN)/hass-retrieve-roomba-token
+$(DOTHOME_BIN)/hass-retrieve-roomba-token: $(DF_FSHOME)/.home/bin/hass-retrieve-roomba-token | docker pass
 	@install -d $(@D)
 	@ln -svfn $< $@
 	@chmod +x $<
 
-FILES += $(HOME_BIN)/sync-mqtt-env-primary
-$(HOME_BIN)/sync-mqtt-env-primary: $(FSHOME)/.home/bin/sync-mqtt-env-primary | libsecret pass
+FILES += $(DOTHOME_BIN)/sync-mqtt-env-primary
+$(DOTHOME_BIN)/sync-mqtt-env-primary: $(DF_FSHOME)/.home/bin/sync-mqtt-env-primary | libsecret pass
 	@install -d $(@D)
 	@ln -svfn $< $@
 	@chmod +x $<
 
-FILES += $(HOME_BIN)/sync-nebula-creds
-$(HOME_BIN)/sync-nebula-creds: $(FSHOME)/.home/bin/sync-nebula-creds | libsecret pass
+FILES += $(DOTHOME_BIN)/sync-nebula-creds
+$(DOTHOME_BIN)/sync-nebula-creds: $(DF_FSHOME)/.home/bin/sync-nebula-creds | libsecret pass
 	@install -d $(@D)
 	@ln -svfn $< $@
 	@chmod +x $<
 
-FILES += $(HOME_BIN)/sync-restic-env-cloud
-$(HOME_BIN)/sync-restic-env-cloud: $(FSHOME)/.home/bin/sync-restic-env-cloud | libsecret pass
+FILES += $(DOTHOME_BIN)/sync-restic-env-cloud
+$(DOTHOME_BIN)/sync-restic-env-cloud: $(DF_FSHOME)/.home/bin/sync-restic-env-cloud | libsecret pass
 	@install -d $(@D)
 	@ln -svfn $< $@
 	@chmod +x $<
 
-FILES += $(HOME_BIN)/sync-restic-env-primary
-$(HOME_BIN)/sync-restic-env-primary: $(FSHOME)/.home/bin/sync-restic-env-primary | libsecret pass
+FILES += $(DOTHOME_BIN)/sync-restic-env-primary
+$(DOTHOME_BIN)/sync-restic-env-primary: $(DF_FSHOME)/.home/bin/sync-restic-env-primary | libsecret pass
 	@install -d $(@D)
 	@ln -svfn $< $@
 	@chmod +x $<
 
-FILES += $(HOME_BIN)/sync-restic-env-secondary
-$(HOME_BIN)/sync-restic-env-secondary: $(FSHOME)/.home/bin/sync-restic-env-secondary | libsecret pass
+FILES += $(DOTHOME_BIN)/sync-restic-env-secondary
+$(DOTHOME_BIN)/sync-restic-env-secondary: $(DF_FSHOME)/.home/bin/sync-restic-env-secondary | libsecret pass
 	@install -d $(@D)
 	@ln -svfn $< $@
 	@chmod +x $<
 
 FILES += $(XDG_CONFIG_HOME)/gtk-2.0/gtkrc
-$(XDG_CONFIG_HOME)/gtk-2.0/gtkrc: $(FSHOME)/.config/gtk-2.0/gtkrc
+$(XDG_CONFIG_HOME)/gtk-2.0/gtkrc: $(DF_FSHOME)/.config/gtk-2.0/gtkrc
 	 @install -d $(@D)
 	 @ln -svfn $< $@
 
 FILES += $(XDG_CONFIG_HOME)/gtk-3.0/settings.ini
-$(XDG_CONFIG_HOME)/gtk-3.0/settings.ini: $(FSHOME)/.config/gtk-3.0/settings.ini
+$(XDG_CONFIG_HOME)/gtk-3.0/settings.ini: $(DF_FSHOME)/.config/gtk-3.0/settings.ini
 	@install -d $(@D)
 	@ln -svfn $< $@
 
 FILES += $(XDG_CONFIG_HOME)/gtk-3.0/gtk.css
-$(XDG_CONFIG_HOME)/gtk-3.0/gtk.css: $(FSHOME)/.config/gtk-3.0/gtk.css
+$(XDG_CONFIG_HOME)/gtk-3.0/gtk.css: $(DF_FSHOME)/.config/gtk-3.0/gtk.css
 	@install -d $(@D)
 	@ln -svfn $< $@
 
 FILES += $(XDG_CONFIG_HOME)/gtk-3.0/bookmarks
-$(XDG_CONFIG_HOME)/gtk-3.0/bookmarks: $(FSHOME)/.config/gtk-3.0/bookmarks
+$(XDG_CONFIG_HOME)/gtk-3.0/bookmarks: $(DF_FSHOME)/.config/gtk-3.0/bookmarks
 	@install -d $(@D)
 	@ln -svfn $< $@
 
 FILES += $(XDG_CONFIG_HOME)/gtk-4.0/settings.ini
-$(XDG_CONFIG_HOME)/gtk-4.0/settings.ini: $(FSHOME)/.config/gtk-4.0/settings.ini
+$(XDG_CONFIG_HOME)/gtk-4.0/settings.ini: $(DF_FSHOME)/.config/gtk-4.0/settings.ini
 	@install -d $(@D)
 	@ln -svfn $< $@
 
 FILES += $(XDG_CONFIG_HOME)/user-dirs.dirs
-$(XDG_CONFIG_HOME)/user-dirs.dirs: $(FSHOME)/.config/user-dirs.dirs | xdg-user-dirs
+$(XDG_CONFIG_HOME)/user-dirs.dirs: $(DF_FSHOME)/.config/user-dirs.dirs | xdg-user-dirs
 	@install -d $(@D)
 	@ln -svnf $< $@
 
 FILES += $(XDG_CONFIG_HOME)/micro/bindings.json
-$(XDG_CONFIG_HOME)/micro/bindings.json: $(FSHOME)/.config/micro/bindings.json | micro
+$(XDG_CONFIG_HOME)/micro/bindings.json: $(DF_FSHOME)/.config/micro/bindings.json | micro
 	@install -d $(@D)
 	@ln -svfn $< $@
 
 FILES += $(XDG_CONFIG_HOME)/micro/settings.json
-$(XDG_CONFIG_HOME)/micro/settings.json: $(FSHOME)/.config/micro/settings.json | micro
+$(XDG_CONFIG_HOME)/micro/settings.json: $(DF_FSHOME)/.config/micro/settings.json | micro
 	@install -d $(@D)
 	@ln -svfn $< $@
 
 FILES += $(XDG_CONFIG_HOME)/mc/ini
-$(XDG_CONFIG_HOME)/mc/ini: $(FSHOME)/.config/mc/ini | mc
+$(XDG_CONFIG_HOME)/mc/ini: $(DF_FSHOME)/.config/mc/ini | mc
 	@install -d $(@D)
 	@ln -svfn $< $@
 
-FILES += $(VIVALDI_CONF_DEST_FILES)
-$(VIVALDI_CF_DEST_DIR)/%: $(VIVALDI_CF_SRC_DIR)/%
+FILES += $(VIVALDI_CONF_FILES)
+$(VIVALDI_CONF)/%: $(DF_VIVALDI_CONF)/%
 	@install -d $(@D)
 	@ln -svfn $< $@
 
 FILES += $(XDG_CONFIG_HOME)/Code/User/settings.json
-$(XDG_CONFIG_HOME)/Code/User/settings.json: $(FSHOME)/.config/Code/User/settings.json
+$(XDG_CONFIG_HOME)/Code/User/settings.json: $(DF_FSHOME)/.config/Code/User/settings.json
 	@install -d $(@D)
 	@ln -svfn $< $@
 
 FILES += $(XDG_CONFIG_HOME)/glow/glow.yml
-$(XDG_CONFIG_HOME)/glow/glow.yml: $(FSHOME)/.config/glow/glow.yml | glow
+$(XDG_CONFIG_HOME)/glow/glow.yml: $(DF_FSHOME)/.config/glow/glow.yml | glow
 	@install -d $(@D)
 	@ln -svfn $< $@
 
-FILES += $(BACKUP_CONF_DEST_FILES)
-$(HOME_BACKUP_CF_DEST_DIR)/%: $(HOME_BACKUP_CF_SRC_DIR)/%
+FILES += $(BACKUP_CONF_FILES)
+$(BACKUP_CONF)/%: $(DF_BACKUP_CONF)/%
 	@install -d $(@D)
 	@ln -svfn $< $@
 
 FILES += $(XDG_CONFIG_HOME)/wget/wgetrc
-$(XDG_CONFIG_HOME)/wget/wgetrc: $(FSHOME)/.config/wget/wgetrc.template | wget $(BASHRCD)/bashrc-xdg gettext-envsubst
+$(XDG_CONFIG_HOME)/wget/wgetrc: $(DF_FSHOME)/.config/wget/wgetrc.template | wget $(BASHRCD)/bashrc-xdg gettext-envsubst
 	@install -d $(@D)
 	@install -d $(XDG_CACHE_HOME)/wget
 	@envsubst '$$TODAY $$USER $$XDG_CACHE_HOME' < $< | install -m 644 -D /dev/stdin $@
 
 FILES += $(XDG_DATA_HOME)/backgrounds/current
-$(XDG_DATA_HOME)/backgrounds/current: $(FSHOME)/.local/share/backgrounds/morphogenesis-d.svg
+$(XDG_DATA_HOME)/backgrounds/current: $(DF_FSHOME)/.local/share/backgrounds/morphogenesis-d.svg
 	@install -d $(@D)
 	@ln -svfn $< $@
 
@@ -1160,11 +1127,11 @@ $(PASS_HOME)/.gitattributes: | pass git
 	@pass git config log.showsignature false
 
 FILES += $(PASS_HOME)/.gitignore
-$(PASS_HOME)/.gitignore: $(FSHOME)/.password-store/.gitignore | pass
+$(PASS_HOME)/.gitignore: $(DF_FSHOME)/.password-store/.gitignore | pass
 	@install -m 600 -D $< $@
 
 FILES += $(PASS_HOME)/.browserpass.json
-$(PASS_HOME)/.browserpass.json: $(FSHOME)/.password-store/.browserpass.json | pass
+$(PASS_HOME)/.browserpass.json: $(DF_FSHOME)/.password-store/.browserpass.json | pass
 	@install -d $(@D)
 	@ln -svfn $< $@
 
@@ -1172,35 +1139,35 @@ FILES += $(PASS_EXT)/symlink.bash
 $(PASS_EXT)/symlink.bash: | git pass
 	@$(call clone,pass-symlink.git)
 	@install -d $(@D)
-	@ln -svfn $(HOME_OPT)/pass-symlink.git/src/symlink.bash $@
+	@ln -svfn $(DOTHOME_OPT)/pass-symlink.git/src/symlink.bash $@
 
 FILES += $(PASS_EXT)/age.bash
 $(PASS_EXT)/age.bash: | git pass
 	@$(call clone,pass-age.git)
 	@install -d $(@D)
-	@ln -svfn $(HOME_OPT)/pass-age.git/age.bash $@
+	@ln -svfn $(DOTHOME_OPT)/pass-age.git/age.bash $@
 
 FILES += $(PASS_EXT)/file.bash
 $(PASS_EXT)/file.bash: | git pass
 	@$(call clone,pass-file.git)
 	@install -d $(@D)
-	@ln -svfn $(HOME_OPT)/pass-file.git/file.bash $@
+	@ln -svfn $(DOTHOME_OPT)/pass-file.git/file.bash $@
 
 FILES += $(PASS_EXT)/ln.bash
 $(PASS_EXT)/ln.bash: | git pass
 	@$(call clone,pass-ln.git)
 	@install -d $(@D)
 	@install -d $(XDG_DATA_HOME)/bash-completion/completions
-	@ln -svfn $(HOME_OPT)/pass-ln.git/pass-ln.bash $@
-	@ln -svfn $(HOME_OPT)/pass-ln.git/pass-ln.bash.completion $(XDG_DATA_HOME)/bash-completion/completions/pass-ln
+	@ln -svfn $(DOTHOME_OPT)/pass-ln.git/pass-ln.bash $@
+	@ln -svfn $(DOTHOME_OPT)/pass-ln.git/pass-ln.bash.completion $(XDG_DATA_HOME)/bash-completion/completions/pass-ln
 
 FILES += $(PASS_EXT)/update.bash
 $(PASS_EXT)/update.bash: | git pass
 	@$(call clone,pass-update.git)
 	@install -d $(@D)
 	@install -d $(XDG_DATA_HOME)/bash-completion/completions
-	@ln -svfn $(HOME_OPT)/pass-update.git/update.bash $@
-	@ln -svfn $(HOME_OPT)/pass-update.git/share/bash-completion/completions/pass-update \
+	@ln -svfn $(DOTHOME_OPT)/pass-update.git/update.bash $@
+	@ln -svfn $(DOTHOME_OPT)/pass-update.git/share/bash-completion/completions/pass-update \
 		$(XDG_DATA_HOME)/bash-completion/completions/pass-update
 
 FILES += $(PASS_EXT)/tessen.bash
@@ -1208,8 +1175,8 @@ $(PASS_EXT)/tessen.bash: | git pass
 	@$(call clone,pass-tessen.git)
 	@install -d $(@D)
 	@install -d $(XDG_DATA_HOME)/bash-completion/completions
-	@ln -svfn $(HOME_OPT)/pass-tessen.git/tessen.bash $@
-	@ln -svfn $(HOME_OPT)/pass-tessen.git/completion/pass-tessen.bash-completion \
+	@ln -svfn $(DOTHOME_OPT)/pass-tessen.git/tessen.bash $@
+	@ln -svfn $(DOTHOME_OPT)/pass-tessen.git/completion/pass-tessen.bash-completion \
 		$(XDG_DATA_HOME)/bash-completion/completions/pass-tessen
 
 FILES += $(PASS_EXT)/meta.bash
@@ -1217,8 +1184,8 @@ $(PASS_EXT)/meta.bash: | git pass
 	@$(call clone,pass-extension-meta.git)
 	@install -d $(@D)
 	@install -d $(XDG_DATA_HOME)/bash-completion/completions
-	@ln -svfn $(HOME_OPT)/pass-extension-meta.git/src/meta.bash $@
-	@ln -svfn $(HOME_OPT)/pass-extension-meta.git/completion/pass-meta.bash.completion \
+	@ln -svfn $(DOTHOME_OPT)/pass-extension-meta.git/src/meta.bash $@
+	@ln -svfn $(DOTHOME_OPT)/pass-extension-meta.git/completion/pass-meta.bash.completion \
  		$(XDG_DATA_HOME)/bash-completion/completions/pass-meta
 
 FILES += $(XDG_DATA_HOME)/python/history
@@ -1228,31 +1195,31 @@ $(XDG_DATA_HOME)/python/history: $(BASHRCD)/bashrc-xdg
 
 FILES += $(XDG_CONFIG_HOME)/systemd/user/restic-backup@.service
 $(XDG_CONFIG_HOME)/systemd/user/restic-backup@.service: \
-	$(FSHOME)/.config/systemd/user/restic-backup@.service.template \
-	| $(HOME_BIN)/restic-backup gettext-envsubst
-	@WORKDIR=$(DOTFILES) envsubst '$$TODAY $$USER $$WORKDIR' < $< | install -m 644 -D /dev/stdin $@
+	$(DF_FSHOME)/.config/systemd/user/restic-backup@.service.template \
+	| $(DOTHOME_BIN)/restic-backup gettext-envsubst
+	@WORKDIR=$(DF_ROOT) envsubst '$$TODAY $$USER $$WORKDIR' < $< | install -m 644 -D /dev/stdin $@
 	@systemd-analyze verify $@
 	@systemctl --user daemon-reload
 
 FILES += $(XDG_CONFIG_HOME)/systemd/user/restic-stats@.service
 $(XDG_CONFIG_HOME)/systemd/user/restic-stats@.service: \
-	$(FSHOME)/.config/systemd/user/restic-stats@.service.template \
-	| $(HOME_BIN)/restic-stats $(XDG_CONFIG_HOME)/systemd/user/restic-backup@.service gettext-envsubst
-	@WORKDIR=$(DOTFILES) envsubst '$$TODAY $$USER $$WORKDIR' < $< | install -m 644 -D /dev/stdin $@
+	$(DF_FSHOME)/.config/systemd/user/restic-stats@.service.template \
+	| $(DOTHOME_BIN)/restic-stats $(XDG_CONFIG_HOME)/systemd/user/restic-backup@.service gettext-envsubst
+	@WORKDIR=$(DF_ROOT) envsubst '$$TODAY $$USER $$WORKDIR' < $< | install -m 644 -D /dev/stdin $@
 	@systemd-analyze verify $@
 	@systemctl --user daemon-reload
 
 FILES += $(XDG_CONFIG_HOME)/systemd/user/restic-check@.service
 $(XDG_CONFIG_HOME)/systemd/user/restic-check@.service: \
-	$(FSHOME)/.config/systemd/user/restic-check@.service.template \
-	| $(HOME_BIN)/restic-check gettext-envsubst
-	@WORKDIR=$(DOTFILES) envsubst '$$TODAY $$USER $$WORKDIR' < $< | install -m 644 -D /dev/stdin $@
+	$(DF_FSHOME)/.config/systemd/user/restic-check@.service.template \
+	| $(DOTHOME_BIN)/restic-check gettext-envsubst
+	@WORKDIR=$(DF_ROOT) envsubst '$$TODAY $$USER $$WORKDIR' < $< | install -m 644 -D /dev/stdin $@
 	@systemd-analyze verify $@
 	@systemctl --user daemon-reload
 
 FILES += $(XDG_CONFIG_HOME)/systemd/user/restic-backup-daily@.timer
 $(XDG_CONFIG_HOME)/systemd/user/restic-backup-daily@.timer: \
-	$(FSHOME)/.config/systemd/user/restic-backup-daily@.timer.template \
+	$(DF_FSHOME)/.config/systemd/user/restic-backup-daily@.timer.template \
 	| $(XDG_CONFIG_HOME)/systemd/user/restic-backup@.service gettext-envsubst
 	@envsubst '$$TODAY $$USER' < $< | install -m 644 -D /dev/stdin $@
 	@systemd-analyze verify $@
@@ -1260,7 +1227,7 @@ $(XDG_CONFIG_HOME)/systemd/user/restic-backup-daily@.timer: \
 
 FILES += $(XDG_CONFIG_HOME)/systemd/user/restic-backup-monthly@.timer
 $(XDG_CONFIG_HOME)/systemd/user/restic-backup-monthly@.timer: \
-	$(FSHOME)/.config/systemd/user/restic-backup-monthly@.timer.template \
+	$(DF_FSHOME)/.config/systemd/user/restic-backup-monthly@.timer.template \
 	| $(XDG_CONFIG_HOME)/systemd/user/restic-backup@.service gettext-envsubst
 	@envsubst '$$TODAY $$USER' < $< | install -m 644 -D /dev/stdin $@
 	@systemd-analyze verify $@
@@ -1268,20 +1235,34 @@ $(XDG_CONFIG_HOME)/systemd/user/restic-backup-monthly@.timer: \
 
 FILES += $(XDG_CONFIG_HOME)/systemd/user/restic-check-monthly@.timer
 $(XDG_CONFIG_HOME)/systemd/user/restic-check-monthly@.timer: \
-	$(FSHOME)/.config/systemd/user/restic-check-monthly@.timer.template \
-	| $(HOME_BIN)/restic-check gettext-envsubst
+	$(DF_FSHOME)/.config/systemd/user/restic-check-monthly@.timer.template \
+	| $(DOTHOME_BIN)/restic-check gettext-envsubst
 	@envsubst '$$TODAY $$USER' < $< | install -m 644 -D /dev/stdin $@
 	@systemd-analyze verify $@
 	@systemctl --user daemon-reload
+
+FILES += $(DOTHOME_BIN)/install-gnome-extensions
+$(DOTHOME_BIN)/install-gnome-extensions: $(DOTHOME_OPT)/install-gnome-extensions.git/install-gnome-extensions.sh
+	@ln -svfn $< $@
+	@chmod u+x $@
+
+FILES += $(DOTHOME_OPT)/install-gnome-extensions.git/install-gnome-extensions.sh
+$(DOTHOME_OPT)/install-gnome-extensions.git/install-gnome-extensions.sh: | gnome-desktop git
+	@$(call clone,install-gnome-extensions.git)
+
+FILES += $(NVM_DIR)/nvm.sh
+$(NVM_DIR)/nvm.sh:
+	@install -d $(NVM_DIR)
+	@PROFILE=/dev/null bash -c 'curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash'
 
 #
 # /usr
 #
 
 FILES += /usr/local/bin/pass-gen
-/usr/local/bin/pass-gen: | git pass $(FSHOME)/.passgenrc
+/usr/local/bin/pass-gen: | git pass $(DF_FSHOME)/.passgenrc
 	@$(call clone,pass-gen.git)
-	@sudo make -C $(HOME_OPT)/pass-gen.git install
+	@sudo make -C $(DOTHOME_OPT)/pass-gen.git install
 
 #
 #  /etc
@@ -1307,13 +1288,13 @@ FILES += /etc/yum.repos.d/vivaldi-fedora.repo
 	@sudo dnf config-manager --add-repo https://repo.vivaldi.com/stable/vivaldi-fedora.repo
 
 FILES += /etc/yum.repos.d/opera.repo
-/etc/yum.repos.d/opera.repo: $(FSETC)/yum.repos.d/opera.repo.template | gettext-envsubst
+/etc/yum.repos.d/opera.repo: $(DF_FSETC)/yum.repos.d/opera.repo.template | gettext-envsubst
 	-@sudo rpm --import https://rpm.opera.com/rpmrepo.key
 	@sudo install -d $(@D)
 	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -D /dev/stdin $@
 
 FILES += /etc/yum.repos.d/keybase.repo
-/etc/yum.repos.d/keybase.repo: $(FSETC)/yum.repos.d/keybase.repo.template | gettext-envsubst
+/etc/yum.repos.d/keybase.repo: $(DF_FSETC)/yum.repos.d/keybase.repo.template | gettext-envsubst
 	@sudo install -d $(@D)
 	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -D /dev/stdin $@
 
@@ -1340,22 +1321,22 @@ FILES += /etc/yum.repos.d/_copr\:copr.fedorainfracloud.org\:dusansimic\:themes.r
 	@sudo dnf copr enable -y dusansimic/themes
 
 FILES += /etc/NetworkManager/conf.d/00-randomize-mac.conf
-/etc/NetworkManager/conf.d/00-randomize-mac.conf: $(FSETC)/NetworkManager/conf.d/00-randomize-mac.conf.template \
+/etc/NetworkManager/conf.d/00-randomize-mac.conf: $(DF_FSETC)/NetworkManager/conf.d/00-randomize-mac.conf.template \
 	| gettext-envsubst
 	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -D /dev/stdin $@
 	@sudo systemctl restart NetworkManager
 
 FILES += /etc/systemd/logind.conf.d/power.conf
-/etc/systemd/logind.conf.d/power.conf: $(FSETC)/systemd/logind.conf.d/power.conf.template | gettext-envsubst
+/etc/systemd/logind.conf.d/power.conf: $(DF_FSETC)/systemd/logind.conf.d/power.conf.template | gettext-envsubst
 	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -D /dev/stdin $@
 
 FILES += /etc/systemd/resolved.conf.d/dnssec.conf
-/etc/systemd/resolved.conf.d/dnssec.conf: $(FSETC)/systemd/resolved.conf.d/dnssec.conf.template | gettext-envsubst
+/etc/systemd/resolved.conf.d/dnssec.conf: $(DF_FSETC)/systemd/resolved.conf.d/dnssec.conf.template | gettext-envsubst
 	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -D /dev/stdin $@
 	@sudo systemctl restart systemd-resolved
 
 FILES += /etc/udev/rules.d/60-streamdeck.rules
-/etc/udev/rules.d/60-streamdeck.rules: $(FSETC)/udev/rules.d/60-streamdeck.rules.template | gettext-envsubst
+/etc/udev/rules.d/60-streamdeck.rules: $(DF_FSETC)/udev/rules.d/60-streamdeck.rules.template | gettext-envsubst
 	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -D /dev/stdin $@
 	@sudo udevadm control --reload-rules && sudo udevadm trigger
 
@@ -1366,22 +1347,22 @@ FILES += /etc/pki/akmods/certs/public_key.der
 
 FILES += /etc/polkit-1/rules.d/10-admin-auth-ignore-inhibit.rules
 /etc/polkit-1/rules.d/10-admin-auth-ignore-inhibit.rules: \
-	$(FSETC)/polkit-1/rules.d/10-admin-auth-ignore-inhibit.rules.template | gettext-envsubst
+	$(DF_FSETC)/polkit-1/rules.d/10-admin-auth-ignore-inhibit.rules.template | gettext-envsubst
 	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -D /dev/stdin $@
 
 FILES += /etc/polkit-1/rules.d/70-allow-usbguard.rules
-/etc/polkit-1/rules.d/70-allow-usbguard.rules: $(FSETC)/polkit-1/rules.d/70-allow-usbguard.rules.template \
+/etc/polkit-1/rules.d/70-allow-usbguard.rules: $(DF_FSETC)/polkit-1/rules.d/70-allow-usbguard.rules.template \
 	| gettext-envsubst
 	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -D /dev/stdin $@
 
 FILES += /etc/udev/rules.d/71-sony-controllers.rules
-/etc/udev/rules.d/71-sony-controllers.rules: $(FSETC)/udev/rules.d/71-sony-controllers.rules.template \
+/etc/udev/rules.d/71-sony-controllers.rules: $(DF_FSETC)/udev/rules.d/71-sony-controllers.rules.template \
 	| gettext-envsubst
 	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -D /dev/stdin $@
 	@sudo udevadm control --reload-rules && sudo udevadm trigger
 
 FILES += /etc/logrotate.d/dnf
-/etc/logrotate.d/dnf: $(FSETC)/logrotate.d/dnf.template | gettext-envsubst
+/etc/logrotate.d/dnf: $(DF_FSETC)/logrotate.d/dnf.template | gettext-envsubst
 	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -D /dev/stdin $@
 
 ########################################################################################################################
@@ -1407,7 +1388,7 @@ PATCH += /etc/sysconfig/lm_sensors
 
 # Potential fix for mouse lag (e.g., disabling autosuspend for the Dell Universal Receiver)
 PATCH += /etc/udev/rules.d/50-usb-power-save.rules
-/etc/udev/rules.d/50-usb-power-save.rules: $(FSETC)/udev/rules.d/50-usb-power-save.rules.template | gettext-envsubst
+/etc/udev/rules.d/50-usb-power-save.rules: $(DF_FSETC)/udev/rules.d/50-usb-power-save.rules.template | gettext-envsubst
 	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -D /dev/stdin $@
 	@sudo udevadm control --reload-rules && sudo udevadm trigger
 
@@ -1415,15 +1396,26 @@ PATCH += /etc/udev/rules.d/50-usb-power-save.rules
 # (see https://forums.developer.nvidia.com/t/trouble-suspending-with-510-39-01-linux-5-16-0-freezing-of-tasks-failed-after-20-009-seconds/200933/11)
 PATCH += patch-gnome-suspend
 patch-gnome-suspend: | gettext-envsubst
-	@envsubst '$$TODAY $$USER' < $(FSETC)/systemd/system/gnome-shell-suspend.service.template \
+	@envsubst '$$TODAY $$USER' < $(DF_FSETC)/systemd/system/gnome-shell-suspend.service.template \
 		| sudo install -m 644 -D /dev/stdin /etc/systemd/system/gnome-shell-suspend.service
 
-	@envsubst '$$TODAY $$USER' < $(FSETC)/systemd/system/gnome-shell-resume.service.template \
+	@envsubst '$$TODAY $$USER' < $(DF_FSETC)/systemd/system/gnome-shell-resume.service.template \
 		| sudo install -m 644 -D /dev/stdin /etc/systemd/system/gnome-shell-resume.service
 
 	@sudo systemctl daemon-reload
 	@sudo systemctl enable gnome-shell-suspend
 	@sudo systemctl enable gnome-shell-resume
+
+PATCH += disable-gnome-tracker
+disable-gnome-tracker: | gnome-desktop gnome-tracker-settings
+	-@sudo systemctl --user mask \
+		tracker-extract-3.service \
+		tracker-miner-fs-3.service \
+		tracker-miner-rss-3.service \
+		tracker-writeback-3.service \
+		tracker-xdg-portal-3.service \
+		tracker-miner-fs-control-3.service
+	-@tracker3 reset -s -r || true
 
 ########################################################################################################################
 #
@@ -1471,6 +1463,10 @@ update-firmware: | fwupd
 	@$(call log,$(INFO), "\\nUpdating firmware ...\\n")
 	@fwupdmgr get-updates --force
 	@fwupdmgr update
+
+UPDATE += update-gnome-shell-extensions-bin
+update-gnome-shell-extensions-bin: $(DOTHOME_OPT)/install-gnome-extensions.git/install-gnome-extensions.sh
+	@git -C $(DOTHOME_OPT)/install-gnome-extensions.git pull
 
 ########################################################################################################################
 #
@@ -1602,14 +1598,14 @@ define restic-check-rule-set
 # Target called by a systemd service to generate state report for the specific environment
 .PHONY: check-restic-$(1)-no-deps
 check-restic-$(1)-no-deps:
-	@$(HOME_BIN)/restic-check --env-file "$(HOME_BACKUP)/.env.restic.$(1)"
+	@$(DOTHOME_BIN)/restic-check --env-file "$(DOTHOME_BACKUP)/.env.restic.$(1)"
 
 CHECK += check-restic-$(1)
-check-restic-$(1): $(HOME_BIN)/restic-check check-restic-$(1)-no-deps
+check-restic-$(1): $(DOTHOME_BIN)/restic-check check-restic-$(1)-no-deps
 endef
 
 # Generate dynamic check rules for each restic environment
-$(foreach env, $(BACKUP_ENVS),\
+$(foreach env, $(ENV_BACKUP),\
 	$(eval $(call restic-check-rule-set,$(env))))
 
 CHECK += check-rasdaemon
@@ -1623,7 +1619,7 @@ check-firewalld-config:
 CHECK += check-missing-packages
 check-missing-packages:
 	@# Check that defined packages are installed and correctly named
-	@$(foreach package,$(PACKAGES_RPM),\
+	@$(foreach package,$(PKG_RPM) $(EXT_DNF),\
 		rpm -q $(package) > /dev/null || \
 			{ $(call log,$(ERR),"Error: Package [$(package)] is defined\x2C but not installed \
 				or has a different name\x21"); exit 1;}$(NEWLINE))
@@ -1637,20 +1633,20 @@ define restic-backup-rule-set
 # Target called by a systemd service to execute a backup using the specific backup configuration and restic environment
 .PHONY: backup-restic-$(1)-$(2)-no-deps
 backup-restic-$(1)-$(2)-no-deps:
-	@$(HOME_BIN)/restic-backup --conf-file "$(HOME_BACKUP)/.conf.backup.$(1)" --env-file "$(HOME_BACKUP)/.env.restic.$(2)"
+	@$(DOTHOME_BIN)/restic-backup --conf-file "$(DOTHOME_BACKUP)/.conf.backup.$(1)" --env-file "$(DOTHOME_BACKUP)/.env.restic.$(2)"
 
 # Target called by a systemd service to generate a stats report for the specific restic environment
 .PHONY: stats-restic-$(1)-$(2)-no-deps
 stats-restic-$(1)-$(2)-no-deps:
-	@$(HOME_BIN)/restic-stats --backup-conf-name "$(1)" --env-file "$(HOME_BACKUP)/.env.restic.$(2)"
+	@$(DOTHOME_BIN)/restic-stats --backup-conf-name "$(1)" --env-file "$(DOTHOME_BACKUP)/.env.restic.$(2)"
 
 BACKUP += backup-$(1)-$(2)
-backup-$(1)-$(2): $(HOME_BACKUP)/.conf.backup.$(1) $(HOME_BACKUP)/.env.restic.$(2) $(HOME_BIN)/restic-backup $(HOME_BIN)/restic-stats backup-restic-$(1)-$(2)-no-deps
+backup-$(1)-$(2): $(DOTHOME_BACKUP)/.conf.backup.$(1) $(DOTHOME_BACKUP)/.env.restic.$(2) $(DOTHOME_BIN)/restic-backup $(DOTHOME_BIN)/restic-stats backup-restic-$(1)-$(2)-no-deps
 endef
 
 # Generate dynamic backup rules for every pair of backup config and environment (e.g. <conf>-<env>)
-$(foreach config, $(BACKUP_CONFIGS),\
- 	$(foreach env, $(BACKUP_ENVS),\
+$(foreach config, $(CONF_BACKUP),\
+ 	$(foreach env, $(ENV_BACKUP),\
  		$(eval $(call restic-backup-rule-set,$(config),$(env)))))
 
 BACKUP += backup-pass
@@ -1703,6 +1699,12 @@ wget: wget2
 
 .PHONY: dnf
 dnf: dnf5
+
+.PNONY: nvm
+nvm: $(NVM_DIR)/nvm.sh
+
+.PHONY: nodejs
+nodejs: nodejs-lts
 
 ########################################################################################################################
 #
