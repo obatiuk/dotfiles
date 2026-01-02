@@ -1,9 +1,0 @@
-#!/usr/bin/env -S echo "This should not be run directly. Use: \nsource"
-#
-# Fonts Configuration
-#
-# Note: This file is intended to be SOURCED by your .bashrc
-#
-# shellcheck shell=bash
-
-export FREETYPE_PROPERTIES="cff:no-stem-darkening=0 autofitter:no-stem-darkening=0"

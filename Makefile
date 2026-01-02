@@ -146,7 +146,7 @@ EXT_DNF := dnf-plugins-core dnf-plugin-diff python3-dnf-plugin-tracer python3-dn
 EXT_DNF += remove-retired-packages dracut-config-rescue clean-rpm-gpg-pubkey python3-dnf-plugin-show-leaves
 
 # All `snap` packages that do not require manual installation steps
-PKG_SNAP := chromium-ffmpeg brave intellij-idea-community slack
+PKG_SNAP := chromium-ffmpeg mqtt-explorer
 
 # All **user** `flatpak` that do not require manual installation steps
 PKG_FLATPAK := org.gnupg.GPA org.gtk.Gtk3theme.Arc-Darker be.alexandervanhee.gradia com.core447.StreamController
@@ -154,8 +154,8 @@ PKG_FLATPAK := org.gnupg.GPA org.gtk.Gtk3theme.Arc-Darker be.alexandervanhee.gra
 # Font packages
 PKG_FONT := google-droid-sans-fonts google-droid-serif-fonts google-droid-sans-mono-fonts
 PKG_FONT += google-roboto-fonts adobe-source-code-pro-fonts dejavu-sans-fonts dejavu-sans-mono-fonts
-PKG_FONT += dejavu-serif-fonts liberation-fonts-common liberation-mono-fonts liberation-narrow-fonts
-PKG_FONT += liberation-sans-fonts liberation-serif-fonts jetbrains-mono-fonts-all fontawesome4-fonts
+PKG_FONT += dejavu-serif-fonts liberation-mono-fonts liberation-narrow-fonts liberation-sans-fonts
+PKG_FONT += liberation-serif-fonts jetbrains-mono-fonts-all fontawesome4-fonts
 
 # GNOME Shell extensions (rpm packages)
 PKG_GSHELL := gnome-shell-extension-dash-to-dock gnome-shell-extension-appindicator
@@ -188,7 +188,7 @@ EXT_ULAUNCHER += ulauncher-obsidian.git ulauncher-numconverter.git ulauncher-lis
 
 # IntelliJ extensions
 EXT_INTELLIJ := ru.adelf.idea.dotenv lermitage.intellij.battery.status Docker name.kropp.intellij.makefile
-EXT_INTELLIJ += com.jetbrains.packagesearch.intellij-plugin com.jetbrains.plugins.ini4idea
+EXT_INTELLIJ += com.jetbrains.plugins.ini4idea
 
 # `micro` editor extensions
 EXT_MICRO += $(addprefix micro_,editorconfig fzf filemanager)
@@ -237,7 +237,7 @@ ecryptfs-utils:
 
 INSTALL += fonts-better
 fonts-better: /etc/yum.repos.d/_copr\:copr.fedorainfracloud.org\:hyperreal\:better_fonts.repo
-	@$(call dnf,fontconfig-enhanced-defaults fontconfig-font-replacements)
+	@$(call dnf,fontconfig-font-replacements)
 
 INSTALL += fonts_ms
 fonts-ms:
@@ -337,8 +337,8 @@ arduino: flatpak
 	@sudo usermod -aG dialout,tty,lock '$(USER)'
 
 INSTALL += code
-code: snapd
-	@snap install $@ --classic
+code: | snapd
+	@sudo snap install $@ --classic
 
 INSTALL += ddcutil
 ddcutil: | /etc/yum.repos.d/_copr\:copr.fedorainfracloud.org\:rockowitz\:ddcutil.repo
@@ -481,12 +481,13 @@ steam: | flatpak steam-devices /etc/yum.repos.d/rpmfusion-nonfree.repo
 INSTALL += snapd
 snapd:
 	@$(call dnf,$@)
-	@sudo ln -svnf /var/lib/snapd/snap /snap
+	@sudo [ ! -L /snap ] && sudo ln -svnf /var/lib/snapd/snap /snap
 	@# A manual fix for the broken snap when `/usr/lib/snapd` link exists
 	@# (see https://discussion.fedoraproject.org/t/snap-stopped-working-on-f41/161371 and
 	@# https://github.com/canonical/snapd/commit/858801cf47fe5e8dc6307e4cf02191b7157fc0c2)
 	@sudo [ -L '/usr/lib/snapd' ] && sudo rm -rfi '/usr/lib/snapd'
 	@sudo snap set system refresh.retain=2
+	@sudo systemctl daemon-reload
 	@sudo systemctl restart $@
 
 INSTALL += logrotate
@@ -593,6 +594,10 @@ jre: java-21-openjdk
 INSTALL += kse
 kse: | jre
 	@$(call dnf,https://github.com/kaikramer/keystore-explorer/releases/download/v5.6.0/kse-5.6.0-1.noarch.rpm)
+
+INSTALL += intellij-idea-community
+intellij-idea-community: | snapd
+	@sudo snap install $@ --classic
 
 ########################################################################################################################
 #
@@ -872,16 +877,16 @@ $(EXT_GSHELL): $(DOTHOME_BIN)/install-gnome-extensions | gnome-desktop dconf
 	@$< --enable $(__ext_id)
 
 INSTALL += $(EXT_VSCODE)
-$(EXT_VSCODE): | snap code
-	@snap run code --force --install-extension '$@'
+$(EXT_VSCODE): code
+	@snap run $< --force --install-extension '$@'
 
 INSTALL += $(EXT_INTELLIJ)
-$(EXT_INTELLIJ): | intellij-idea-community acpi
-	@$$(command -v intellij-idea-community) installPlugins $@
+$(EXT_INTELLIJ): intellij-idea-community | acpi
+	@snap run $< installPlugins $@
 
 INSTALL += $(EXT_MICRO)
 $(EXT_MICRO): | micro fzf
-	@$$(command -v micro) -plugin install $(subst micro_,,$@)
+	@micro -plugin install $(subst micro_,,$@)
 
 ########################################################################################################################
 #
@@ -914,11 +919,6 @@ $(BASHRCD)/bashrc-git: $(DF_FSHOME)/.bashrc.d/bashrc-git
 
 FILES += $(BASHRCD)/bashrc-base
 $(BASHRCD)/bashrc-base: $(DF_FSHOME)/.bashrc.d/bashrc-base
-	@install -d $(@D)
-	@ln -svnf $< $@
-
-FILES += $(BASHRCD)/bashrc-fonts
-$(BASHRCD)/bashrc-fonts: $(DF_FSHOME)/.bashrc.d/bashrc-fonts
 	@install -d $(@D)
 	@ln -svnf $< $@
 
@@ -1393,7 +1393,6 @@ PATCH += /etc/udev/rules.d/50-usb-power-save.rules
 	@sudo udevadm control --reload-rules && sudo udevadm trigger
 
 # Fix for the NVIDIA suspend issue
-# (see https://forums.developer.nvidia.com/t/trouble-suspending-with-510-39-01-linux-5-16-0-freezing-of-tasks-failed-after-20-009-seconds/200933/11)
 PATCH += patch-gnome-suspend
 patch-gnome-suspend: | gettext-envsubst
 	@envsubst '$$TODAY $$USER' < $(DF_FSETC)/systemd/system/gnome-shell-suspend.service.template \
@@ -1441,6 +1440,12 @@ update-flatpak: | flatpak
 	@$(call log,$(INFO),"\\nUpdating 'flatpak' packages ...\\n")
 	@flatpak update
 	@flatpak update --user
+
+UPDATE += update-snap
+update-snap:
+	@echo -e "\n*******************************************************************************************************"
+	@$(call log,$(INFO),"\\nUpdating 'snap' packages ...\\n")
+	@sudo snap refresh
 
 UPDATE += update-gnome-extensions
 update-gnome-extensions:
@@ -1619,7 +1624,7 @@ check-firewalld-config:
 CHECK += check-missing-packages
 check-missing-packages:
 	@# Check that defined packages are installed and correctly named
-	@$(foreach package,$(PKG_RPM) $(EXT_DNF),\
+	@$(foreach package,$(PKG_RPM) $(EXT_DNF) $(PKG_FONT),\
 		rpm -q $(package) > /dev/null || \
 			{ $(call log,$(ERR),"Error: Package [$(package)] is defined\x2C but not installed \
 				or has a different name\x21"); exit 1;}$(NEWLINE))
