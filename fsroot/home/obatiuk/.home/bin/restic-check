@@ -6,6 +6,12 @@
 #
 # shellcheck disable=SC2086
 
+# --- Check Prerequisites ---
+
+command -v restic > /dev/null 2>&1 || { _err "'restic' command not found. Aborting!"; exit 1; }
+command -v jq > /dev/null 2>&1 || { _err "'jq' command not found. Aborting!"; exit 1; }
+command -v mosquitto_pub > /dev/null 2>&1 || { _err "'mosquitto_pub' command not found. Aborting!"; exit 1; }
+
 # --- Utility Functions ---
 
 # Log errors to stderr
@@ -57,16 +63,10 @@ while true; do
   esac
 done
 
-[[ -z "${_env_file}" ]] && { _usage; exit 1;}
-
-# --- Check Prerequisites ---
-
-[ ! -f "${_env_file}" ] && { _err "Unable to load environment file ${_env_file}. Aborting!"; exit 1; }
-command -v restic > /dev/null 2>&1 || { _err "'restic' command not found. Aborting!"; exit 1; }
-command -v jq > /dev/null 2>&1 || { _err "'jq' command not found. Aborting!"; exit 1; }
-command -v mosquitto_pub > /dev/null 2>&1 || { _err "'mosquitto_pub' command not found. Aborting!"; exit 1; }
-
 # --- Load Configuration ---
+
+[[ -z "${_env_file}" ]] && { _usage; exit 1;}
+[ ! -f "${_env_file}" ] && { _err "Unable to load environment file ${_env_file}. Aborting!"; exit 1; }
 
 echo "Loading restic environment file '${_env_file}' ..."
 # shellcheck source=/dev/null

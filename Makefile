@@ -133,7 +133,7 @@ PKG_RPM += usbguard-dbus fastfetch bc usbutils pciutils acpi policycoreutils-dev
 PKG_RPM += gnupg2 pinentry-tty pinentry-gnome3 gedit gedit-plugins gedit-plugin-editorconfig
 PKG_RPM += gvfs-mtp screen progress pv tio dialog catimg cifs-utils sharutils binutils odt2txt
 PKG_RPM += restic rsync rclone micro wget2 xsensors lm_sensors curl jq libnotify glow libsecret
-PKG_RPM += unrar lynx crudini sysstat p7zip nmap cabextract iotop-c qrencode uuid tcpdump
+PKG_RPM += unrar lynx crudini sysstat p7zip nmap cabextract iotop-c qrencode uuid tcpdump plymouth-system-theme
 PKG_RPM += git diffutils git-lfs git-extras git-credential-libsecret git-crypt bat mc gh perl-Image-ExifTool
 PKG_RPM += calibre ebook-tools clamav clamav-freshclam mdns-scan fping gettext-envsubst steam-devices
 PKG_RPM += fedora-workstation-repositories gnome-monitor-config java-latest-openjdk java-21-openjdk java-25-openjdk
@@ -424,8 +424,8 @@ arc-theme:
 endif
 
 INSTALL += plymouth
-plymouth:
-	@$(call dnf,$@ plymouth-system-theme)
+plymouth: plymouth-system-theme
+	@$(call dnf,$@)
 	@sudo plymouth-set-default-theme bgrt -R
 	@sudo grub2-mkconfig -o /etc/grub2.cfg
 
@@ -511,18 +511,18 @@ INSTALL += browserpass
 browserpass: | pass pass-extensions $(PASS_HOME)/.browserpass.json browserpass-bin clean-browserpass
 
 INSTALL += geoclue2
-geoclue2: | crudini
+geoclue2: /etc/geoclue/geoclue.conf | crudini
 	@$(call dnf,$@)
-	@sudo crudini --ini-options=nospace --set /etc/geoclue/geoclue.conf wifi enable true
-	@sudo crudini --ini-options=nospace --set /etc/geoclue/geoclue.conf wifi url 'https://beacondb.net/v1/geolocate'
+	@sudo crudini --ini-options=nospace --set $< wifi enable true
+	@sudo crudini --ini-options=nospace --set $< wifi url 'https://beacondb.net/v1/geolocate'
 	@sudo systemctl restart geoclue
 
 INSTALL += proton-mail-bridge
-proton-mail-bridge: | pass
+proton-mail-bridge: $(PASS_HOME)/.gitignore | pass
 	@sudo dnf -y install https://proton.me/download/bridge/protonmail-bridge-3.13.0-1.x86_64.rpm
-	@if ! grep -q 'protonmail-credentials' '$(HOME)/.password-store/.gitignore'; then \
-		echo 'protonmail-credentials' >> '$(HOME)/.password-store/.gitignore'; \
-		echo 'docker-credential-helpers' >> '$(HOME)/.password-store/.gitignore'; fi
+	@if ! grep -q 'protonmail-credentials' $<; then \
+		echo 'protonmail-credentials' >> $<; \
+		echo 'docker-credential-helpers' >> $<; fi
 
 INSTALL += editor-alternatives
 editor-alternatives: micro

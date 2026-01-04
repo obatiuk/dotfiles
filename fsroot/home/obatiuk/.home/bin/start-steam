@@ -3,7 +3,8 @@
 # Script to prepare the environment for a gaming session:
 # 1. Restart audio service (if needed for stability)
 # 2. Connect specified Bluetooth devices
-# 3. Launch Steam
+# 3. Switch to a single monitor setup
+# 4. Launch Steam
 
 # List of MAC addresses to connect
 BLUETOOTH_DEVICES=(

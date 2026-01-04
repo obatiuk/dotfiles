@@ -4,6 +4,9 @@
 #
 # Source: https://www.home-assistant.io/integrations/roomba/#retrieving-credentials-from-the-cloud-with-dorita980
 
+command -v docker > /dev/null 2>&1 || { echo "ERROR: 'docker' command not found. Aborting!"; exit 1; }
+command -v pass > /dev/null 2>&1 || { echo "ERROR: 'pass' command not found. Aborting!"; exit 1; }
+
 docker run -it node sh -c "npm install -g dorita980 \
      && get-roomba-password-cloud \
      $(pass meta www/irobot.com/account login) \

@@ -5,6 +5,9 @@
 # Prerequisites: ddcutil must be installed.
 #
 
+# Check if ddcutil is installed and store its path
+DDCUTIL_CMD=$(command -v ddcutil) || { echo "ERROR: 'ddcutil' command not found. Aborting." >&2; exit 1; }
+
 # Monitor model string (must exactly match ddcutil's output for -l/--display)
 MONITOR_MODEL='DELL U3821DW'
 
@@ -14,9 +17,6 @@ VCP_CODE=0x60
 # VCP values for the two inputs to toggle between
 INPUT_DP_1=0x0f # Example: DisplayPort (DP)
 INPUT_USB_C=0x1b # Example: USB-C/KVM
-
-# Check if ddcutil is installed and store its path
-DDCUTIL_CMD=$(command -v ddcutil) || { echo "ERROR: 'ddcutil' command not found. Aborting." >&2; exit 1; }
 
 # Get current input value (VCP 0x60)
 echo "Getting current input for monitor: ${MONITOR_MODEL}" >&2

@@ -9,7 +9,6 @@
 
 command -v lsb_release > /dev/null 2>&1 || { echo "ERROR: 'lsb_release' command not found. Aborting!" >&2; return 1; }
 command -v diff > /dev/null 2>&1 || { echo "ERROR: 'diff' command not found. Aborting!" >&2; return 1; }
-command -v fastfetch > /dev/null 2>&1 || { echo "ERROR: 'fastfetch' command not found. Aborting!" >&2; return 1; }
 
 # --- Configuration Variables ---
 
