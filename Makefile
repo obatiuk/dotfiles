@@ -1664,10 +1664,10 @@ backup-pass: git pass pass-extensions
 #
 
 .PHONY: snap
-snap: | snapd
+snap: snapd
 
 .PHONY: vscode
-vscode: | code $(EXT_VSCODE)
+vscode: code $(EXT_VSCODE)
 
 .PHONY: ecryptfs
 ecryptfs: ecryptfs-utils
@@ -1682,7 +1682,7 @@ gnome-settings: gnome-key-binding-settings gnome-theme-settings gnome-wallpaper 
 diff: diffutils ydiff git-split-diffs
 
 .PHONY: intellij
-intellij: | intellij-idea-community $(EXT_INTELLIJ)
+intellij: intellij-idea-community $(EXT_INTELLIJ)
 
 .PHONY: geoclue
 geoclue: geoclue2
