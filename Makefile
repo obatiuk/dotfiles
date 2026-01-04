@@ -1705,7 +1705,7 @@ wget: wget2
 .PHONY: dnf
 dnf: dnf5
 
-.PNONY: nvm
+.PHONY: nvm
 nvm: $(NVM_DIR)/nvm.sh
 
 .PHONY: nodejs
