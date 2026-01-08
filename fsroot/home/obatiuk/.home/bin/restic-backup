@@ -8,13 +8,6 @@
 
 # shellcheck disable=SC2086
 
-# --- Check Prerequisites ---
-
-command -v restic > /dev/null 2>&1 || { _err "'restic' command not found. Aborting!"; exit 1; }
-command -v jq > /dev/null 2>&1 || { _err "'jq' command not found. Aborting!"; exit 1; }
-command -v notify-send > /dev/null 2>&1 || { _err "'notify-send' command not found. Aborting!"; exit 1; }
-command -v mosquitto_pub > /dev/null 2>&1 || { _err "'mosquitto_pub' command not found. Aborting!"; exit 1; }
-
 # --- Utility Functions ---
 
 # Log errors to stderr
@@ -80,6 +73,13 @@ function _usage {
     echo -e "Usage:\n $(basename "$0") --env-file <file_path> --conf-file <file_path>"
     sleep 1
 }
+
+# --- Check Prerequisites ---
+
+command -v restic > /dev/null 2>&1 || { _err "'restic' command not found. Aborting!"; exit 1; }
+command -v jq > /dev/null 2>&1 || { _err "'jq' command not found. Aborting!"; exit 1; }
+command -v notify-send > /dev/null 2>&1 || { _err "'notify-send' command not found. Aborting!"; exit 1; }
+command -v mosquitto_pub > /dev/null 2>&1 || { _err "'mosquitto_pub' command not found. Aborting!"; exit 1; }
 
 # --- Argument Parsing ---
 
