@@ -13,6 +13,3 @@ RuntimeDirectory=restic-check/%i
 IOSchedulingClass=idle
 Restart=no
 ExecStart=/usr/bin/make -C ${WORKDIR} check-restic-%i-no-deps
-
-[Install]
-WantedBy=default.target
