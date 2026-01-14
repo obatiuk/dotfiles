@@ -14,9 +14,9 @@ command -v secret-tool > /dev/null 2>&1 || { echo "ERROR: 'secret-tool' command 
 
 # --- Retrieve secrets from keyring ---
 
-ROUTER_HOST_NAME="nebula"
-ROUTER_HOST="${ROUTER_HOST_NAME}.lan"
-_lookup_base="device router app_id openwrt host ${ROUTER_HOST}"
+_router_host_name="nebula"
+_router_host="${_router_host_name}.lan"
+_lookup_base="device router app_id openwrt host ${_router_host}"
 
 # --- Retrieve secrets from keyring ---
 
@@ -27,7 +27,7 @@ _router_luci_password=$(secret-tool lookup ${_lookup_base} type password)
 
 # Basic check for credentials
 if [[ -z "${_router_luci_username}" || -z "${_router_luci_password}" ]]; then
-    echo "ERROR: OpenWrt credentials for '${ROUTER_HOST}' were not found in system keyring'. Aborting!" >&2
+    echo "ERROR: OpenWrt credentials for '${_router_host}' were not found in system keyring'. Aborting!" >&2
     return 1
 fi
 
@@ -67,33 +67,33 @@ _backup_tags="--tag system,stream,${_tag_os_name},${_tag_os_version}"
 
 # Arguments used for the 'restic backup' command
 RESTIC_ARGS_BACKUP="--verbose --exclude-caches --cleanup-cache --no-cache \
-    --host ${ROUTER_HOST_NAME} \
+    --host ${_router_host_name} \
     ${_backup_tags} \
-    --stdin-filename=openwrt-luci-backup-${ROUTER_HOST}.tgz \
+    --stdin-filename openwrt-luci-backup-${_router_host}.tgz \
     --stdin-from-command -- \
     curl -s ${_router_luci_url}/cgi-backup --data-raw sessionid=${_session_id}"
 
 # Arguments for comparing snapshots
-RESTIC_ARGS_COMPARE="--host ${ROUTER_HOST_NAME} ${_backup_tags}"
+RESTIC_ARGS_COMPARE="--host ${_router_host_name} ${_backup_tags}"
 
 # Arguments used for the 'restic forget --prune' command
 RESTIC_ARGS_PRUNE="--keep-last 10 --keep-daily 7 --keep-weekly 4 --keep-monthly 12 --keep-yearly 5 \
     --group-by host,tags \
-    --host ${ROUTER_HOST_NAME} \
+    --host ${_router_host_name} \
     --keep-tag ${_tag_keep} \
     ${_backup_tags}"
 
 # Arguments for getting statistics on the latest snapshot
-RESTIC_ARGS_SNAPSHOT_STATS="--host ${ROUTER_HOST_NAME} ${_backup_tags}"
+RESTIC_ARGS_SNAPSHOT_STATS="--host ${_router_host_name} ${_backup_tags}"
 
-export BACKUP_CONF_NAME="${ROUTER_HOST_NAME}"
+export BACKUP_CONF_NAME="${_router_host_name}"
 export RESTIC_ARGS_BACKUP
 export RESTIC_ARGS_COMPARE
 export RESTIC_ARGS_PRUNE
 export RESTIC_ARGS_SNAPSHOT_STATS
 
-unset ROUTER_HOST_NAME
-unset ROUTER_HOST
+unset _router_host_name
+unset _router_host
 unset _lookup_base
 unset _router_luci_url
 unset _router_luci_username
