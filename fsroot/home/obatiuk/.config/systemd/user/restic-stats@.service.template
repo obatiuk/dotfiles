@@ -4,7 +4,7 @@
 
 [Unit]
 Description=Publishes next backup run and repository statistics for %i
-After=network.target restic-backup@%i.service
+After=network-online.target restic-backup@%i.service
 ConditionUser=!root
 
 [Service]

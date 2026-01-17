@@ -4,6 +4,8 @@
 
 [Unit]
 Description=Monthly backup of %i
+Requires=network-online.target
+After=network-online.target
 
 [Timer]
 OnBootSec=15min

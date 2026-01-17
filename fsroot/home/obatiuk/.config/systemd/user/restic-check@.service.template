@@ -4,7 +4,7 @@
 
 [Unit]
 Description=Verifies '%i' repository integrity and publishes the result
-After=network.target
+After=network-online.target
 ConditionUser=!root
 
 [Service]

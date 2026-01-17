@@ -4,7 +4,7 @@
 
 [Unit]
 Description=Runs restic backup for %i
-After=network.target
+After=network-online.target
 ConditionUser=!root
 
 [Service]
