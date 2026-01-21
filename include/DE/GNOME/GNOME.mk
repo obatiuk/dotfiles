@@ -30,8 +30,8 @@ PKG_RPM += adwaita-icon-theme adwaita-cursor-theme gtk-update-icon-cache
 # Install preferred GNOME theme
 PKG_FLATPACK += org.gtk.Gtk3theme.Arc-Darker
 
-DF_GNOME_FSHOME := $(DF_GNOME)/fsroot/home/obatiuk
-DF_GNOME_FSETC := $(DF_GNOME)/etc
+DF_GNOME_FSROOT := $(DF_GNOME)/fsroot
+DF_GNOME_FSHOME := $(DF_GNOME_FSROOT)/home/obatiuk
 DF_GNOME_RES := $(DF_GNOME)/resources
 
 ########################################################################################################################
@@ -426,10 +426,10 @@ disable-gnome-tracker: | gnome-desktop gnome-tracker-settings $(HOME)/.trackerig
 # Fix for the NVIDIA suspend issue
 PATCH += patch-gnome-suspend
 patch-gnome-suspend: | gettext-envsubst
-	@envsubst '$$TODAY $$USER' < $(DF_GNOME_FSETC)/systemd/system/gnome-shell-suspend.service.template \
+	@envsubst '$$TODAY $$USER' < $(DF_GNOME_FSROOT)/etc/systemd/system/gnome-shell-suspend.service.template \
 		| sudo install -m 644 -DC /dev/stdin /etc/systemd/system/gnome-shell-suspend.service
 
-	@envsubst '$$TODAY $$USER' < $(DF_GNOME_FSETC)/systemd/system/gnome-shell-resume.service.template \
+	@envsubst '$$TODAY $$USER' < $(DF_GNOME_FSROOT)/etc/systemd/system/gnome-shell-resume.service.template \
 		| sudo install -m 644 -DC /dev/stdin /etc/systemd/system/gnome-shell-resume.service
 
 	@sudo systemctl daemon-reload
