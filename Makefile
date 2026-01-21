@@ -122,23 +122,25 @@ endef
 #
 
 # All RPM packages that do not require manual installation steps
-PKG_RPM += rpm dnf5 dnf-utils redhat-lsb rpmconf pwgen systemd pam-u2f pamu2fcfg xdg-user-dirs audit golang akmods
-PKG_RPM += fwupd bluez bash bash-completion avahi avahi-tools samba-client tree brightnessctl mokutil
-PKG_RPM += hplip hplip-gui xsane ffmpeg feh nano htop btop fzf less xdg-utils httpie lynis cheat tldr
-PKG_RPM += ImageMagick cups duf ssh-audit coreutils openssl
-PKG_RPM += libreoffice-core libreoffice-writer libreoffice-calc libreoffice-filters minder firefox vlc
-PKG_RPM += fd-find ydiff webp-pixbuf-loader tuned usbguard-selinux usbguard-notifier usbguard-dbus
-PKG_RPM += fastfetch bc usbutils pciutils acpi policycoreutils-devel pass-otp pass-audit
-PKG_RPM += gnupg2 pinentry-tty
-PKG_RPM += gvfs-mtp screen progress pv tio dialog catimg cifs-utils sharutils binutils odt2txt
-PKG_RPM += restic rsync rclone micro wget2 xsensors lm_sensors curl jq libnotify glow libsecret
-PKG_RPM += unrar lynx crudini sysstat p7zip nmap cabextract iotop-c qrencode uuid tcpdump plymouth-system-theme
-PKG_RPM += git diffutils git-lfs git-extras git-credential-libsecret git-crypt bat mc gh perl-Image-ExifTool
-PKG_RPM += calibre ebook-tools clamav clamav-freshclam mdns-scan fping gettext-envsubst steam-devices
-PKG_RPM += java-latest-openjdk java-21-openjdk java-25-openjdk adoptium-temurin-java-repository
-PKG_RPM += dconf fedora-workstation-repositories make
-PKG_RPM += python3 python3-pip python3-devel python3-virtualenv NetworkManager
+PKG_RPM += rpm dnf5 dnf-utils redhat-lsb rpmconf pam-u2f pamu2fcfg audit plymouth-system-theme NetworkManager
+PKG_RPM += akmods fwupd bluez mokutil brightnessctl ssh-audit coreutils openssl tuned acpi lm_sensors sysstat
+PKG_RPM += make tree usbguard-selinux usbguard-notifier usbguard-dbus cifs-utils sharutils binutils usbutils pciutils
 PKG_RPM += iwlwifi-dvm-firmware iwlwifi-mld-firmware iwlwifi-mvm-firmware
+PKG_RPM += xdg-utils xdg-user-dirs dconf
+PKG_RPM += bash bash-completion screen progress pv tio dialog catimg wget2 bc uuid crudini gettext-envsubst
+PKG_RPM += fastfetch duf fd-find ydiff webp-pixbuf-loader feh nano htop btop fzf less httpie lynis cheat tldr golang
+PKG_RPM += policycoreutils-devel mdns-scan fping nmap iotop-c tcpdump avahi avahi-tools samba-client
+PKG_RPM += gnupg2 pinentry-tty pass-otp pass-audit curl jq libnotify libsecret pwgen
+PKG_RPM += gvfs-mtp p7zip unrar cabextract bsdtar odt2txt qrencode
+PKG_RPM += glow micro bat mc git gh diffutils git-lfs git-extras git-credential-libsecret git-crypt lynx
+PKG_RPM += perl-Image-ExifTool calibre ebook-tools steam-devices
+PKG_RPM += java-latest-openjdk java-21-openjdk java-25-openjdk adoptium-temurin-java-repository
+PKG_RPM += python3 python3-pip python3-devel python3-virtualenv
+PKG_RPM += libreoffice-writer libreoffice-calc libreoffice-filters minder firefox vlc ImageMagick xsensors ffmpeg xsane
+PKG_RPM += fedora-workstation-repositories
+PKG_RPM += clamav clamav-freshclam
+PKG_RPM += restic rsync rclone
+PKG_RPM += cups hplip hplip-gui
 
 # DNF plugins
 EXT_DNF := dnf-plugins-core dnf-plugin-diff python3-dnf-plugin-tracer python3-dnf-plugin-rpmconf
@@ -148,7 +150,7 @@ EXT_DNF += remove-retired-packages dracut-config-rescue clean-rpm-gpg-pubkey pyt
 PKG_SNAP := chromium-ffmpeg mqtt-explorer
 
 # All **user** `flatpak` that do not require manual installation steps
-PKG_FLATPAK := org.gnupg.GPA org.gtk.Gtk3theme.Arc-Darker be.alexandervanhee.gradia com.core447.StreamController
+PKG_FLATPAK := org.gnupg.GPA be.alexandervanhee.gradia com.core447.StreamController
 
 # Font packages
 PKG_FONT := google-droid-sans-fonts google-droid-serif-fonts google-droid-sans-mono-fonts
@@ -196,7 +198,7 @@ EDITORS := /usr/bin/vi /usr/bin/nano /usr/bin/micro
 
 ########################################################################################################################
 #
-# Package installation customizations and aliases
+# Package installation customizations
 #
 
 INSTALL += dnf-plugins
@@ -214,16 +216,25 @@ ecryptfs-utils:
 	@sudo modprobe ecryptfs
 	@sudo usermod -aG ecryptfs '$(USER)'
 
+INSTALL += fonts-ms
+fonts-ms:
+	-@$(call dnf,http://sourceforge.net/projects/mscorefonts2/files/rpms/msttcore-fonts-installer-2.6-1.noarch.rpm)
+
+INSTALL += fonts-nerd
+fonts-nerd: | curl bsdtar
+	@install -d ${XDG_DATA_HOME}/fonts/NerdFonts
+	@curl -sL "https://github.com/ryanoasis/nerd-fonts/releases/download/v3.4.0/JetBrainsMono.zip" | bsdtar -xv -f - -C ${XDG_DATA_HOME}/fonts/NerdFonts
+	@curl -sL "https://github.com/ryanoasis/nerd-fonts/releases/download/v3.4.0/FiraCode.zip" | bsdtar -xv -f - -C ${XDG_DATA_HOME}/fonts/NerdFonts
+
 INSTALL += fonts-better
 fonts-better: /etc/yum.repos.d/_copr\:copr.fedorainfracloud.org\:hyperreal\:better_fonts.repo
+	@dnf download --releasever=42 --destdir=/tmp mozilla-fira-fonts-common mozilla-fira-mono-fonts mozilla-fira-sans-fonts
+	@sudo rpm -ivh /tmp/mozilla-fira-fonts-common*.rmp /tmp/mozilla-fira-mono-fonts*.rpm /tmp/mozilla-fira-sans-fonts*.rpm
+	@rm -f /tmp/mozilla*.rpm
 	@$(call dnf,fontconfig-font-replacements)
 
-INSTALL += fonts_ms
-fonts-ms:
-	@$(call dnf,http://sourceforge.net/projects/mscorefonts2/files/rpms/msttcore-fonts-installer-2.6-1.noarch.rpm)
-
 INSTALL += fonts
-fonts: $(PKG_FONT) fonts-ms fonts-better
+fonts: $(PKG_FONT) fonts-ms fonts-nerd fonts-better
 
 INSTALL += flatpak
 flatpak:
@@ -246,7 +257,7 @@ git-split-diffs: | nodejs
 	@. $(NVM_DIR)/nvm.sh && npm list -g $@ > /dev/null || { . $(NVM_DIR)/nvm.sh && npm install -g $@; }
 
 INSTALL += docker
-docker: /etc/yum.repos.d/docker-ce.repo | systemd
+docker: /etc/yum.repos.d/docker-ce.repo
 	-@sudo dnf -y remove --exclude=container-selinux \
 		docker \
 		docker-client \
@@ -353,11 +364,6 @@ INSTALL += smartmontools
 smartmontools:
 	@$(call dnf,$@)
 	@sudo systemctl enable --now smartd
-
-INSTALL += meld
-meld: $(DF_GNOME_RES)/meld.ini | dconf
-	@$(call dnf,$@)
-	@dconf load '/' < $<
 
 INSTALL += obsidian
 obsidian: | flatpak
@@ -581,12 +587,18 @@ $(HOME)/.passgenrc : $(DF_FSHOME)/.passgenrc | pass
 
 FILES += $(XDG_CONFIG_HOME)/git/config
 $(XDG_CONFIG_HOME)/git/config: $(DF_FSHOME)/.config/git/config | git git-lfs git-credential-libsecret \
-		git-split-diffs bat meld perl-Image-ExifTool
+		git-split-diffs bat perl-Image-ExifTool
 	@install -d $(@D)
 	@ln -svfn $< $@
 
 FILES += $(DOTHOME_BIN)/dell-kvm-switch-input
 $(DOTHOME_BIN)/dell-kvm-switch-input: $(DF_FSHOME)/.home/bin/dell-kvm-switch-input | ddcutil
+	@install -d $(@D)
+	@ln -svfn $< $@
+	@chmod +x $<
+
+FILES += $(DOTHOME_BIN)/switch-monitor
+$(DOTHOME_BIN)/switch-monitor: $(DF_FSHOME)/.home/bin/switch-monitor
 	@install -d $(@D)
 	@ln -svfn $< $@
 	@chmod +x $<
@@ -881,7 +893,7 @@ $(XDG_CONFIG_HOME)/systemd/user/network-online.target:
 	@systemctl --user link /usr/lib/systemd/system/network-online.target
 
 FILES += $(NVM_DIR)/nvm.sh
-$(NVM_DIR)/nvm.sh:
+$(NVM_DIR)/nvm.sh: | curl
 	@install -d $(NVM_DIR)
 	@PROFILE=/dev/null bash -c 'curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash'
 
@@ -912,6 +924,7 @@ FILES += /etc/yum.repos.d/docker-ce.repo
 FILES += /etc/yum.repos.d/google-chrome.repo
 /etc/yum.repos.d/google-chrome.repo: | dnf-plugins fedora-workstation-repositories
 	@sudo dnf config-manager setopt google-chrome.enabled=1
+	@sudo dnf update --refresh
 
 FILES += /etc/yum.repos.d/vivaldi-fedora.repo
 /etc/yum.repos.d/vivaldi-fedora.repo: | dnf-plugins
@@ -998,13 +1011,13 @@ FILES += /etc/logrotate.d/dnf
 
 # Set correct timezone and enable date/time synchronization
 PATCH += patch-time-sync
-patch-time-sync: | systemd
+patch-time-sync:
 	@timedatectl set-timezone 'America/New_York'
 	@timedatectl set-ntp true
 
 # Ensure the system is configured to maintain the RTC in Universal Time (UTC).
 PATCH += patch-local-rtc
-patch-local-rtc: | systemd
+patch-local-rtc:
 	@if [ "$$(timedatectl show -p LocalRTC --value)" == "yes" ]; then timedatectl set-local-rtc 0 --adjust-system-clock; fi
 
 # Potential fix for mouse lag (e.g., disabling autosuspend for the Dell Universal Receiver)
@@ -1072,7 +1085,7 @@ clean-package: | dnf-plugins
 	@sudo remove-retired-packages
 
 CLEAN += clean-journal
-clean-journal: | systemd
+clean-journal:
 	@sudo journalctl --rotate
 	@sudo journalctl --vacuum-size=500M
 

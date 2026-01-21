@@ -21,13 +21,23 @@ EXT_GSHELL += https\://extensions.gnome.org/extension/517/caffeine
 EXT_ULAUNCHER := ulauncher-emoji.git pass-ulauncher.git pass-for-ulauncher.git pass-otp-for-ulauncher.git
 EXT_ULAUNCHER += ulauncher-obsidian.git ulauncher-numconverter.git ulauncher-list-keywords.git
 
-PKG_RPM += gdm gnome-shell gnome-terminal seahorse gnome-keyring pinentry-gnome3
+# Gnome RPM packages
+PKG_RPM += gnome-shell gnome-terminal seahorse gnome-keyring pinentry-gnome3
 PKG_RPM += gparted baobab gimp gedit gedit-plugins gedit-plugin-editorconfig
 PKG_RPM += gnome-browser-connector gnome-pomodoro gnome-clocks gnome-monitor-config gnome-system-monitor
 PKG_RPM += adwaita-icon-theme adwaita-cursor-theme gtk-update-icon-cache
 
+# Install preferred GNOME theme
+PKG_FLATPACK += org.gtk.Gtk3theme.Arc-Darker
+
 DF_GNOME_FSHOME := $(DF_GNOME)/fsroot/home/obatiuk
+DF_GNOME_FSETC := $(DF_GNOME)/etc
 DF_GNOME_RES := $(DF_GNOME)/resources
+
+########################################################################################################################
+#
+# Package installation customizations
+#
 
 INSTALL += gnome-desktop
 gnome-desktop:
@@ -35,6 +45,11 @@ gnome-desktop:
 	@$(if $(findstring B,$(firstword -$(MAKEFLAGS))), \
 		@sudo dnf -y group install $@, \
 		@dnf group list --installed --hidden | grep $@ > /dev/null || sudo dnf -y group install $@;)
+
+INSTALL += gdm
+gdm:
+	@$(call dnf,$@)
+	@sudo systemctl enable gdm
 
 INSTALL += morewaita-icon-theme
 morewaita-icon-theme: /etc/yum.repos.d/_copr\:copr.fedorainfracloud.org\:dusansimic\:themes.repo xdg-utils gtk-update-icon-cache
@@ -114,6 +129,11 @@ ulauncher:
 INSTALL += ulauncher-extensions
 ulauncher-extensions: ulauncher $(EXT_ULAUNCHER)
 	-@systemctl --user restart ulauncher.service
+
+INSTALL += meld
+meld: $(DF_GNOME_RES)/meld.ini | dconf
+	@$(call dnf,$@)
+	@dconf load '/' < $<
 
 ########################################################################################################################
 #
@@ -288,15 +308,6 @@ gnome-file-chooser-settings: | gnome-desktop
 	@gsettings set org.gtk.Settings.FileChooser location-mode 'path-bar'
 	@gsettings set org.gtk.Settings.FileChooser sort-directories-first true
 
-#INSTALL += gnome-screenshot-settings
-#gnome-screenshot-settings: | gnome-desktop
-#	@gsettings set org.gnome.gnome-screenshot auto-save-directory 'file://$(XDG_PICTURES_DIR)/Screenshots'
-#	@gsettings set org.gnome.gnome-screenshot last-save-directory 'file://$(XDG_PICTURES_DIR)/Screenshots'
-#	@gsettings set org.gnome.gnome-screenshot default-file-type 'png'
-#	@gsettings set org.gnome.gnome-screenshot include-pointer false
-#	@gsettings set org.gnome.gnome-screenshot delay 2
-#	@gsettings set org.gnome.gnome-screenshot take-window-shot false
-
 INSTALL += gnome-power-settings
 gnome-power-settings: | gnome-desktop
 	@gsettings set org.gnome.settings-daemon.plugins.power idle-dim true
@@ -347,6 +358,11 @@ INSTALL += gnome-clocks-settings
 gnome-clocks-settings: $(DF_GNOME_RES)/gnome-clocks.ini | dconf
 	@dconf load '/' < $<
 
+########################################################################################################################
+#
+# Bulk installation rules
+#
+
 INSTALL += $(PKG_GSHELL)
 $(PKG_GSHELL): | gnome-desktop
 	@$(call dnf,$@)
@@ -369,6 +385,11 @@ $(EXT_ULAUNCHER): | git ulauncher
 	@install -d $(ULAUNCHER_EXT)
 	@ln -svfn $(DOTHOME_OPT)/$@ $(ULAUNCHER_EXT)/$(subst .git,,$@)
 
+########################################################################################################################
+#
+# Files
+#
+
 FILES += $(HOME)/.trackerignore
 $(HOME)/.trackerignore: $(DF_FSHOME)/.trackerignore
 	@ln -svnf $< $@
@@ -386,24 +407,10 @@ FILES += $(DOTHOME_OPT)/install-gnome-extensions.git/install-gnome-extensions.sh
 $(DOTHOME_OPT)/install-gnome-extensions.git/install-gnome-extensions.sh: | git
 	@$(call clone,install-gnome-extensions.git)
 
-FILES += $(DOTHOME_BIN)/switch-monitor
-$(DOTHOME_BIN)/switch-monitor: $(DF_GNOME_FSHOME)/.home/bin/switch-monitor | gnome-monitor-config
-	@install -d $(@D)
-	@ln -svfn $< $@
-	@chmod +x $<
-
-UPDATE += update-gnome-extensions
-update-gnome-extensions:
-	@echo -e "\n*******************************************************************************************************"
-	@$(call log,$(INFO), "\\nScheduling GNOME extension auto-update ...\\n")
-	-@gdbus call --session \
-		--dest org.gnome.Shell.Extensions \
-		--object-path /org/gnome/Shell/Extensions \
-		--method org.gnome.Shell.Extensions.CheckForUpdates
-
-UPDATE += update-gnome-shell-extensions-bin
-update-gnome-shell-extensions-bin: $(DOTHOME_OPT)/install-gnome-extensions.git/install-gnome-extensions.sh
-	@git -C $(DOTHOME_OPT)/install-gnome-extensions.git pull
+########################################################################################################################
+#
+# Patches
+#
 
 PATCH += disable-gnome-tracker
 disable-gnome-tracker: | gnome-desktop gnome-tracker-settings $(HOME)/.trackerignore
@@ -417,21 +424,52 @@ disable-gnome-tracker: | gnome-desktop gnome-tracker-settings $(HOME)/.trackerig
 	-@tracker3 reset -s -r || true
 
 # Fix for the NVIDIA suspend issue
-# TODO: move files to GNOME/fsroot
 PATCH += patch-gnome-suspend
 patch-gnome-suspend: | gettext-envsubst
-	@envsubst '$$TODAY $$USER' < $(DF_FSETC)/systemd/system/gnome-shell-suspend.service.template \
+	@envsubst '$$TODAY $$USER' < $(DF_GNOME_FSETC)/systemd/system/gnome-shell-suspend.service.template \
 		| sudo install -m 644 -DC /dev/stdin /etc/systemd/system/gnome-shell-suspend.service
 
-	@envsubst '$$TODAY $$USER' < $(DF_FSETC)/systemd/system/gnome-shell-resume.service.template \
+	@envsubst '$$TODAY $$USER' < $(DF_GNOME_FSETC)/systemd/system/gnome-shell-resume.service.template \
 		| sudo install -m 644 -DC /dev/stdin /etc/systemd/system/gnome-shell-resume.service
 
 	@sudo systemctl daemon-reload
 	@sudo systemctl enable gnome-shell-suspend
 	@sudo systemctl enable gnome-shell-resume
 
+########################################################################################################################
+#
+# Updates
+#
+
+UPDATE += update-gnome-extensions
+update-gnome-extensions:
+	@echo -e "\n*******************************************************************************************************"
+	@$(call log,$(INFO), "\\nScheduling GNOME extension auto-update ...\\n")
+	-@gdbus call --session \
+		--dest org.gnome.Shell.Extensions \
+		--object-path /org/gnome/Shell/Extensions \
+		--method org.gnome.Shell.Extensions.CheckForUpdates
+
+UPDATE += update-gnome-shell-extensions-bin
+update-gnome-shell-extensions-bin: $(DOTHOME_OPT)/install-gnome-extensions.git/install-gnome-extensions.sh | git
+	@git -C $(DOTHOME_OPT)/install-gnome-extensions.git pull
+
+########################################################################################################################
+#
+# Aliases
+#
+
 .PHONY: gnome-settings
-gnome-settings: gnome-key-binding-settings gnome-theme-settings gnome-wallpaper gnome-shell-extensions \
-		gnome-input-settings gnome-desktop-settings gnome-display-settings \
-		gnome-nautilus-settings gnome-file-chooser-settings gnome-gedit-settings gnome-screenshot-settings \
-		gnome-tracker-settings gnome-power-settings gnome-privacy-settings gnome-terminal-settings
+gnome-settings: gnome-key-binding-settings \
+		gnome-theme-settings \
+		gnome-wallpaper \
+		gnome-shell-extensions \
+		gnome-input-settings \
+		gnome-desktop-settings gnome-display-settings \
+		gnome-nautilus-settings \
+		gnome-file-chooser-settings \
+		gnome-gedit-settings \
+		gnome-tracker-settings \
+		gnome-power-settings \
+		gnome-privacy-settings \
+		gnome-terminal-settings

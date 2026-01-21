@@ -14,7 +14,7 @@ mkdir -pv "${HOME}/.home"
 git clone https://github.com/obatiuk/dotfiles.git "${HOME}/.home/.dotfiles.d"
 pushd "${HOME}/.home/.dotfiles.d"
 git-crypt unlock <keyfile>
-make init | tee -a ~/init.log
+make init --trace 2>&1 | tee -a ~/init.log
 popd
 cat ~/init.log
 ``

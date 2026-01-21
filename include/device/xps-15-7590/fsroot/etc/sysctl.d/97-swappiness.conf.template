@@ -1,0 +1,10 @@
+#
+# Created manually on ${TODAY} by ${USER}
+#
+# Source:
+# - http://www.akitaonrails.com/2017/01/17/optimizing-linux-for-slow-computers
+# - https://help.ubuntu.com/community/SwapFaq
+# - https://wiki.archlinux.org/index.php/Solid_State_Drives
+
+vm.swappiness=10
+vm.vfs_cache_pressure=50

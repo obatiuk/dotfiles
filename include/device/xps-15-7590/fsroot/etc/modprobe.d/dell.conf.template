@@ -1,0 +1,6 @@
+#
+# Created manually on ${TODAY} by ${USER}
+#
+# https://bbs.archlinux.org/viewtopic.php?id=222322
+#
+options snd-hda-intel model=dell-headset-multi
