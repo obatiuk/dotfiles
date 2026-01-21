@@ -122,25 +122,28 @@ endef
 #
 
 # All RPM packages that do not require manual installation steps
-PKG_RPM += rpm dnf5 dnf-utils redhat-lsb rpmconf pam-u2f pamu2fcfg audit plymouth-system-theme NetworkManager
-PKG_RPM += akmods fwupd bluez mokutil brightnessctl ssh-audit coreutils openssl tuned acpi lm_sensors sysstat
+PKG_RPM += rpm deltarpm dnf5 dnf-utils redhat-lsb rpmconf pam-u2f pamu2fcfg audit plymouth-system-theme NetworkManager
+PKG_RPM += akmods fwupd bluez mokutil brightnessctl ssh-audit coreutils openssl tuned acpi lm_sensors sysstat thermald
 PKG_RPM += make tree usbguard-selinux usbguard-notifier usbguard-dbus cifs-utils sharutils binutils usbutils pciutils
 PKG_RPM += iwlwifi-dvm-firmware iwlwifi-mld-firmware iwlwifi-mvm-firmware
-PKG_RPM += xdg-utils xdg-user-dirs dconf
+PKG_RPM += xdg-utils xdg-user-dirs dconf man-pages
 PKG_RPM += bash bash-completion screen progress pv tio dialog catimg wget2 bc uuid crudini gettext-envsubst
 PKG_RPM += fastfetch duf fd-find ydiff webp-pixbuf-loader feh nano htop btop fzf less httpie lynis cheat tldr golang
 PKG_RPM += policycoreutils-devel mdns-scan fping nmap iotop-c tcpdump avahi avahi-tools samba-client
 PKG_RPM += gnupg2 pinentry-tty pass-otp pass-audit curl jq libnotify libsecret pwgen
-PKG_RPM += gvfs-mtp p7zip unrar cabextract bsdtar odt2txt qrencode
-PKG_RPM += glow micro bat mc git gh diffutils git-lfs git-extras git-credential-libsecret git-crypt lynx
-PKG_RPM += perl-Image-ExifTool calibre ebook-tools steam-devices
+PKG_RPM += gvfs-mtp 7zip-standalone unrar cabextract bsdtar odt2txt qrencode
+PKG_RPM += glow micro bat mc git gh diffutils git-lfs git-extras git-credential-libsecret git-crypt lynx whois
+PKG_RPM += perl-Image-ExifTool calibre ebook-tools dos2unix graphviz
 PKG_RPM += java-latest-openjdk java-21-openjdk java-25-openjdk adoptium-temurin-java-repository
 PKG_RPM += python3 python3-pip python3-devel python3-virtualenv
-PKG_RPM += libreoffice-writer libreoffice-calc libreoffice-filters minder firefox vlc ImageMagick xsensors ffmpeg xsane
-PKG_RPM += fedora-workstation-repositories
-PKG_RPM += clamav clamav-freshclam
+PKG_RPM += libreoffice-writer libreoffice-calc libreoffice-filters minder firefox ImageMagick xsensors ffmpeg
+PKG_RPM += xsane diff-pdf media-player-info steam-devices
+PKG_RPM += fedora-workstation-repositories dracut-network dracut-squash NetworkManager-config-connectivity-fedora
+PKG_RPM += clamav clamav-freshclam clamav-data
 PKG_RPM += restic rsync rclone
 PKG_RPM += cups hplip hplip-gui
+
+
 
 # DNF plugins
 EXT_DNF := dnf-plugins-core dnf-plugin-diff python3-dnf-plugin-tracer python3-dnf-plugin-rpmconf
@@ -156,7 +159,7 @@ PKG_FLATPAK := org.gnupg.GPA be.alexandervanhee.gradia com.core447.StreamControl
 PKG_FONT := google-droid-sans-fonts google-droid-serif-fonts google-droid-sans-mono-fonts
 PKG_FONT += google-roboto-fonts adobe-source-code-pro-fonts dejavu-sans-fonts dejavu-sans-mono-fonts
 PKG_FONT += dejavu-serif-fonts liberation-mono-fonts liberation-narrow-fonts liberation-sans-fonts
-PKG_FONT += liberation-serif-fonts jetbrains-mono-fonts-all fontawesome4-fonts fira-code-fonts
+PKG_FONT += liberation-serif-fonts jetbrains-mono-fonts-all fontawesome-fonts-all fontawesome4-fonts fira-code-fonts
 
 # VSCode extensions
 EXT_VSCODE := EditorConfig.EditorConfig jianbingfang.dupchecker mechatroner.rainbow-csv bierner.markdown-mermaid
@@ -217,8 +220,11 @@ ecryptfs-utils:
 	@sudo usermod -aG ecryptfs '$(USER)'
 
 INSTALL += fonts-ms
-fonts-ms:
-	-@$(call dnf,http://sourceforge.net/projects/mscorefonts2/files/rpms/msttcore-fonts-installer-2.6-1.noarch.rpm)
+fonts-ms: | curl
+	@$(call dnf,xorg-x11-font-utils)
+	@curl -sL -O --output-dir /tmp "https://phoenixnap.dl.sourceforge.net/project/mscorefonts2/rpms/msttcore-fonts-installer-2.6-1.noarch.rpm"
+	@sudo rpm -ivh --nodigest --nofiledigest /tmp/msttcore-fonts-installer-2.6-1.noarch.rpm
+	@rm -fv /tmp/msttcore-fonts-installer-2.6-1.noarch.rpm
 
 INSTALL += fonts-nerd
 fonts-nerd: | curl bsdtar
@@ -229,12 +235,13 @@ fonts-nerd: | curl bsdtar
 INSTALL += fonts-better
 fonts-better: /etc/yum.repos.d/_copr\:copr.fedorainfracloud.org\:hyperreal\:better_fonts.repo
 	@dnf download --releasever=42 --destdir=/tmp mozilla-fira-fonts-common mozilla-fira-mono-fonts mozilla-fira-sans-fonts
-	@sudo rpm -ivh /tmp/mozilla-fira-fonts-common*.rmp /tmp/mozilla-fira-mono-fonts*.rpm /tmp/mozilla-fira-sans-fonts*.rpm
+	@sudo rpm -ivh /tmp/mozilla-fira-fonts-common*.rpm /tmp/mozilla-fira-mono-fonts*.rpm /tmp/mozilla-fira-sans-fonts*.rpm
 	@rm -f /tmp/mozilla*.rpm
 	@$(call dnf,fontconfig-font-replacements)
 
 INSTALL += fonts
 fonts: $(PKG_FONT) fonts-ms fonts-nerd fonts-better
+	@sudo dnf install @fonts
 
 INSTALL += flatpak
 flatpak:
@@ -481,6 +488,10 @@ kse: | jre
 INSTALL += intellij-idea-community
 intellij-idea-community: | snapd
 	@sudo snap install $@ --classic
+
+INSTALL += vlc
+vlc:
+	@sudo dnf install @vlc vlc-plugin*
 
 ########################################################################################################################
 #

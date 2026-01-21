@@ -23,7 +23,7 @@ EXT_ULAUNCHER += ulauncher-obsidian.git ulauncher-numconverter.git ulauncher-lis
 
 # Gnome RPM packages
 PKG_RPM += gnome-shell gnome-terminal seahorse gnome-keyring pinentry-gnome3
-PKG_RPM += gparted baobab gimp gedit gedit-plugins gedit-plugin-editorconfig
+PKG_RPM += gparted baobab gimp gedit gedit-plugins gedit-plugin-editorconfig fedora-chromium-config-gnome
 PKG_RPM += gnome-browser-connector gnome-pomodoro gnome-clocks gnome-monitor-config gnome-system-monitor
 PKG_RPM += adwaita-icon-theme adwaita-cursor-theme gtk-update-icon-cache
 
@@ -50,6 +50,11 @@ INSTALL += gdm
 gdm:
 	@$(call dnf,$@)
 	@sudo systemctl enable gdm
+	@sudo systemctl set-default graphical.target
+
+INSTALL += abrt
+abrt:
+	@$(call dnf,$@ gnome-abrt abrt-addon*)
 
 INSTALL += morewaita-icon-theme
 morewaita-icon-theme: /etc/yum.repos.d/_copr\:copr.fedorainfracloud.org\:dusansimic\:themes.repo xdg-utils gtk-update-icon-cache
@@ -184,8 +189,10 @@ gnome-theme-settings: | gnome-themes arc-theme gnome-shell-extension-user-theme 
 		$(XDG_CONFIG_HOME)/gtk-3.0/gtk.css \
 		$(XDG_CONFIG_HOME)/gtk-4.0/settings.ini
 	@gsettings set org.gnome.desktop.interface gtk-theme 'Arc-Darker'
-	@gsettings set org.gnome.desktop.wm.preferences theme 'Arc-Darker'
+	@gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'
 	@gsettings set org.gnome.desktop.interface icon-theme 'MoreWaita'
+
+	@gsettings set org.gnome.desktop.wm.preferences theme 'Arc-Darker'
 	@gsettings set org.gnome.desktop.wm.preferences titlebar-uses-system-font true
 	@gsettings set org.gnome.desktop.wm.preferences mouse-button-modifier '<Super>'
 
