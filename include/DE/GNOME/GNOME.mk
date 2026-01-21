@@ -52,12 +52,8 @@ gdm:
 	@sudo systemctl enable gdm
 	@sudo systemctl set-default graphical.target
 
-INSTALL += abrt
-abrt:
-	@$(call dnf,$@ gnome-abrt abrt-addon*)
-
 INSTALL += morewaita-icon-theme
-morewaita-icon-theme: /etc/yum.repos.d/_copr\:copr.fedorainfracloud.org\:dusansimic\:themes.repo xdg-utils gtk-update-icon-cache
+morewaita-icon-theme: /etc/yum.repos.d/_copr\:copr.fedorainfracloud.org\:dusansimic\:themes.repo | xdg-utils gtk-update-icon-cache
 	@$(call dnf,$@)
 	@sudo /usr/bin/gtk-update-icon-cache -f -t /usr/share/icons/MoreWaita && /usr/bin/xdg-desktop-menu forceupdate
 

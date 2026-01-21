@@ -127,7 +127,7 @@ PKG_RPM += akmods fwupd bluez mokutil brightnessctl ssh-audit coreutils openssl 
 PKG_RPM += make tree usbguard-selinux usbguard-notifier usbguard-dbus cifs-utils sharutils binutils usbutils pciutils
 PKG_RPM += iwlwifi-dvm-firmware iwlwifi-mld-firmware iwlwifi-mvm-firmware
 PKG_RPM += xdg-utils xdg-user-dirs dconf man-pages
-PKG_RPM += bash bash-completion screen progress pv tio dialog catimg wget2 bc uuid crudini gettext-envsubst
+PKG_RPM += bash bash-completion screen progress pv tio dialog catimg wget2 bc uuid crudini gettext-envsubst symlinks
 PKG_RPM += fastfetch duf fd-find ydiff webp-pixbuf-loader feh nano htop btop fzf less httpie lynis cheat tldr golang
 PKG_RPM += policycoreutils-devel mdns-scan fping nmap iotop-c tcpdump avahi avahi-tools samba-client
 PKG_RPM += gnupg2 pinentry-tty pass-otp pass-audit curl jq libnotify libsecret pwgen
@@ -140,10 +140,8 @@ PKG_RPM += libreoffice-writer libreoffice-calc libreoffice-filters minder firefo
 PKG_RPM += xsane diff-pdf media-player-info steam-devices
 PKG_RPM += fedora-workstation-repositories dracut-network dracut-squash NetworkManager-config-connectivity-fedora
 PKG_RPM += clamav clamav-freshclam clamav-data
-PKG_RPM += restic rsync rclone
+PKG_RPM += syncthing restic rsync rclone
 PKG_RPM += cups hplip hplip-gui
-
-
 
 # DNF plugins
 EXT_DNF := dnf-plugins-core dnf-plugin-diff python3-dnf-plugin-tracer python3-dnf-plugin-rpmconf
@@ -213,6 +211,10 @@ dnf-settings: /etc/dnf/dnf.conf crudini
 	@sudo crudini --ini-options=nospace --set $< main max_parallel_downloads 10
 	@sudo crudini --ini-options=nospace --set $< main ip_resolve 4
 
+INSTALL += core
+core:
+	@sudo dnf -y install @core
+
 INSTALL += ecryptfs-utils
 ecryptfs-utils:
 	@$(call dnf,$@)
@@ -241,7 +243,7 @@ fonts-better: /etc/yum.repos.d/_copr\:copr.fedorainfracloud.org\:hyperreal\:bett
 
 INSTALL += fonts
 fonts: $(PKG_FONT) fonts-ms fonts-nerd fonts-better
-	@sudo dnf install @fonts
+	@sudo dnf -y install @fonts
 
 INSTALL += flatpak
 flatpak:
@@ -491,7 +493,7 @@ intellij-idea-community: | snapd
 
 INSTALL += vlc
 vlc:
-	@sudo dnf install @vlc vlc-plugin*
+	@sudo dnf -y install @vlc vlc-plugin*
 
 ########################################################################################################################
 #
@@ -1202,7 +1204,7 @@ check-release-eol: /etc/os-release
 
 CHECK += check-fwupd-security
 check-fwupd-security: | fwupd
-	@sudo fwupdmgr security
+	-@sudo fwupdmgr security
 
 CHECK += check-journal
 check-journal:
