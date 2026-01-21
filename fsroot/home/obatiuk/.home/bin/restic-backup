@@ -162,6 +162,15 @@ done
 
 # --- Main Execution Block ---
 
+# Check that internet is online
+_internet_status=$(mosquitto_sub ${MQTT_PUB_ARGS} -N -t "home/internet/primary/state" -C 1 -W 2 2>/dev/null || true)
+if [ "${_internet_status}" != "online" ]; then
+	echo "Primary internet is offline. Aborting!"
+	mosquitto_pub ${MQTT_PUB_ARGS} -r -t "${HASS_BACKUP_STATE_TOPIC}" -m "{\"state\" : \"Failure\"}" || true
+	_notify "critical" "Primary internet connection is offline. Aborting!" > /dev/null || true
+	exit 1;
+fi
+
 # Configure repository device using MQTT autodiscovery feature in Home Assistant
 # echo "Following restic repository MQTT payload will be used for autodiscovery:"
 # echo "${HASS_RESTIC_REPOSITORY_DISCOVERY_PAYLOAD}" | jq

@@ -1,6 +1,12 @@
 # DELL XPS 15 7590 model patches
 
 # TODO: add command-configure utility
+#https://dl.dell.com/FOLDER12703333M/1/command-configure-5.1.0-23.el9.x86_64.tar.gz
+#
+#1. rpm -ivh srvadmin-hapi-9.5.0-.el8.x86_64.rpm
+#2. rpm -ivh command-configure-4.8.0-.el8.x86_64.rpm
+#
+#The default installation path is /opt/dell/dcc.
 
 .PHONY:
 grubby:
@@ -29,7 +35,7 @@ install_nvidia_drivers: | /etc/yum.repos.d/rpmfusion-nonfree.repo akmods grubby
 /etc/modprobe.d/dell.conf:
 	@sudo install -D /dev/stdin $@ <<- EOF
 		#
-		# Created manually on $$(date -I) by ${USER}
+		# Created manually on $(TODAY) by $(USER)
 		#
 		# https://bbs.archlinux.org/viewtopic.php?id=222322
 		#
@@ -41,7 +47,7 @@ install_nvidia_drivers: | /etc/yum.repos.d/rpmfusion-nonfree.repo akmods grubby
 /etc/modprobe.d/btusb.conf:
 	@sudo install -D /dev/stdin $@ <<- EOF
 		#
-		# Created manually on $$(date -I) by ${USER}
+		# Created manually on $(TODAY) by $(USER)
 		#
 		# https://bbs.archlinux.org/viewtopic.php?id=222322
 		#
@@ -56,12 +62,12 @@ install_nvidia_drivers: | /etc/yum.repos.d/rpmfusion-nonfree.repo akmods grubby
 	# - https://wiki.archlinux.org/index.php/Solid_State_Drives
 	@sudo install -D /dev/stdin $@ <<- EOF
 		#
-		# Created manually on $$(date -I) by ${USER}
+		# Created manually on $(TODAY) by $(USER)
 		#
 		vm.swappiness=10
 		vm.vfs_cache_pressure=50
 	EOF
 
-PATCH += patch_dell_xps
+PATCH += patch-dell-xps
 patch-dell-xps: | fix_dell_deep_sleep fix_dell_camera install_nvidia_drivers \
 	/etc/modprobe.d/dell.conf /etc/modprobe.d/btusb.conf /etc/sysctl.d/97-swappiness.conf

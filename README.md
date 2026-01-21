@@ -2,12 +2,19 @@
 
 ## Installation
 
-* Install Fedora Workstation minimal (follow instructions [here](https://github.com/benmat/fedora-install))
-* Download latest `dotfiles`
-* Run `make install`
+* Install whatever version your need from https://www.fedoraproject.org/
+  * Note the [Fedora Everything](https://www.fedoraproject.org/misc#everything) version
+* Import private PGP keys
+* Restore backup
+* Run the following script:
 
 ```bash
+sudo dnf install git-crypt
 mkdir -pv "${HOME}/.home"
 git clone https://github.com/obatiuk/dotfiles.git "${HOME}/.home/.dotfiles.d"
-cd "${HOME}/.home/.dotfiles.d" && make install
+pushd "${HOME}/.home/.dotfiles.d"
+git-crypt unlock <keyfile>
+make init | tee -a ~/init.log
+popd
+cat ~/init.log
 ``
