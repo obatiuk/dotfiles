@@ -122,7 +122,7 @@ endef
 #
 
 # All RPM packages that do not require manual installation steps
-PKG_RPM += rpm deltarpm dnf5 dnf-utils redhat-lsb rpmconf pam-u2f pamu2fcfg audit plymouth-system-theme NetworkManager
+PKG_RPM += rpm deltarpm dnf5 dnf-utils lsb_release rpmconf pam-u2f pamu2fcfg audit plymouth-system-theme NetworkManager
 PKG_RPM += akmods fwupd bluez mokutil brightnessctl ssh-audit coreutils openssl tuned acpi lm_sensors sysstat thermald
 PKG_RPM += make tree usbguard-selinux usbguard-notifier usbguard-dbus cifs-utils sharutils binutils usbutils pciutils
 PKG_RPM += iwlwifi-dvm-firmware iwlwifi-mld-firmware iwlwifi-mvm-firmware
@@ -138,7 +138,7 @@ PKG_RPM += java-latest-openjdk java-21-openjdk java-25-openjdk adoptium-temurin-
 PKG_RPM += python3 python3-pip python3-devel python3-virtualenv
 PKG_RPM += libreoffice-writer libreoffice-calc libreoffice-filters minder firefox ImageMagick xsensors ffmpeg
 PKG_RPM += xsane diff-pdf media-player-info steam-devices
-PKG_RPM += fedora-workstation-repositories dracut-network dracut-squash NetworkManager-config-connectivity-fedora
+PKG_RPM += dracut-network dracut-squash NetworkManager-config-connectivity-fedora
 PKG_RPM += clamav clamav-freshclam clamav-data
 PKG_RPM += syncthing restic rsync rclone
 PKG_RPM += cups hplip hplip-gui
@@ -210,6 +210,11 @@ dnf-settings: /etc/dnf/dnf.conf crudini
 	@sudo crudini --ini-options=nospace --set $< main fastestmirror 1
 	@sudo crudini --ini-options=nospace --set $< main max_parallel_downloads 10
 	@sudo crudini --ini-options=nospace --set $< main ip_resolve 4
+
+INSTALL += fedora-workstation-repositories
+fedora-workstation-repositories:
+	@$(call dnf,$@)
+	@sudo dnf config-manager setopt google-chrome.enabled=1
 
 INSTALL += core
 core:
@@ -623,7 +628,7 @@ $(DOTHOME_BIN)/start-steam: $(DF_FSHOME)/.home/bin/start-steam | $(DOTHOME_BIN)/
 	@chmod +x $<
 
 FILES += $(DOTHOME_BIN)/restic-backup
-$(DOTHOME_BIN)/restic-backup: $(DF_FSHOME)/.home/bin/restic-backup | restic jq mosquitto curl libsecret redhat-lsb \
+$(DOTHOME_BIN)/restic-backup: $(DF_FSHOME)/.home/bin/restic-backup | restic jq mosquitto curl libsecret lsb_release \
 	diffutils mosquitto libsecret $(BACKUP_CONF_FILES)
 	@install -d $(@D)
 	@ln -svfn $< $@
@@ -935,9 +940,7 @@ FILES += /etc/yum.repos.d/docker-ce.repo
 	@sudo dnf config-manager addrepo --from-repofile=https://download.docker.com/linux/fedora/docker-ce.repo
 
 FILES += /etc/yum.repos.d/google-chrome.repo
-/etc/yum.repos.d/google-chrome.repo: | dnf-plugins fedora-workstation-repositories
-	@sudo dnf config-manager setopt google-chrome.enabled=1
-	@sudo dnf update --refresh
+/etc/yum.repos.d/google-chrome.repo: | fedora-workstation-repositories
 
 FILES += /etc/yum.repos.d/vivaldi-fedora.repo
 /etc/yum.repos.d/vivaldi-fedora.repo: | dnf-plugins
