@@ -4,7 +4,7 @@
 
 [Unit]
 Description=Runs restic backup for %i
-Requires=network-online.target
+Requires=network-check.service
 ConditionUser=!root
 
 [Service]
@@ -14,6 +14,7 @@ Type=oneshot
 RuntimeDirectory=restic-backup/%i
 IOSchedulingClass=idle
 Restart=no
+ExecStartPre=/bin/sleep 15
 ExecStart=/usr/bin/gnome-session-inhibit \
     --inhibit logout:suspend:idle \
     --app-id org.gnome.Terminal.desktop \

@@ -1,0 +1,10 @@
+#
+# Created by dotfiles setup script on ${TODAY} by ${USER}
+#
+# Source: https://github.com/containers/podman/issues/22197
+
+[Unit]
+Description=User-level network-online.target
+Requires=network-online.service
+Wants=network-online.service
+After=network-online.service

@@ -18,7 +18,7 @@
 # --- Bash Completions ---
 
 # Manually load user bash-completion files
-# This ensures completions for tools like 'pass' and others are available
+# This ensures completions for tools like 'pass' and others
 for bcfile in "${HOME}"/.local/share/bash-completion/completions/* ; do
   [ -f "${bcfile}" ] && . "${bcfile}"
 done
@@ -33,7 +33,7 @@ fi
 
 # --- Base Aliases ---
 
-# Use single quotes for aliases to prevent premature variable expansion.
+# Use single quotes for aliases to prevent premature variable expansion
 alias ls='ls --color=auto --human-readable'             # More readable output
 alias la='ls -la --color=auto --human-readable'
 alias grep='grep --color=auto'
@@ -54,7 +54,7 @@ alias dotfiles='cd "${HOME}/.home/.dotfiles.d"'
 
 # --- History Management ---
 
-# History settings for sharing history across multiple shell sessions seamlessly.
+# History settings for sharing history across multiple shell sessions seamlessly
 export HISTSIZE=1000000
 export HISTFILESIZE=${HISTSIZE}
 export HISTCONTROL=ignoreboth:erasedups                 # Ignore duplicates and spaces
@@ -62,9 +62,9 @@ export HISTIGNORE='&:ls:ll:la:cd:exit:clear:history'
 export HISTTIMEFORMAT='%F %T '
 
 # Safe and standard history synchronization pattern:
-# 1. Append current history to file (history -a).
-# 2. Read new history from file written by other sessions (history -n).
-# 3. Append previous PROMPT_COMMANDs using parameter expansion.
+# 1. Append current history to file (history -a)
+# 2. Read new history from file written by other sessions (history -n)
+# 3. Append previous PROMPT_COMMANDs using parameter expansion
 export PROMPT_COMMAND='history -a; history -n; '${PROMPT_COMMAND:-}''
 
 # Append to the history file, don't overwrite it
@@ -102,7 +102,7 @@ export GPG_TTY
 
 # --- Utility Functions ---
 
-# man: Function to display man pages with custom colors using tput, while preserving environment.
+# man: Function to display man pages with custom colors using tput, while preserving environment
 function man {
     # Check if tput is available before attempting to use it for colors
     if command -v tput >/dev/null 2>&1; then
@@ -128,7 +128,7 @@ function man {
     fi
 }
 
-# fcount: Counts the number of regular files in each immediate subdirectory.
+# fcount: Counts the number of regular files in each immediate subdirectory
 function fcount {
     find . -maxdepth 1 -type d | sort | while read -r dir; do
         n=$(find "${dir}" -type f 2>/dev/null | wc -l)

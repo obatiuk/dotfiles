@@ -4,7 +4,7 @@
 
 [Unit]
 Description=Verifies '%i' repository integrity and publishes the result
-Requires=network-online.target
+Requires=network-check.service
 ConditionUser=!root
 
 [Service]
@@ -12,4 +12,5 @@ Type=simple
 RuntimeDirectory=restic-check/%i
 IOSchedulingClass=idle
 Restart=no
+ExecStartPre=/bin/sleep 15
 ExecStart=/usr/bin/make -C ${WORKDIR} check-restic-%i-no-deps

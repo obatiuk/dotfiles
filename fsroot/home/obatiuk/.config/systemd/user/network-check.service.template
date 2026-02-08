@@ -1,0 +1,17 @@
+#
+# Created by dotfiles setup script on ${TODAY} by ${USER}
+#
+
+[Unit]
+Description=Check if local network is available
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStartPre=/bin/sh -c 'nmcli -t -f GENERAL.STATE dev show | grep -q "connected"'
+ExecStart=/bin/sh -c 'while ! ping -c 1 -W 1 ${BACKUP_HOST} > /dev/null 2>&1; do echo "Network not ready, waiting..."; sleep 1; done; echo "Network is up."'
+RemainAfterExit=yes
+
+[Install]
+WantedBy=default.target

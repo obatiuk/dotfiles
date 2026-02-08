@@ -14,6 +14,7 @@
 #
 # shellcheck shell=bash
 # shellcheck disable=SC2155
+# shellcheck disable=SC2076
 
 # --- Define Primary XDG Variables (with default fallback) ---
 
@@ -38,6 +39,11 @@ export GRADLE_USER_HOME="${XDG_DATA_HOME}/gradle"        # Gradle configuration 
 export OPAMROOT="${XDG_DATA_HOME}/opam"                  # Opam root directory (.opam)
 export W3M_DIR="${XDG_DATA_HOME}/w3m"                    # W3m configuration (.w3m)
 export GOPATH="${XDG_DATA_HOME}/go"                      # Go workspace
+
+if ! [[ ":${PATH}:" =~ ":${GOPATH}/bin:" ]]; then
+    export PATH="${PATH}:${GOPATH}/bin"
+fi
+
 export PYTHON_HISTORY="${XDG_DATA_HOME}/python/history"  # Python interactive history
 
 # Data Files - Specialized

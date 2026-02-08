@@ -43,6 +43,7 @@ export XDG_PICTURES_DIR ?= $(HOME)/Private/Pictures
 export NVM_DIR ?= $(XDG_DATA_HOME)/nvm
 export NOW := $(shell date +%Y-%m-%d_%H:%M:%S)
 export TODAY := $(shell date -I)
+export BACKUP_HOST := backup.lan
 
 MODEL := $(shell (if command -v hostnamectl > /dev/null 2>&1; \
 	then hostnamectl | grep 'Hardware Model:' | sed 's/^.*: //'; \
@@ -238,6 +239,7 @@ fonts-nerd: | curl bsdtar
 	@install -d ${XDG_DATA_HOME}/fonts/NerdFonts
 	@curl -sL "https://github.com/ryanoasis/nerd-fonts/releases/download/v3.4.0/JetBrainsMono.zip" | bsdtar -xv -f - -C ${XDG_DATA_HOME}/fonts/NerdFonts
 	@curl -sL "https://github.com/ryanoasis/nerd-fonts/releases/download/v3.4.0/FiraCode.zip" | bsdtar -xv -f - -C ${XDG_DATA_HOME}/fonts/NerdFonts
+	@fc-cache -fv
 
 INSTALL += fonts-better
 fonts-better: /etc/yum.repos.d/_copr\:copr.fedorainfracloud.org\:hyperreal\:better_fonts.repo
@@ -847,7 +849,7 @@ $(XDG_STATE_HOME)/bash/history: $(BASHRCD)/bashrc-xdg
 FILES += $(XDG_CONFIG_HOME)/systemd/user/restic-backup@.service
 $(XDG_CONFIG_HOME)/systemd/user/restic-backup@.service: \
 	$(DF_FSHOME)/.config/systemd/user/restic-backup@.service.template \
-	| $(XDG_CONFIG_HOME)/systemd/user/network-online.target \
+	| $(XDG_CONFIG_HOME)/systemd/user/network-check.service \
 	$(DOTHOME_BIN)/restic-backup \
 	gettext-envsubst
 	@WORKDIR=$(DF_ROOT) envsubst '$$TODAY $$USER $$WORKDIR' < $< | install -m 644 -DC /dev/stdin $@
@@ -857,7 +859,7 @@ $(XDG_CONFIG_HOME)/systemd/user/restic-backup@.service: \
 FILES += $(XDG_CONFIG_HOME)/systemd/user/restic-stats@.service
 $(XDG_CONFIG_HOME)/systemd/user/restic-stats@.service: \
 	$(DF_FSHOME)/.config/systemd/user/restic-stats@.service.template \
-	| $(XDG_CONFIG_HOME)/systemd/user/network-online.target \
+	| $(XDG_CONFIG_HOME)/systemd/user/network-check.service \
 	$(XDG_CONFIG_HOME)/systemd/user/restic-backup@.service \
 	$(DOTHOME_BIN)/restic-stats \
 	gettext-envsubst
@@ -868,7 +870,7 @@ $(XDG_CONFIG_HOME)/systemd/user/restic-stats@.service: \
 FILES += $(XDG_CONFIG_HOME)/systemd/user/restic-check@.service
 $(XDG_CONFIG_HOME)/systemd/user/restic-check@.service: \
 	$(DF_FSHOME)/.config/systemd/user/restic-check@.service.template \
-	| $(XDG_CONFIG_HOME)/systemd/user/network-online.target \
+	| $(XDG_CONFIG_HOME)/systemd/user/network-check.service \
 	$(DOTHOME_BIN)/restic-check \
 	gettext-envsubst
 	@WORKDIR=$(DF_ROOT) envsubst '$$TODAY $$USER $$WORKDIR' < $< | install -m 644 -DC /dev/stdin $@
@@ -878,7 +880,7 @@ $(XDG_CONFIG_HOME)/systemd/user/restic-check@.service: \
 FILES += $(XDG_CONFIG_HOME)/systemd/user/restic-backup-daily@.timer
 $(XDG_CONFIG_HOME)/systemd/user/restic-backup-daily@.timer: \
 	$(DF_FSHOME)/.config/systemd/user/restic-backup-daily@.timer.template \
-	| $(XDG_CONFIG_HOME)/systemd/user/network-online.target \
+	| $(XDG_CONFIG_HOME)/systemd/user/network-check.service \
 	$(XDG_CONFIG_HOME)/systemd/user/restic-backup@.service \
 	gettext-envsubst
 	@envsubst '$$TODAY $$USER' < $< | install -m 644 -DC /dev/stdin $@
@@ -888,7 +890,7 @@ $(XDG_CONFIG_HOME)/systemd/user/restic-backup-daily@.timer: \
 FILES += $(XDG_CONFIG_HOME)/systemd/user/restic-backup-monthly@.timer
 $(XDG_CONFIG_HOME)/systemd/user/restic-backup-monthly@.timer: \
 	$(DF_FSHOME)/.config/systemd/user/restic-backup-monthly@.timer.template \
-	| $(XDG_CONFIG_HOME)/systemd/user/network-online.target \
+	| $(XDG_CONFIG_HOME)/systemd/user/network-check.service \
 	$(XDG_CONFIG_HOME)/systemd/user/restic-backup@.service \
 	gettext-envsubst
 	@envsubst '$$TODAY $$USER' < $< | install -m 644 -DC /dev/stdin $@
@@ -898,17 +900,40 @@ $(XDG_CONFIG_HOME)/systemd/user/restic-backup-monthly@.timer: \
 FILES += $(XDG_CONFIG_HOME)/systemd/user/restic-check-monthly@.timer
 $(XDG_CONFIG_HOME)/systemd/user/restic-check-monthly@.timer: \
 	$(DF_FSHOME)/.config/systemd/user/restic-check-monthly@.timer.template \
-	| $(XDG_CONFIG_HOME)/systemd/user/network-online.target \
+	| $(XDG_CONFIG_HOME)/systemd/user/network-check.service \
 	$(DOTHOME_BIN)/restic-check \
 	gettext-envsubst
 	@envsubst '$$TODAY $$USER' < $< | install -m 644 -DC /dev/stdin $@
 	@systemd-analyze verify $@
 	@systemctl --user daemon-reload
 
-# An ugly hack to allow 'user' systemd services to wait for online network status
+FILES += $(XDG_CONFIG_HOME)/systemd/user/network-online.service
+$(XDG_CONFIG_HOME)/systemd/user/network-online.service: $(DF_FSHOME)/.config/systemd/user/network-online.service.template \
+	| NetworkManager \
+	gettext-envsubst
+	@envsubst '$$TODAY $$USER' < $< | install -m 644 -DC /dev/stdin $@
+	@systemd-analyze verify $@
+	@systemctl --user daemon-reload
+	@systemctl --user enable --now $(@F)
+
 FILES += $(XDG_CONFIG_HOME)/systemd/user/network-online.target
-$(XDG_CONFIG_HOME)/systemd/user/network-online.target:
-	@systemctl --user link /usr/lib/systemd/system/network-online.target
+$(XDG_CONFIG_HOME)/systemd/user/network-online.target: $(DF_FSHOME)/.config/systemd/user/network-online.target.template \
+	| $(XDG_CONFIG_HOME)/systemd/user/network-online.service \
+	NetworkManager \
+	gettext-envsubst
+	@envsubst '$$TODAY $$USER' < $< | install -m 644 -DC /dev/stdin $@
+	@systemd-analyze verify $@
+	@systemctl --user daemon-reload
+
+FILES += $(XDG_CONFIG_HOME)/systemd/user/network-check.service
+$(XDG_CONFIG_HOME)/systemd/user/network-check.service: $(DF_FSHOME)/.config/systemd/user/network-check.service.template \
+	| $(XDG_CONFIG_HOME)/systemd/user/network-online.target \
+	NetworkManager \
+	gettext-envsubst
+	@envsubst '$$TODAY $$USER $$BACKUP_HOST' < $< | install -m 644 -DC /dev/stdin $@
+	@systemd-analyze verify $@
+	@systemctl --user daemon-reload
+	@systemctl --user enable --now $(@F)
 
 FILES += $(NVM_DIR)/nvm.sh
 $(NVM_DIR)/nvm.sh: | curl

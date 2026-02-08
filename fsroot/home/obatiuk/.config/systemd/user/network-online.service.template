@@ -1,0 +1,14 @@
+#
+# Created by dotfiles setup script on ${TODAY} by ${USER}
+#
+# Source: https://github.com/containers/podman/issues/22197
+
+[Unit]
+Description=User-level proxy to system-level network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash -c 'until systemctl is-active network-online.target; do sleep 1; done'
+
+[Install]
+WantedBy=default.target

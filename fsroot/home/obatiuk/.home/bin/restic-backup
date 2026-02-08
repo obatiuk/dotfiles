@@ -8,6 +8,17 @@
 
 # shellcheck disable=SC2086
 
+# --- Defaults ---
+
+: "${RESTIC_COMMAND:=restic}"
+
+# Do not publish anything via MQTT by default
+: "${BACKUP_MQTT_AUTO_DISCOVERY:=false}"
+: "${BACKUP_MQTT_BACKUP_STATUS:=false}"
+
+# Do not check for Internet connection by default
+: "${BACKUP_ENV_REQ_INTERNET_ONLINE:=false}"
+
 # --- Utility Functions ---
 
 # Log errors to stderr
@@ -74,12 +85,31 @@ function _usage {
     sleep 1
 }
 
+function _check_network_online() {
+	# Check that network is online
+	nm-online
+}
+
+function _check_internet_online() {
+	_check_network_online
+	# Check that internet is online
+    _internet_status=$(mosquitto_sub ${MQTT_PUB_ARGS} -N -t "home/internet/primary/state" -C 1 -W 5 2>/dev/null || true)
+    echo "Obtained internet status: [${_internet_status}]"
+    if [ "${_internet_status}" != "online" ]; then
+    	_err "Primary internet is offline. Aborting!"
+    	_notify "critical" "Primary internet connection is offline. Aborting!" > /dev/null || true
+    	mosquitto_pub ${MQTT_PUB_ARGS} -r -t "${HASS_BACKUP_STATE_TOPIC}" -m "{\"state\" : \"Failure\"}" || true
+    	exit 1;
+    fi
+}
+
 # --- Check Prerequisites ---
 
 command -v restic > /dev/null 2>&1 || { _err "'restic' command not found. Aborting!"; exit 1; }
 command -v jq > /dev/null 2>&1 || { _err "'jq' command not found. Aborting!"; exit 1; }
 command -v notify-send > /dev/null 2>&1 || { _err "'notify-send' command not found. Aborting!"; exit 1; }
 command -v mosquitto_pub > /dev/null 2>&1 || { _err "'mosquitto_pub' command not found. Aborting!"; exit 1; }
+command -v nm-online > /dev/null 2>&1 || { _err "'nm-online' command not found. Aborting!"; exit 1; }
 
 # --- Argument Parsing ---
 
@@ -122,8 +152,6 @@ echo "Loading backup configuration file '${_conf_file}' ..."
 source "${_conf_file}"
 echo "Backup configuration file '${_conf_file}' was loaded successfully."
 
-: "${RESTIC_COMMAND:=restic}"
-
 echo "Loading MQTT environment file ..."
 # shellcheck source=/dev/null
 source "${HOME}/.home/backup/.env.mqtt.primary"
@@ -162,13 +190,8 @@ done
 
 # --- Main Execution Block ---
 
-# Check that internet is online
-_internet_status=$(mosquitto_sub ${MQTT_PUB_ARGS} -N -t "home/internet/primary/state" -C 1 -W 2 2>/dev/null || true)
-if [ "${_internet_status}" != "online" ]; then
-	echo "Primary internet is offline. Aborting!"
-	mosquitto_pub ${MQTT_PUB_ARGS} -r -t "${HASS_BACKUP_STATE_TOPIC}" -m "{\"state\" : \"Failure\"}" || true
-	_notify "critical" "Primary internet connection is offline. Aborting!" > /dev/null || true
-	exit 1;
+if [ "${BACKUP_ENV_REQ_INTERNET_ONLINE}" == "true" ]; then
+	_check_internet_online
 fi
 
 # Configure repository device using MQTT autodiscovery feature in Home Assistant

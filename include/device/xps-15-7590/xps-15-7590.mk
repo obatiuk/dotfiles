@@ -42,17 +42,17 @@ FILE += /opt/dell/dcc/cctk
 
 # Fix known suspend issues
 .PHONY:
-fix_dell_deep_sleep: grubby
+fix-dell-deep-sleep: grubby
 	@sudo grubby --args='mem_sleep_default=deep' --update-kernel=ALL
 
 # Remove redness from video stream
 .PHONY:
-fix_dell_camera:
+fix-dell-camera:
 	@sudo dnf install v4l-utils
 	@v4l2-ctl -c saturation=42
 
 .PHONY:
-install_nvidia_drivers: | /etc/yum.repos.d/rpmfusion-nonfree.repo akmods grubby
+install-nvidia-drivers: | /etc/yum.repos.d/rpmfusion-nonfree.repo akmods grubby
 	@sudo dnf -y install akmod-nvidia xorg-x11-drv-nvidia-cuda vulkan nvidia-vaapi-driver libva-utils vdpauinfo
 	@sudo grubby --update-kernel=ALL --args='rd.driver.blacklist=nouveau modprobe.blacklist=nouveau'
 	@sudo akmods --force
@@ -73,9 +73,9 @@ install_nvidia_drivers: | /etc/yum.repos.d/rpmfusion-nonfree.repo akmods grubby
 	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -DC /dev/stdin $@
 
 PATCH += patch-dell-xps-15-7590
-patch-dell-xps-15-7590: fix_dell_deep_sleep \
-	fix_dell_camera \
-	install_nvidia_drivers \
+patch-dell-xps-15-7590: fix-dell-deep-sleep \
+	fix-dell-camera \
+	install-nvidia-drivers \
 	/etc/modprobe.d/dell.conf \
 	/etc/modprobe.d/btusb.conf \
 	/etc/sysctl.d/97-swappiness.conf

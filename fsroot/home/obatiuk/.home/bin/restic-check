@@ -6,6 +6,15 @@
 #
 # shellcheck disable=SC2086
 
+# --- Defaults ---
+
+# Do not publish anything via MQTT by default
+: "${BACKUP_MQTT_AUTO_DISCOVERY:=false}"
+: "${BACKUP_MQTT_BACKUP_STATUS:=false}"
+
+# Do not check for Internet connection by default
+: "${BACKUP_ENV_REQ_INTERNET_ONLINE:=false}"
+
 # --- Utility Functions ---
 
 # Log errors to stderr
@@ -37,11 +46,29 @@ function _usage {
     sleep 1
 }
 
+function _check_network_online() {
+	# Check that network is online
+	nm-online
+}
+
+function _check_internet_online() {
+	_check_network_online
+	# Check that internet is online
+    _internet_status=$(mosquitto_sub ${MQTT_PUB_ARGS} -N -t "home/internet/primary/state" -C 1 -W 5 2>/dev/null || true)
+    if [ "${_internet_status}" != "online" ]; then
+    	_err "Primary internet is offline. Aborting!"
+    	mosquitto_pub ${MQTT_PUB_ARGS} -r -t "${HASS_BACKUP_STATE_TOPIC}" -m "{\"state\" : \"Failure\"}" || true
+    	_notify "critical" "Primary internet connection is offline. Aborting!" > /dev/null || true
+    	exit 1;
+    fi
+}
+
 # --- Check Prerequisites ---
 
 command -v restic > /dev/null 2>&1 || { _err "'restic' command not found. Aborting!"; exit 1; }
 command -v jq > /dev/null 2>&1 || { _err "'jq' command not found. Aborting!"; exit 1; }
 command -v mosquitto_pub > /dev/null 2>&1 || { _err "'mosquitto_pub' command not found. Aborting!"; exit 1; }
+command -v nm-online > /dev/null 2>&1 || { _err "'nm-online' command not found. Aborting!"; exit 1; }
 
 # --- Argument Parsing ---
 
@@ -98,11 +125,10 @@ for var in "${REQUIRED_VARS[@]}"; do
     fi
 done
 
-# Check that internet is online
-_internet_status=$(mosquitto_sub ${MQTT_PUB_ARGS} -N -t "home/internet/primary/state" -C 1 -W 2 2>/dev/null || true)
-if [ "${_internet_status}" != "online" ]; then
-	_err "Primary internet is offline. Aborting!"
-	exit 1;
+# --- Main Execution Block ---
+
+if [ "${BACKUP_ENV_REQ_INTERNET_ONLINE}" == "true" ]; then
+	_check_internet_online
 fi
 
 # Configure repository device using MQTT autodiscovery feature in Home Assistant
