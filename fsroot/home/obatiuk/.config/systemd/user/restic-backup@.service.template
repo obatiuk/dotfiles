@@ -5,6 +5,7 @@
 [Unit]
 Description=Runs restic backup for %i
 Requires=network-check.service
+After=network-check.service
 ConditionUser=!root
 
 [Service]
