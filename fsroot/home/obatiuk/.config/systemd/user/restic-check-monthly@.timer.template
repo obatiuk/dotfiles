@@ -4,8 +4,8 @@
 
 [Unit]
 Description=Monthly check for %i
-Requires=network-check.service
-After=network-check.service
+Requires=network-online.target
+After=network-online.target
 
 [Timer]
 OnBootSec=15min
