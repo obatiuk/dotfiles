@@ -33,10 +33,15 @@ fi
 
 # --- OpenWrt authentication and data retrieval ---
 
+_auth_token_payload=$(jq -n \
+  --arg user "${_router_luci_username}" \
+  --arg pass "${_router_luci_password}" \
+  '{id: 1, method: "login", params: [$user, $pass]}')
+
 # Get RPC auth token
-_rpc_auth_token=$(curl -s -k -X POST "${_router_luci_url}/luci/rpc/auth" --data \
-  "{\"id\":1,\"method\":\"login\",\"params\":[\"${_router_luci_username}\",\"${_router_luci_password}\"]}" \
-    | jq -r '.result')
+_rpc_auth_token=$(curl -s -k -X POST "${_router_luci_url}/luci/rpc/auth" \
+  -H "Content-Type: application/json" \
+  --data "${_auth_token_payload}" | jq -r '.result')
 
 if [[ "${_rpc_auth_token}" == "null" ]]; then
     echo "ERROR: Failed to retrieve RPC auth token. Check credentials and URL. Aborting!" >&2
@@ -44,9 +49,12 @@ if [[ "${_rpc_auth_token}" == "null" ]]; then
 fi
 
 # Get OS version
-_os_ver=$(curl -s -k -X POST "${_router_luci_url}/luci/rpc/sys?auth=${_rpc_auth_token}" --data \
-  '{"id":1,"method":"exec","params":["ubus call system board"]}' | \
-    jq -r '.result | fromjson | .release | "\(.version)-\(.revision)"')
+_os_version_payload='{"id": 1, "method": "exec", "params": ["ubus call system board"]}'
+
+_os_ver=$(curl -s -k -X POST "${_router_luci_url}/luci/rpc/sys?auth=${_rpc_auth_token}" \
+  -H "Content-Type: application/json" \
+  --data "${_os_version_payload}" \
+  | jq -r '.result | fromjson | .release | "\(.version)-\(.revision)"')
 
 # Get session ID
 _login_params="luci_username=${_router_luci_username}&luci_password=${_router_luci_password}"
