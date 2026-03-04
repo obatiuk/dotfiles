@@ -17,10 +17,6 @@
 
 # --- Defaults ---
 
-# Do not publish anything via MQTT by default
-: "${BACKUP_MQTT_AUTO_DISCOVERY:=false}"
-: "${BACKUP_MQTT_BACKUP_STATUS:=false}"
-
 # Do not check for Internet connection by default
 : "${BACKUP_ENV_REQ_INTERNET_ONLINE:=false}"
 
