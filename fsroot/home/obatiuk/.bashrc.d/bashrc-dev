@@ -36,6 +36,11 @@ export NVM_DIR="${XDG_DATA_HOME}/nvm"
 if [ -f '/opt/google/google-cloud-sdk/path.bash.inc' ]; then \. '/opt/google/google-cloud-sdk/path.bash.inc'; fi
 if [ -f '/opt/google/google-cloud-sdk/completion.bash.inc' ]; then \. '/opt/google/google-cloud-sdk/completion.bash.inc'; fi
 
+# --- Python Setup ---
+
+# Pipenv: use project based virtual environment and ignore the global virtualenv manager `pew`
+export PIPENV_VENV_IN_PROJECT=1
+
 # --- Utility Functions ---
 
 # dtags: Fetches and displays all available tags for a given Docker image
