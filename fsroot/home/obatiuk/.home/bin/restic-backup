@@ -253,7 +253,7 @@ exec {RESTIC_LOCK_FD}>"${RESTIC_LOCK_FILE}" || { _err "Unable to open or create 
 
     # Prune repository. Continue even if prune fails
     _nid=$(_notify "normal" "Pruning repository ..." "${_nid}") || _err "The script was unable to send a notification. Ignoring."
-    _prune_repository || true
+    _prune_repository || _unlock_repository || true
 
     _nid=$(_notify "normal" "Backup has finished" "${_nid}") || _err "The script was unable to send a notification. Ignoring."
 
