@@ -205,6 +205,7 @@ EDITORS := /usr/bin/vi /usr/bin/nano /usr/bin/micro
 
 INSTALL += dnf-plugins
 dnf-plugins: $(EXT_DNF)
+	@sudo dnf remove -y PackageKit-command-not-found
 
 INSTALL += dnf-settings
 dnf-settings: /etc/dnf/dnf.conf crudini
