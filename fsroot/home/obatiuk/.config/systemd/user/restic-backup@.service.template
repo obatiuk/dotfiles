@@ -15,7 +15,7 @@ Type=oneshot
 RuntimeDirectory=restic-backup/%i
 IOSchedulingClass=idle
 Restart=no
-ExecStartPre=/bin/sleep 15
+ExecStartPre=/bin/sleep 30
 ExecStart=/usr/bin/gnome-session-inhibit \
     --inhibit logout:suspend:idle \
     --app-id org.gnome.Terminal.desktop \
