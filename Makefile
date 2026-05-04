@@ -687,8 +687,8 @@ $(DOTHOME_BIN)/sync-restic-env-secondary: $(DF_FSHOME)/.home/bin/sync-restic-env
 	@ln -svfn $< $@
 	@chmod +x $<
 
-FILES += $(DOTHOME_BIN)/appim
-$(DOTHOME_BIN)/appim: $(DF_FSHOME)/.home/bin/appim | fuse fuse-libs
+FILES += $(DOTHOME_BIN)/appimage
+$(DOTHOME_BIN)/appimage: $(DF_FSHOME)/.home/bin/appimage | fuse fuse-libs
 	@install -d $(@D)
 	@ln -svfn $< $@
 	@chmod +x $<
@@ -1086,30 +1086,36 @@ update-dnf: check-release-eol
 	@sudo dnf update --refresh
 
 UPDATE += update-check-rpmconf
-update-check-rpmconf: | rpmconf update-dnf
+update-check-rpmconf: rpmconf | update-dnf
 	@echo -e "\n*******************************************************************************************************"
 	@$(call log,$(INFO),"\\nChecking for unmerged configuration files ...\\n")
-	@sudo rpmconf -at > /dev/null || $(call log,$(WARN),"Warning: There are unmerged system configuration files. \
+	@sudo $^ -at > /dev/null || $(call log,$(WARN),"Warning: There are unmerged system configuration files. \
 		use 'make check-rpmconf' to review them\\n")
 
 UPDATE += update-flatpak
-update-flatpak: | flatpak
+update-flatpak: flatpak
 	@echo -e "\n*******************************************************************************************************"
 	@$(call log,$(INFO),"\\nUpdating 'flatpak' packages ...\\n")
-	@flatpak update -y
-	@flatpak update -y --user
+	@$^ update -y
+	@$^ update -y --user
 
 UPDATE += update-snap
-update-snap:
+update-snap: snap
 	@echo -e "\n*******************************************************************************************************"
 	@$(call log,$(INFO),"\\nUpdating 'snap' packages ...\\n")
-	@sudo snap refresh
+	@sudo $^ refresh
+
+UPDATE += update-appimage
+update-appimage: $(DOTHOME_BIN)/appimage
+	@echo -e "\n*******************************************************************************************************"
+	@$(call log,$(INFO),"\\nUpdating 'AppImage' applications ...\\n")
+	@$^ update-all
 
 UPDATE += update-micro-plugins
-update-micro-plugins: | micro
+update-micro-plugins: micro
 	@echo -e "\n*******************************************************************************************************"
 	@$(call log,$(INFO), "\\nUpdating micro plugins ...\\n")
-	@$(foreach plugin,$(EXT_MICRO),$$(command -v micro) -plugin update $(subst micro_,,$(plugin);$(NEWLINE)))
+	@$(foreach plugin,$(EXT_MICRO),$$(command -v $^) -plugin update $(subst micro_,,$(plugin);$(NEWLINE)))
 
 UPDATE += update-firmware
 update-firmware: | fwupd
