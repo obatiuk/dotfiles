@@ -127,7 +127,7 @@ PKG_RPM += rpm deltarpm dnf5 dnf-utils lsb_release rpmconf pam-u2f pamu2fcfg aud
 PKG_RPM += akmods fwupd bluez mokutil brightnessctl ssh-audit coreutils openssl tuned acpi lm_sensors sysstat thermald
 PKG_RPM += make tree usbguard-selinux usbguard-notifier usbguard-dbus cifs-utils sharutils binutils usbutils pciutils
 PKG_RPM += iwlwifi-dvm-firmware iwlwifi-mld-firmware iwlwifi-mvm-firmware
-PKG_RPM += xdg-utils xdg-user-dirs dconf man-pages
+PKG_RPM += xdg-utils xdg-user-dirs dconf man-pages fuse fuse-libs
 PKG_RPM += bash bash-completion screen progress pv tio dialog catimg wget2 bc uuid crudini gettext-envsubst symlinks
 PKG_RPM += fastfetch duf fd-find ydiff webp-pixbuf-loader feh nano htop btop fzf less httpie lynis cheat tldr golang
 PKG_RPM += policycoreutils-devel mdns-scan fping nmap iotop-c tcpdump avahi avahi-tools samba-client
@@ -264,6 +264,18 @@ flatpak:
 	@flatpak --user remote-modify --no-filter --enable flathub
 	@flatpak install -y --system org.gtk.Gtk3theme.Arc-Darker
 
+INSTALL += snapd
+snapd:
+	@$(call dnf,$@)
+	@sudo [ ! -L /snap ] && sudo ln -svnf /var/lib/snapd/snap /snap
+	@# A manual fix for the broken snap when `/usr/lib/snapd` link exists
+	@# (see https://discussion.fedoraproject.org/t/snap-stopped-working-on-f41/161371 and
+	@# https://github.com/canonical/snapd/commit/858801cf47fe5e8dc6307e4cf02191b7157fc0c2)
+	@sudo [ -L '/usr/lib/snapd' ] && sudo rm -rfi '/usr/lib/snapd'
+	@sudo snap set system refresh.retain=2
+	@sudo systemctl daemon-reload
+	@sudo systemctl restart $@
+
 INSTALL += nodejs-lts
 nodejs-lts: | $(NVM_DIR)/nvm.sh
 	@[ -n "$$( source $(NVM_DIR)/nvm.sh && nvm ls | grep -v 'N/A' | grep -o 'lts/[a-zA-Z]*' | head -n 1)" ] \
@@ -393,18 +405,6 @@ steam: | flatpak steam-devices /etc/yum.repos.d/rpmfusion-nonfree.repo
 		com.valvesoftware.Steam.Utility.gamescope \
 		org.freedesktop.Platform.VulkanLayer.gamescope
 	@flatpak override --user --filesystem=/run/udev:ro com.valvesoftware.Steam
-
-INSTALL += snapd
-snapd:
-	@$(call dnf,$@)
-	@sudo [ ! -L /snap ] && sudo ln -svnf /var/lib/snapd/snap /snap
-	@# A manual fix for the broken snap when `/usr/lib/snapd` link exists
-	@# (see https://discussion.fedoraproject.org/t/snap-stopped-working-on-f41/161371 and
-	@# https://github.com/canonical/snapd/commit/858801cf47fe5e8dc6307e4cf02191b7157fc0c2)
-	@sudo [ -L '/usr/lib/snapd' ] && sudo rm -rfi '/usr/lib/snapd'
-	@sudo snap set system refresh.retain=2
-	@sudo systemctl daemon-reload
-	@sudo systemctl restart $@
 
 INSTALL += logrotate
 logrotate: /etc/logrotate.d/dnf
@@ -683,6 +683,12 @@ $(DOTHOME_BIN)/sync-restic-env-primary: $(DF_FSHOME)/.home/bin/sync-restic-env-p
 
 FILES += $(DOTHOME_BIN)/sync-restic-env-secondary
 $(DOTHOME_BIN)/sync-restic-env-secondary: $(DF_FSHOME)/.home/bin/sync-restic-env-secondary | libsecret pass
+	@install -d $(@D)
+	@ln -svfn $< $@
+	@chmod +x $<
+
+FILES += $(DOTHOME_BIN)/appim
+$(DOTHOME_BIN)/appim: $(DF_FSHOME)/.home/bin/appim | fuse fuse-libs
 	@install -d $(@D)
 	@ln -svfn $< $@
 	@chmod +x $<

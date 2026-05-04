@@ -1,0 +1,282 @@
+#!/bin/bash
+
+# Configuration directories
+BIN_DIR="$HOME/.local/bin/appimage"
+DESKTOP_DIR="$HOME/.local/share/applications"
+ICON_DIR="$HOME/.local/share/icons/appimage"
+
+# Updater Configuration
+UPDATER_URL="https://github.com/AppImageCommunity/AppImageUpdate/releases/download/continuous/appimageupdatetool-x86_64.AppImage"
+UPDATER_BIN="$BIN_DIR/appimageupdatetool"
+
+# Ensure necessary directories exist
+mkdir -p "$BIN_DIR" "$DESKTOP_DIR" "$ICON_DIR"
+
+# Function to ensure the AppImageUpdate tool is installed
+ensure_updater() {
+    if [[ ! -f "$UPDATER_BIN" ]]; then
+        echo "AppImageUpdate tool not found. Downloading it now..."
+        wget -q --show-progress "$UPDATER_URL" -O "$UPDATER_BIN" || { echo "Failed to download updater."; exit 1; }
+        chmod +x "$UPDATER_BIN"
+        echo "Updater installed."
+    fi
+}
+
+# Function to list installed AppImages
+list_apps() {
+    echo "Installed AppImages in $BIN_DIR:"
+    echo "----------------------------------------"
+
+    local found_apps=0
+
+    for app in "$BIN_DIR"/*; do
+        if [[ -f "$app" ]]; then
+            local app_name
+            app_name=$(basename "$app")
+
+            if [[ "$app_name" != "appimageupdatetool" ]]; then
+                echo "$app_name"
+                found_apps=1
+            fi
+        fi
+    done
+
+    if [[ $found_apps -eq 0 ]]; then
+        echo "No AppImages installed yet."
+    fi
+    echo "----------------------------------------"
+}
+
+# Function to install (or re-integrate) an AppImage
+install_appimage() {
+    local source="$1"
+    local is_inplace_update="$2"
+
+    if [[ -z "$source" ]]; then
+        echo "Error: Please provide a local file path or URL."
+        return 1
+    fi
+
+    local filename
+    filename=$(basename "${source%%\?*}")
+
+    local dest_path="$BIN_DIR/$filename"
+
+    # Download or copy the file (Skip if we are just re-integrating after an update)
+    if [[ "$is_inplace_update" != "true" ]]; then
+        echo "Fetching $filename..."
+        if [[ "$source" =~ ^https?:// ]]; then
+            wget -q --show-progress "$source" -O "$dest_path" || { echo "Download failed."; rm -f "$dest_path"; exit 1; }
+        else
+            if [[ ! -f "$source" ]]; then
+                echo "Error: Local file '$source' not found."
+                exit 1
+            fi
+
+            # Check if it's already the same file to prevent move errors
+            if [[ "$source" -ef "$dest_path" ]]; then
+                echo "File is already in the destination directory. Re-integrating..."
+            else
+                echo "Moving file to $BIN_DIR..."
+                mv "$source" "$dest_path" || { echo "Move failed."; exit 1; }
+            fi
+        fi
+    else
+        dest_path="$source"
+    fi
+
+    chmod +x "$dest_path"
+    echo "Extracting desktop integration files..."
+
+    local temp_dir
+    temp_dir=$(mktemp -d)
+
+    cd "$temp_dir" || exit 1
+
+    "$dest_path" --appimage-extract > /dev/null 2>&1
+
+    if [[ -d "squashfs-root" ]]; then
+        local desktop_file
+        desktop_file=$(find squashfs-root -maxdepth 1 -name "*.desktop" | head -n 1)
+
+        if [[ -n "$desktop_file" ]]; then
+            # Use the .desktop filename for the AppImage if available
+            local target_name
+            target_name=$(basename "$desktop_file" .desktop)
+            local new_dest_path="$BIN_DIR/${target_name}.AppImage"
+
+            # Rename the file to match the desktop file name
+            if [[ "$dest_path" != "$new_dest_path" ]]; then
+                echo "Renaming to extracted name: ${target_name}.AppImage"
+                mv "$dest_path" "$new_dest_path"
+                dest_path="$new_dest_path"
+            fi
+
+            local icon_name
+            icon_name=$(grep -E "^Icon=" "$desktop_file" | cut -d= -f2 | tr -d '\r')
+
+            local icon_file
+            icon_file=$(find squashfs-root -name "${icon_name}.png" -o -name "${icon_name}.svg" | head -n 1)
+
+            if [[ -z "$icon_file" && -f squashfs-root/.DirIcon ]]; then
+                icon_file="squashfs-root/.DirIcon"
+            fi
+
+            local final_icon_path="$icon_name"
+
+            if [[ -n "$icon_file" ]]; then
+                local ext="${icon_file##*.}"
+                [[ "$icon_file" == *".DirIcon" ]] && ext="png"
+                final_icon_path="$ICON_DIR/${target_name}_icon.${ext}"
+                cp "$icon_file" "$final_icon_path"
+            fi
+
+            local final_desktop_path="$DESKTOP_DIR/${target_name}.desktop"
+            cp "$desktop_file" "$final_desktop_path"
+
+            sed -i "s~^Exec=.*~Exec=\"$dest_path\" %U~" "$final_desktop_path"
+            sed -i "s~^TryExec=.*~TryExec=\"$dest_path\"~" "$final_desktop_path"
+            sed -i "s~^Icon=.*~Icon=$final_icon_path~" "$final_desktop_path"
+
+            echo "Integration complete for '$target_name'."
+        else
+            # Clean and lowercase the original filename if .desktop file is not available
+            echo "Warning: No .desktop file found. Skipping menu integration."
+
+            local raw_app_name="${filename%.*}" # Strip original extension
+            local clean_name
+            clean_name=$(echo "$raw_app_name" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | sed 's/-\+/-/g' | sed 's/-$//')
+            local new_dest_path="$BIN_DIR/${clean_name}.appimage"
+
+            if [[ "$dest_path" != "$new_dest_path" ]]; then
+                echo "Applying fallback rename to clean format: ${clean_name}.appimage"
+                mv "$dest_path" "$new_dest_path"
+                dest_path="$new_dest_path"
+            fi
+        fi
+    else
+        echo "Warning: Failed to extract AppImage (ensure 'fuse' and 'fuse-devel' packages are installed)."
+    fi
+
+    # Cleanup
+    cd "$HOME" || exit 1
+    rm -rf "$temp_dir"
+}
+
+# Function to recursively find, move, and install AppImages
+import_dir() {
+    local search_dir="$1"
+
+    if [[ -z "$search_dir" || ! -d "$search_dir" ]]; then
+        echo "Error: Please provide a valid directory to scan."
+        echo "Usage: $0 import <directory_path>"
+        return 1
+    fi
+
+    echo "Scanning '$search_dir' recursively for AppImages..."
+    echo "----------------------------------------"
+
+    local count=0
+
+    # Process substitution and -print0 safely handles spaces and weird characters in filenames
+    while IFS= read -r -d '' file; do
+        local filename
+        filename=$(basename "$file")
+        local dest_path="$BIN_DIR/$filename"
+
+        echo "Discovered: $filename"
+
+        # Check if the file is already in our destination bin using -ef (checks same inode)
+        if [[ "$file" -ef "$dest_path" ]]; then
+            echo "-> File is already in destination folder. Re-integrating..."
+            install_appimage "$dest_path" "true"
+        else
+            echo "-> Moving to $BIN_DIR and integrating..."
+            mv "$file" "$dest_path"
+            install_appimage "$dest_path" "true"
+        fi
+
+        count=$((count + 1))
+        echo "---"
+    done < <(find "$search_dir" -type f -iname "*.appimage" -print0)
+
+    if [[ $count -eq 0 ]]; then
+        echo "No .AppImage files found in '$search_dir'."
+    else
+        echo "Successfully imported $count AppImages."
+    fi
+}
+
+# Function to update a specific AppImage
+update_app() {
+    local target="$1"
+    local app_path="$BIN_DIR/$target"
+
+    if [[ ! -f "$app_path" ]]; then
+        echo "Error: Application '$target' not found in $BIN_DIR."
+        return 1
+    fi
+
+    echo "Checking for updates: $target..."
+
+    # -O flag tells AppImageUpdate to Overwrite the existing file instead of creating a new versioned file.
+    # This ensures our existing .desktop file path doesn't break.
+    if "$UPDATER_BIN" -O "$app_path"; then
+        echo "Update applied (or already up to date). Re-integrating..."
+        install_appimage "$app_path" "true"
+    else
+        echo "Update failed or skipped. (Note: The AppImage must contain embedded update information to use this feature)."
+    fi
+}
+
+# Function to update all installed AppImages
+update_all() {
+    echo "Starting global update process..."
+    for app in "$BIN_DIR"/*; do
+        if [[ -f "$app" ]]; then
+            local app_filename
+            app_filename=$(basename "$app")
+            if [[ "$app_filename" != "appimageupdatetool" ]]; then
+                echo "----------------------------------------"
+                update_app "$app_filename"
+            fi
+        fi
+    done
+    echo "----------------------------------------"
+    echo "Global update complete."
+}
+
+# Command Line Interface routing
+case "$1" in
+    install)
+        install_appimage "$2"
+        ;;
+    import)
+        import_dir "$2"
+        ;;
+    list)
+        list_apps
+        ;;
+    update)
+        if [[ -z "$2" ]]; then
+            echo "Error: Specify an AppImage to update (use 'list' to see exact names)."
+            echo "Usage: $0 update <appimage_filename>"
+        else
+            ensure_updater
+            update_app "$2"
+        fi
+        ;;
+    update-all)
+        ensure_updater
+        update_all
+        ;;
+    *)
+        echo "AppImage Manager"
+        echo "Usage: $0 {install|import|list|update|update-all}"
+        echo "  install <file/url>  - Download/Move an AppImage and integrate it."
+        echo "  import <directory>  - Recursively find, move, and integrate all AppImages from a folder."
+        echo "  list                - Show all locally installed AppImages."
+        echo "  update <filename>   - Update a specific installed AppImage."
+        echo "  update-all          - Check and apply updates for all installed AppImages."
+        ;;
+esac
