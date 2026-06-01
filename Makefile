@@ -134,10 +134,10 @@ PKG_RPM += policycoreutils-devel mdns-scan fping nmap iotop-c tcpdump avahi avah
 PKG_RPM += gnupg2 pinentry-tty pass-otp pass-audit curl jq libnotify libsecret pwgen
 PKG_RPM += gvfs-mtp 7zip-standalone unrar cabextract bsdtar odt2txt qrencode
 PKG_RPM += glow micro bat mc git gh diffutils git-lfs git-extras git-credential-libsecret git-crypt lynx whois
-PKG_RPM += perl-Image-ExifTool calibre ebook-tools dos2unix graphviz
+PKG_RPM += perl-Image-ExifTool calibre ebook-tools dos2unix graphviz jpegoptim ImageMagick
 PKG_RPM += java-latest-openjdk java-21-openjdk java-25-openjdk adoptium-temurin-java-repository
-PKG_RPM += python3 python3-pip python3-devel python3-virtualenv shftm shellcheck
-PKG_RPM += libreoffice-writer libreoffice-calc libreoffice-filters minder firefox ImageMagick xsensors ffmpeg
+PKG_RPM += python3 python3-pip python3-devel python3-virtualenv shftm ShellCheck
+PKG_RPM += libreoffice-writer libreoffice-calc libreoffice-filters minder firefox xsensors ffmpeg
 PKG_RPM += xsane diff-pdf media-player-info steam-devices
 PKG_RPM += dracut-network dracut-squash NetworkManager-config-connectivity-fedora
 PKG_RPM += clamav clamav-freshclam clamav-data
@@ -153,6 +153,11 @@ PKG_SNAP := chromium-ffmpeg mqtt-explorer
 
 # All **user** `flatpak` that do not require manual installation steps
 PKG_FLATPAK := org.gnupg.GPA be.alexandervanhee.gradia com.core447.StreamController
+
+PKG_APPIMAGE := https://download.live.ledger.com/ledger-live-desktop-4.0.0-linux-x86_64.AppImage
+PKG_APPIMAGE += https://github.com/espotek-org/Labrador/releases/download/continuous/Labrador-3ce3d75-x86_64.AppImage
+PKG_APPIMAGE += https://files.nordicsemi.com/artifactory/web-assets-com_nordicsemi/external/swtools/ncd/launcher/v5.3.0/nrfconnect-5.3.0-x86_64.AppImage
+PKG_APPIMAGE += https://www.mindomo.com/download/11.1/Mindomo_v.11.1.8_x64.AppImage
 
 # Font packages
 PKG_FONT := google-droid-sans-fonts google-droid-serif-fonts google-droid-sans-mono-fonts
@@ -197,6 +202,8 @@ BACKUP_CONF_FILES := $(patsubst $(DF_BACKUP_CONF)/%,$(BACKUP_CONF)/%,$(FILES_BAC
 
 # Editors
 EDITORS := /usr/bin/vi /usr/bin/nano /usr/bin/micro
+
+DOCKER_CMD := podman
 
 ########################################################################################################################
 #
@@ -298,10 +305,11 @@ docker: /etc/yum.repos.d/docker-ce.repo
 		docker-selinux \
 		docker-engine-selinux \
 		docker-engine
-	@$(call dnf,docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin)
+	@$(call dnf,podman podman-compose)
+#	@$(call dnf,docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin)
 	@sudo groupadd --force docker
 	@sudo usermod -aG docker '$(USER)'
-	@sudo systemctl enable --now $@
+#	@sudo systemctl enable --now $@
 
 INSTALL += ql700
 ql700: | cups
@@ -412,7 +420,7 @@ logrotate: /etc/logrotate.d/dnf
 	@sudo systemctl enable --now $@.timer
 
 .PHONY: browserpass-bin
-browserpass-bin: | git make coreutils golang
+browserpass-bin: browserpass-fetch git make coreutils golang
 	@$(call clone,browserpass-native.git)
 	@make -C $(DOTHOME_OPT)/browserpass-native.git browserpass configure
 	@sudo make -C $(DOTHOME_OPT)/browserpass-native.git install
@@ -422,6 +430,9 @@ browserpass-bin: | git make coreutils golang
 CLEAN += clean-browserpass
 clean-browserpass: | make
 	@make -C $(DOTHOME_OPT)/browserpass-native.git clean
+
+UPDATE += update-browserpass
+update-browserpass: browserpass-bin
 
 INSTALL += browserpass
 browserpass: | pass pass-extensions $(PASS_HOME)/.browserpass.json browserpass-bin clean-browserpass
@@ -539,6 +550,10 @@ $(EXT_INTELLIJ): intellij-idea-community | acpi
 INSTALL += $(EXT_MICRO)
 $(EXT_MICRO): | micro fzf
 	@micro -plugin install $(subst micro_,,$@)
+
+INSTALL += $(PKG_APPIMAGE)
+$(PKG_APPIMAGE): | $(DOTHOME_BIN)/appimage
+	@$(DOTHOME_BIN)/appimage install $@
 
 ########################################################################################################################
 #
@@ -1145,7 +1160,7 @@ clean-journal:
 
 CLEAN += clean-docker
 clean-docker: | docker
-	@docker system prune
+	@$(DOCKER_CMD) system prune
 
 CLEAN += clean-flatpak
 clean-flatpak: | flatpak
@@ -1213,6 +1228,10 @@ CHECK += check-dnf-needs-restarting
 check-dnf-needs-restarting:
 	-@sudo dnf needs-restarting
 
+CHECK += check-dnf-extras
+check-dnf-extras:
+	@sudo dnf list --extras
+
 CHECK += check-rpmconf
 check-rpmconf: | rpmconf meld
 	@sudo rpmconf -a -f meld
@@ -1227,7 +1246,7 @@ check-disk-space: | duf
 
 CHECK += check-docker-disk-usage
 check-docker-disk-usage: | docker
-	-@docker system df
+	-@(DOCKER_CMD) system df
 
 CHECK += check-ssh
 check-ssh: | ssh-audit
@@ -1283,7 +1302,7 @@ check-missing-packages:
 	@$(foreach package,$(PKG_RPM) $(EXT_DNF) $(PKG_FONT),\
 		rpm -q $(package) > /dev/null || \
 			{ $(call log,$(ERR),"Error: Package [$(package)] is defined\x2C but not installed \
-				or has a different name\x21"); exit 1;}$(NEWLINE))
+				or has a different name\x21"); }$(NEWLINE))
 
 ########################################################################################################################
 #
