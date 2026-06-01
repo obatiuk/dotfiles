@@ -420,7 +420,7 @@ logrotate: /etc/logrotate.d/dnf
 	@sudo systemctl enable --now $@.timer
 
 .PHONY: browserpass-bin
-browserpass-bin: browserpass-fetch git make coreutils golang
+browserpass-bin: git make coreutils golang
 	@$(call clone,browserpass-native.git)
 	@make -C $(DOTHOME_OPT)/browserpass-native.git browserpass configure
 	@sudo make -C $(DOTHOME_OPT)/browserpass-native.git install
