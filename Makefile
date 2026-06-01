@@ -59,7 +59,7 @@ DF_INCLUDE := $(abspath $(DF_ROOT)/include)
 DF_DEVICE := $(abspath $(DF_INCLUDE)/device)
 DF_GNOME := $(abspath $(DF_INCLUDE)/DE/GNOME)
 DF_VIVALDI_CONF := $(DF_FSHOME)/.config/vivaldi/CustomUIModifications
-DF_BACKUP_CONF :=  $(DF_FSHOME)/.home/backup
+DF_BACKUP_CONF := $(DF_FSHOME)/.home/backup
 
 DOTHOME := $(abspath $(HOME)/.home)
 BASHRCD := $(abspath $(HOME)/.bashrc.d)
@@ -539,6 +539,12 @@ INSTALL += $(PKG_FLATPAK)
 $(PKG_FLATPAK): | flatpak
 	@flatpak install -y --user $@
 
+INSTALL += install-appimages
+install-appimages: | $(DOTHOME_BIN)/appimage
+	@for app in $(PKG_APPIMAGE); do \
+		$(DOTHOME_BIN)/appimage install "$${app}"; \
+	done
+
 INSTALL += $(EXT_VSCODE)
 $(EXT_VSCODE): code
 	@snap run $< --force --install-extension '$@'
@@ -550,10 +556,6 @@ $(EXT_INTELLIJ): intellij-idea-community | acpi
 INSTALL += $(EXT_MICRO)
 $(EXT_MICRO): | micro fzf
 	@micro -plugin install $(subst micro_,,$@)
-
-INSTALL += $(PKG_APPIMAGE)
-$(PKG_APPIMAGE): | $(DOTHOME_BIN)/appimage
-	@$(DOTHOME_BIN)/appimage install $@
 
 ########################################################################################################################
 #
