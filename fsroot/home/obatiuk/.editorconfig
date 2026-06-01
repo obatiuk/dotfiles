@@ -35,9 +35,9 @@ indent_size = 4
 indent_style = space
 
 [*.{js,ts}]
-tab_width = 4
-indent_size = 4
-indent_style = tab
+tab_width = 2
+indent_size = 2
+indent_style = space
 quote_type = single
 
 [*.{markdown,md}]
@@ -425,3 +425,11 @@ ij_json_space_before_comma = false
 ij_json_spaces_within_braces = false
 ij_json_spaces_within_brackets = false
 ij_json_wrap_long_lines = false
+
+[*.sql]
+indent_size = 4
+indent_style = space
+
+[Dockerfile*]
+indent_size = 4
+indent_style = space

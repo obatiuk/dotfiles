@@ -1,0 +1,204 @@
+[org/gnome/shell]
+disable-user-extensions=false
+favorite-apps=['org.gnome.Nautilus.desktop', 'org.gnome.Terminal.desktop', 'intellij-idea-community_intellij-idea-community.desktop', 'code_code.desktop', 'vivaldi-stable.desktop', 'google-chrome.desktop', 'firefox.desktop', 'md.obsidian.Obsidian.desktop', 'xmind.desktop', 'org.gnome.gedit.desktop', 'chrome-cinhimbnkkaeohfgghhklpknlkffjgod-Profile_4.desktop', 'chrome-hpfldicfbfomlpcikngkocigghgafkph-Profile_4.desktop', 'org.gnome.Pomodoro.desktop', 'cc.arduino.IDE2.desktop', 'calibre-gui.desktop', 'com.valvesoftware.Steam.desktop', 'slack_slack.desktop', 'wine-Programs-reMarkable-reMarkable.desktop']
+remember-mount-password=false
+
+[org/gnome/settings-daemon/plugins/media-keys]
+custom-keybindings=['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom3/']
+home=['<Super>h']
+screensaver=['<Super>l']
+control-center=['<Super>s']
+rfkill=[]
+rfkill-bluetooth=[]
+rfkill-bluetooth-static=[]
+rfkill-static=[]
+
+[org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0]
+name='Run Terminal'
+command='${GNOME_TERMINAL_CMD}'
+binding='<Super>t'
+
+[org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1]
+name='Dell KVM - Switch Input'
+command='${KVM_SWITCH_INPUT_CMD}'
+binding='<Alt>i'
+
+[org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2]
+name='Display Ulauncer'
+command='${ULAUNCHER_CMD}'
+binding='<Super>r'
+
+[org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom3]
+name='Run System Monitor'
+command='${SYS_MONITOR_CMD}'
+binding='<Shift><Control>Escape'
+
+[org/gnome/desktop/interface]
+gtk-theme='Arc-Darker'
+color-scheme='prefer-dark'
+icon-theme='MoreWaita'
+show-battery-percentage=true
+clock-show-date=true
+clock-show-weekday=true
+text-scaling-factor=1.0
+toolkit-accessibility=false
+monospace-font-name='JetBrainsMono Nerd Font Mono 10'
+font-name='Sans 9'
+document-font-name='Sans 9'
+font-antialiasing='grayscale'
+font-hinting='slight'
+cursor-size=24
+cursor-blink=true
+enable-animations=false
+
+[org/gnome/desktop/wm/preferences]
+titlebar-uses-system-font=true
+mouse-button-modifier='<Super>'
+num-workspaces=1
+
+[org/gnome/desktop/background]
+picture-uri='file://${WALLPAPER_PATH}'
+picture-uri-dark='file://${WALLPAPER_PATH}'
+color-shading-type='solid'
+picture-options='zoom'
+
+[org/gnome/desktop/wm/keybindings]
+switch-applications=[]
+switch-applications-backward=[]
+switch-windows=['<Primary>Tab']
+switch-windows-backward=['<Primary><Shift>Tab']
+switch-group=['<Primary>grave']
+switch-group-backward=['<Primary><Shift>grave']
+switch-to-workspace-1=['<Super>1']
+switch-to-workspace-2=['<Super>2']
+switch-to-workspace-3=['<Super>3']
+switch-to-workspace-4=['<Super>4']
+move-to-monitor-right=['<Shift><Super>x']
+move-to-monitor-left=['<Shift><Super>z']
+maximize=['<Shift><Super>f']
+switch-to-workspace-up=[]
+switch-to-workspace-down=[]
+switch-to-workspace-left=[]
+switch-to-workspace-right=[]
+
+[org/gnome/mutter/keybindings]
+toggle-tiled-left=[]
+toggle-tiled-right=[]
+
+[org/gnome/desktop/input-sources]
+sources=[('xkb', 'us'), ('xkb', 'ru'), ('xkb', 'ua')]
+mru-sources=[('xkb', 'us'), ('xkb', 'ru'), ('xkb', 'ua')]
+per-window=false
+xkb-options=['lv3:ralt_switch']
+
+[org/gnome/desktop/peripherals/keyboard]
+numlock-state=false
+repeat=true
+delay=uint32 250
+repeat-interval=uint32 15
+
+[org/gnome/desktop/peripherals/mouse]
+speed=-0.44
+
+[org/gnome/desktop/peripherals/touchpad]
+edge-scrolling-enabled=false
+natural-scroll=false
+speed=0.068
+two-finger-scrolling-enabled=true
+tap-to-click=true
+
+[org/gnome/desktop/datetime]
+automatic-timezone=true
+
+[org/gnome/desktop/screensaver]
+lock-enabled=true
+lock-delay=uint32 0
+
+[org/gnome/desktop/session]
+idle-delay=uint32 600
+
+[org/gnome/desktop/sound]
+event-sounds=false
+allow-volume-above-100-percent=true
+
+[org/gnome/desktop/calendar]
+show-weekdate=false
+
+[org/gnome/mutter]
+center-new-windows=true
+dynamic-workspaces=false
+workspaces-only-on-primary=false
+experimental-features=['scale-monitor-framebuffer']
+
+[org/gnome/SessionManager]
+logout-prompt=false
+auto-save-session=true
+
+[org/gnome/settings-daemon/plugins/color]
+night-light-temperature=uint32 4378
+night-light-enabled=true
+night-light-schedule-automatic=true
+night-light-schedule-to=6.0
+night-light-schedule-from=20.0
+recalibrate-display-threshold=uint32 0
+
+[org/gnome/nautilus/preferences]
+show-create-link=true
+always-use-location-entry=true
+show-delete-permanently=true
+show-hidden-files=true
+
+[org/gnome/nautilus/list-view]
+default-visible-columns=['name', 'size', 'type', 'where', 'date_modified']
+default-zoom-level='small'
+
+[org/gtk/Settings/FileChooser]
+sort-column='name'
+date-format='regular'
+show-hidden=true
+clock-format='24h'
+startup-mode='cwd'
+show-type-column=true
+sort-order='ascending'
+type-format='category'
+show-size-column=true
+location-mode='path-bar'
+sort-directories-first=true
+
+[org/gnome/settings-daemon/plugins/power]
+idle-dim=true
+sleep-inactive-battery-type='suspend'
+idle-brightness=30
+power-saver-profile-on-low-battery=true
+ambient-enabled=true
+sleep-inactive-battery-timeout=1200
+sleep-inactive-ac-timeout=3600
+sleep-inactive-ac-type='suspend'
+power-button-action='nothing'
+
+[org/gnome/desktop/privacy]
+old-files-age=uint32 10
+remove-old-temp-files=true
+remove-old-trash-files=false
+# Disable unusable `usb-protection` GNOME settings until this bug is fixed:
+# https://gitlab.gnome.org/GNOME/gnome-settings-daemon/-/issues/735
+usb-protection=false
+usb-protection-level='lockscreen'
+
+[org/gnome/desktop/notifications]
+show-banners=false
+show-in-lock-screen=false
+
+[org/gnome/login-screen]
+disable-user-list=true
+
+[org/gnome/system/location]
+enabled=true
+
+[org/gnome/desktop/search-providers]
+disable-external=true
+
+[org/gnome/software]
+download-updates=false
+download-updates-notify=false
+allow-updates=false

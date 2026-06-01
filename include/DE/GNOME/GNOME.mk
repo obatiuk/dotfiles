@@ -1,14 +1,13 @@
-
 ARC_THEME_SOURCE ?= git
 
-# GNOME Shell extensions (rpm packages)
+# GNOME Shell extensions (RPM packages)
 PKG_GSHELL := gnome-shell-extension-dash-to-dock gnome-shell-extension-appindicator
 PKG_GSHELL += gnome-shell-extension-frippery-move-clock gnome-shell-extension-gsconnect
 PKG_GSHELL += gnome-shell-extension-sound-output-device-chooser gnome-shell-extension-freon
 PKG_GSHELL += gnome-shell-extension-blur-my-shell gnome-shell-extension-user-theme
 PKG_GSHELL += gnome-shell-extension-no-overview
 
-# GNOME shell extensions
+# GNOME Shell extensions
 EXT_GSHELL := https\://extensions.gnome.org/extension/1401/bluetooth-quick-connect
 EXT_GSHELL += https\://extensions.gnome.org/extension/3780/ddterm
 EXT_GSHELL += https\://extensions.gnome.org/extension/7065/tiling-shell
@@ -21,30 +20,31 @@ EXT_GSHELL += https\://extensions.gnome.org/extension/517/caffeine
 EXT_ULAUNCHER := ulauncher-emoji.git pass-ulauncher.git pass-for-ulauncher.git pass-otp-for-ulauncher.git
 EXT_ULAUNCHER += ulauncher-obsidian.git ulauncher-numconverter.git ulauncher-list-keywords.git
 
-# Gnome RPM packages
+# GNOME RPM packages
 PKG_RPM += gnome-shell gnome-terminal seahorse gnome-keyring pinentry-gnome3
 PKG_RPM += gparted baobab gimp gedit gedit-plugins gedit-plugin-editorconfig fedora-chromium-config-gnome
-PKG_RPM += gnome-browser-connector gnome-pomodoro gnome-clocks gnome-monitor-config gnome-system-monitor
-PKG_RPM += adwaita-icon-theme adwaita-cursor-theme gtk-update-icon-cache
+PKG_RPM += gnome-browser-connector gnome-pomodoro gnome-clocks gnome-monitor-config
+PKG_RPM += gnome-system-monitor adwaita-icon-theme adwaita-cursor-theme gtk-update-icon-cache
 
-# Install preferred GNOME theme
 PKG_FLATPACK += org.gtk.Gtk3theme.Arc-Darker
 
 DF_GNOME_FSROOT := $(DF_GNOME)/fsroot
 DF_GNOME_FSHOME := $(DF_GNOME_FSROOT)/home/obatiuk
-DF_GNOME_RES := $(DF_GNOME)/resources
+DF_GNOME_RES    := $(DF_GNOME)/resources
+
+COPR_THEMES_REPO := /etc/yum.repos.d/_copr\:copr.fedorainfracloud.org\:dusansimic\:themes.repo
 
 ########################################################################################################################
 #
-# Package installation customizations
+# GNOME Installation Customizations
 #
 
 INSTALL += gnome-desktop
 gnome-desktop:
 	@# Force group installation if -B flag is present
 	@$(if $(findstring B,$(firstword -$(MAKEFLAGS))), \
-		@sudo dnf -y group install $@, \
-		@dnf group list --installed --hidden | grep $@ > /dev/null || sudo dnf -y group install $@;)
+		sudo dnf -y group install $@, \
+		dnf group list --installed --hidden | grep $@ > /dev/null || sudo dnf -y group install $@)
 
 INSTALL += gdm
 gdm:
@@ -53,38 +53,41 @@ gdm:
 	@sudo systemctl set-default graphical.target
 
 INSTALL += morewaita-icon-theme
-morewaita-icon-theme: /etc/yum.repos.d/_copr\:copr.fedorainfracloud.org\:dusansimic\:themes.repo | xdg-utils gtk-update-icon-cache
+morewaita-icon-theme: $(COPR_THEMES_REPO) | xdg-utils gtk-update-icon-cache
 	@$(call dnf,$@)
-	@sudo /usr/bin/gtk-update-icon-cache -f -t /usr/share/icons/MoreWaita && /usr/bin/xdg-desktop-menu forceupdate
+	@sudo /usr/bin/gtk-update-icon-cache -f -t /usr/share/icons/MoreWaita
+	@/usr/bin/xdg-desktop-menu forceupdate
 
 INSTALL += gnome-themes
-gnome-themes: | adwaita-icon-theme adwaita-cursor-theme morewaita-icon-theme arc-theme
+gnome-themes: | adwaita-icon-theme adwaita-cursor-theme morewaita-icon-theme arc-theme flatpak-themes
+
+INSTALL += flatpak-themes
+flatpak-themes:
+	@$(if $(PKG_FLATPACK), flatpak install -y flathub $(PKG_FLATPACK) || true)
 
 ifeq ($(ARC_THEME_SOURCE),git)
-# `arc-theme` package from the official repository doesn't have latest patches
-# Use patched Arc themes version from git: https://github.com/jnsh/arc-theme/blob/master/INSTALL.md
 INSTALL += arc-theme
 arc-theme: | gnome-shell git install-arc-theme-git build-arc-theme-git clean-arc-theme-git
 
 .PHONY: install-arc-theme-git
 install-arc-theme-git:
 	-@sudo dnf -y remove arc-theme
-	@# install prerequisites
-	@$(call dnf,optipng gnome-themes-extra gtk-murrine-engine meson inkscape sassc glib2-devel gdk-pixbuf2 \
-		gtk3-devel gtk4-devel autoconf automake)
+	@$(call dnf,optipng gnome-themes-extra gtk-murrine-engine meson inkscape sassc \
+		glib2-devel gdk-pixbuf2 gtk3-devel gtk4-devel autoconf automake)
 
-# Using SELF_CALL=xxx to avoid `inkscape` segfaults during build (https://gitlab.com/inkscape/inkscape/-/issues/4716)
 .PHONY: build-arc-theme-git
 build-arc-theme-git:
 	@install -d $(DOTHOME_OPT)
-	@_rebuild_theme=false
-	@if [ ! -d $(DOTHOME_OPT)/arc-theme ]; then
+	@_rebuild=false
+	@if [ ! -d "$(DOTHOME_OPT)/arc-theme" ]; then
 	@	git clone https://github.com/obatiuk/arc-theme --depth 1 $(DOTHOME_OPT)/arc-theme
-	@	_rebuild_theme=true
+	@	_rebuild=true
 	@fi
 	@git -C $(DOTHOME_OPT)/arc-theme remote update
-	@_has_changes=$$(git -C $(DOTHOME_OPT)/arc-theme status -uno | grep -q 'Your branch is behind' && echo 'true' || echo 'false')
-	@if [ $${_rebuild_theme} == true ] || [ $${_has_changes} == true ]; then
+	@if git -C $(DOTHOME_OPT)/arc-theme status -uno | grep -q 'Your branch is behind'; then
+	@	_rebuild=true
+	@fi
+	@if [ "$$_rebuild" = true ]; then
 	@	git -C $(DOTHOME_OPT)/arc-theme pull
 	@	meson setup --reconfigure --prefix=$(HOME)/.local \
 			-Dvariants=dark,darker \
@@ -93,8 +96,8 @@ build-arc-theme-git:
 	@	SELF_CALL=true bash -c 'meson install -C $(DOTHOME_OPT)/arc-theme/build'
 	@	install -d $(HOME)/.themes
 	@	for theme in Arc{,-Dark,-Darker,-Lighter}{,-solid}; do
-	@		if [ -d $(XDG_DATA_HOME)/themes/$${theme} ]; then
-	@			ln -svfn $(XDG_DATA_HOME)/themes/$${theme} $(HOME)/.themes/$${theme}
+	@		if [ -d "$(XDG_DATA_HOME)/themes/$$theme" ]; then
+	@			ln -svfn "$(XDG_DATA_HOME)/themes/$$theme" "$(HOME)/.themes/$$theme"
 	@		fi
 	@	done
 	@fi
@@ -107,20 +110,21 @@ clean-arc-theme-git:
 	@meson compile --clean -C $(DOTHOME_OPT)/arc-theme/build
 
 else
-# Install `arc-theme` from the official repository
 INSTALL += arc-theme
 arc-theme:
 	@$(call dnf,arc-theme)
-	@rm -rf $(DOTHOME_OPT)/arc-theme
-	@rm -rf $(XDG_DATA_HOME)/themes/Arc{,-Dark,-Darker,-Lighter}{,-solid}
-	@rm -rf $(HOME)/.themes/Arc{,-Dark,-Darker,-Lighter}{,-solid}
+	@rm -rf $(DOTHOME_OPT)/arc-theme $(XDG_DATA_HOME)/themes/Arc* $(HOME)/.themes/Arc*
 endif
+
+########################################################################################################################
+#
+# GNOME Settings & Extensions
+#
 
 INSTALL += gnome-shell-extensions
 gnome-shell-extensions: | gnome-shell $(PKG_GSHELL) $(EXT_GSHELL)
-	@gsettings set org.gnome.shell disable-user-extensions false
-	-@/usr/bin/gnome-extensions disable 'window-list@gnome-shell-extensions.gcampax.github.com'
-	-@/usr/bin/gnome-extensions disable 'places-menu@gnome-shell-extensions.gcampax.github.com'
+	@/usr/bin/gnome-extensions disable 'window-list@gnome-shell-extensions.gcampax.github.com' || true
+	@/usr/bin/gnome-extensions disable 'places-menu@gnome-shell-extensions.gcampax.github.com' || true
 
 INSTALL += ulauncher
 ulauncher:
@@ -136,251 +140,56 @@ meld: $(DF_GNOME_RES)/meld.ini | dconf
 	@$(call dnf,$@)
 	@dconf load '/' < $<
 
-########################################################################################################################
-#
-# GNOME settings
-#
-
-INSTALL += gnome-key-binding-settings
-gnome-key-binding-settings: | gnome-shell gnome-terminal ulauncher gnome-system-monitor $(DOTHOME_BIN)/dell-kvm-switch-input
-	@$(eval custom0=/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/)
-	@$(eval custom1=/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/)
-	@$(eval custom2=/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2/)
-	@$(eval custom3=/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom3/)
-
-	@gsettings set org.gnome.settings-daemon.plugins.media-keys custom-keybindings "['$(custom0)', '$(custom1)', '$(custom2)', '$(custom3)']"
-
-	@gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:$(custom0) name 'Run Terminal'
-	@gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:$(custom0) command '$(shell command -v gnome-terminal)'
-	@gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:$(custom0) binding '<Super>t'
-
-	@gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:$(custom1) name 'Dell KVM - Switch Input'
-	@gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:$(custom1) command '$(DOTHOME_BIN)/dell-kvm-switch-input'
-	@gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:$(custom1) binding '<Alt>i'
-
-	@gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:$(custom2) name 'Display Ulauncer'
-	@gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:$(custom2) command '$(shell command -v ulauncher-toggle)'
-	@gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:$(custom2) binding '<Super>r'
-
-	@gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:$(custom3) name 'Run System Monitor'
-	@gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:$(custom3) command '$(shell command -v gnome-system-monitor)'
-	@gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:$(custom3) binding '<Shift><Control>Escape'
-
-	@gsettings set org.gnome.settings-daemon.plugins.media-keys home "['<Super>h']"
-	@gsettings set org.gnome.settings-daemon.plugins.media-keys screensaver "['<Super>l']"
-	@gsettings set org.gnome.settings-daemon.plugins.media-keys control-center "['<Super>s']"
-
-	@# Possible fix for a sporadic flight-mode toggle
-	@gsettings set org.gnome.settings-daemon.plugins.media-keys rfkill []
-	@gsettings set org.gnome.settings-daemon.plugins.media-keys rfkill-bluetooth []
-	@gsettings set org.gnome.settings-daemon.plugins.media-keys rfkill-bluetooth-static []
-	@gsettings set org.gnome.settings-daemon.plugins.media-keys rfkill-static []
-
-	@systemctl --user mask --now org.gnome.SettingsDaemon.Rfkill.service
-
-INSTALL += gnome-theme-settings
-gnome-theme-settings: | gnome-themes arc-theme gnome-shell-extension-user-theme \
+INSTALL += gnome-core-settings
+gnome-core-settings: $(DF_GNOME_RES)/gnome-core-settings.ini.template | \
+		gnome-desktop gnome-shell gnome-terminal ulauncher gnome-system-monitor \
+		gnome-themes arc-theme gnome-shell-extension-user-theme \
+		$(DOTHOME_BIN)/dell-kvm-switch-input \
 		$(XDG_CONFIG_HOME)/gtk-2.0/gtkrc \
 		$(XDG_CONFIG_HOME)/gtk-3.0/settings.ini \
 		$(XDG_CONFIG_HOME)/gtk-3.0/gtk.css \
-		$(XDG_CONFIG_HOME)/gtk-4.0/settings.ini
-	@gsettings set org.gnome.desktop.interface gtk-theme 'Arc-Darker'
-	@gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'
-	@gsettings set org.gnome.desktop.interface icon-theme 'MoreWaita'
+		$(XDG_CONFIG_HOME)/gtk-4.0/settings.ini \
+		$(XDG_DATA_HOME)/backgrounds/current \
+		fonts dconf gettext-envsubst
+	@export GNOME_TERMINAL_CMD=$$(command -v gnome-terminal)
+	@export ULAUNCHER_CMD=$$(command -v ulauncher-toggle)
+	@export SYS_MONITOR_CMD=$$(command -v gnome-system-monitor)
+	@export KVM_SWITCH_INPUT_CMD="$(DOTHOME_BIN)/dell-kvm-switch-input"
+	@export WALLPAPER_PATH="$(XDG_DATA_HOME)/backgrounds/current"
+	@envsubst '$$GNOME_TERMINAL_CMD $$ULAUNCHER_CMD $$SYS_MONITOR_CMD $$KVM_SWITCH_INPUT_CMD $$WALLPAPER_PATH' \
+		< $< | dconf load '/'
+	@systemctl --user mask --now org.gnome.SettingsDaemon.Rfkill.service
 
-	@gsettings set org.gnome.desktop.wm.preferences theme 'Arc-Darker'
-	@gsettings set org.gnome.desktop.wm.preferences titlebar-uses-system-font true
-	@gsettings set org.gnome.desktop.wm.preferences mouse-button-modifier '<Super>'
-
-INSTALL += gnome-wallpaper
-gnome-wallpaper: | $(XDG_DATA_HOME)/backgrounds/current gnome-desktop
-	@gsettings set org.gnome.desktop.background picture-uri 'file://$<'
-	@gsettings set org.gnome.desktop.background picture-uri-dark 'file://$<'
-	@gsettings set org.gnome.desktop.background color-shading-type 'solid'
-	@gsettings set org.gnome.desktop.background picture-options 'zoom'
-
-INSTALL += gnome-input-settings
-gnome-input-settings: | gnome-desktop
-	@gsettings set org.gnome.desktop.wm.keybindings switch-applications []
-	@gsettings set org.gnome.desktop.wm.keybindings switch-applications-backward []
-	@gsettings set org.gnome.desktop.wm.keybindings switch-windows "['<Primary>Tab']"
-	@gsettings set org.gnome.desktop.wm.keybindings switch-windows-backward "['<Primary><Shift>Tab']"
-	@gsettings set org.gnome.desktop.wm.keybindings switch-group "['<Primary>grave']"
-	@gsettings set org.gnome.desktop.wm.keybindings switch-group-backward "['<Primary><Shift>grave']"
-	@gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-1 "['<Super>1']"
-	@gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-2 "['<Super>2']"
-	@gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-3 "['<Super>3']"
-	@gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-4 "['<Super>4']"
-	@gsettings set org.gnome.desktop.wm.keybindings move-to-monitor-right "['<Shift><Super>x']"
-	@gsettings set org.gnome.desktop.wm.keybindings move-to-monitor-left "['<Shift><Super>z']"
-	@gsettings set org.gnome.desktop.wm.keybindings maximize "['<Shift><Super>f']"
-	@gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-up []
-	@gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-down []
-	@gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-left []
-	@gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-right []
-
-	@gsettings set org.gnome.mutter.keybindings toggle-tiled-left []
-	@gsettings set org.gnome.mutter.keybindings toggle-tiled-right []
-
-	@gsettings set org.gnome.desktop.input-sources sources "[('xkb', 'us'), ('xkb', 'ru'), ('xkb', 'ua')]"
-	@gsettings set org.gnome.desktop.input-sources mru-sources "[('xkb', 'us'), ('xkb', 'ru'), ('xkb', 'ua')]"
-	@gsettings set org.gnome.desktop.input-sources per-window false
-	@gsettings set org.gnome.desktop.input-sources xkb-options "['lv3:ralt_switch']"
-
-	@gsettings set org.gnome.desktop.peripherals.keyboard numlock-state false
-	@gsettings set org.gnome.desktop.peripherals.keyboard repeat true
-	@gsettings set org.gnome.desktop.peripherals.keyboard delay 250
-	@gsettings set org.gnome.desktop.peripherals.keyboard repeat-interval 15
-	@gsettings set org.gnome.desktop.peripherals.mouse speed -0.44
-
-	@gsettings set org.gnome.desktop.peripherals.touchpad edge-scrolling-enabled false
-	@gsettings set org.gnome.desktop.peripherals.touchpad natural-scroll false
-	@gsettings set org.gnome.desktop.peripherals.touchpad speed 0.068
-	@gsettings set org.gnome.desktop.peripherals.touchpad two-finger-scrolling-enabled true
-
-INSTALL += gnome-desktop-settings
-gnome-desktop-settings: | gnome-desktop fonts
-	@# Desktop
-	@gsettings set org.gnome.desktop.interface show-battery-percentage true
-	@gsettings set org.gnome.desktop.interface clock-show-date true
-	@gsettings set org.gnome.desktop.interface clock-show-weekday true
-	@gsettings set org.gnome.desktop.interface text-scaling-factor '1.0'
-	@gsettings set org.gnome.desktop.interface toolkit-accessibility false
-	@gsettings set org.gnome.desktop.background show-desktop-icons false
-	@gsettings set org.gnome.desktop.datetime automatic-timezone true
-	@gsettings set org.gnome.desktop.screensaver lock-enabled true
-	@gsettings set org.gnome.desktop.screensaver lock-delay 0
-	@gsettings set org.gnome.desktop.session idle-delay 600
-	@gsettings set org.gnome.desktop.sound event-sounds false
-	@gsettings set org.gnome.desktop.calendar show-weekdate false
-	@gsettings set org.gnome.desktop.wm.preferences num-workspaces 1
-	@gsettings set org.gnome.mutter dynamic-workspaces false
-	@gsettings set org.gnome.mutter workspaces-only-on-primary false
-	@gsettings set org.gnome.SessionManager logout-prompt false
-	@gsettings set org.gnome.SessionManager auto-save-session true
-
-	# Fonts
-	@gsettings set org.gnome.desktop.interface monospace-font-name 'JetBrainsMono Nerd Font Mono 10'
-	@gsettings set org.gnome.desktop.interface font-name 'Sans 9'
-	@gsettings set org.gnome.desktop.interface document-font-name 'Sans 9'
-	@gsettings set org.gnome.desktop.interface font-antialiasing 'grayscale'
-	@gsettings set org.gnome.desktop.interface font-hinting 'slight'
-	@gsettings set org.gnome.desktop.interface cursor-size 24
-	@gsettings set org.gnome.desktop.interface cursor-blink true
-
-	@gsettings set org.gnome.shell favorite-apps "['org.gnome.Nautilus.desktop', 'org.gnome.Terminal.desktop', \
-		'intellij-idea-community_intellij-idea-community.desktop', 'code_code.desktop', \
-		'vivaldi-stable.desktop', 'google-chrome.desktop', 'firefox.desktop', 'md.obsidian.Obsidian.desktop', \
-		'xmind.desktop', 'org.gnome.gedit.desktop', 'chrome-cinhimbnkkaeohfgghhklpknlkffjgod-Profile_4.desktop', \
-		'chrome-hpfldicfbfomlpcikngkocigghgafkph-Profile_4.desktop', 'org.gnome.Pomodoro.desktop', \
-		'cc.arduino.IDE2.desktop', 'calibre-gui.desktop', 'com.valvesoftware.Steam.desktop', 'slack_slack.desktop', \
-		 'wine-Programs-reMarkable-reMarkable.desktop']"
-
-INSTALL += gnome-display-settings
-gnome-display-settings: | gnome-desktop
-	@gsettings set org.gnome.mutter experimental-features "['scale-monitor-framebuffer']"
-
-	@gsettings set org.gnome.settings-daemon.plugins.color night-light-temperature 4378
-	@gsettings set org.gnome.settings-daemon.plugins.color night-light-enabled true
-	@gsettings set org.gnome.settings-daemon.plugins.color night-light-schedule-automatic true
-	@gsettings set org.gnome.settings-daemon.plugins.color night-light-schedule-to 6.0
-	@gsettings set org.gnome.settings-daemon.plugins.color night-light-schedule-from 20.0
-	@gsettings set org.gnome.settings-daemon.plugins.color recalibrate-display-threshold 0
-
-INSTALL += gnome-nautilus-settings
-gnome-nautilus-settings: | gnome-desktop
-	@gsettings set org.gnome.nautilus.preferences show-create-link true
-	@gsettings set org.gnome.nautilus.preferences default-folder-viewer 'icon-view'
-	@gsettings set org.gnome.nautilus.list-view default-visible-columns "['name', 'size', 'type', 'where', 'date_modified']"
-	@gsettings set org.gnome.nautilus.list-view default-zoom-level 'small'
-	@gsettings set org.gnome.nautilus.preferences always-use-location-entry true
-	@gsettings set org.gnome.nautilus.preferences show-delete-permanently true
-	@gsettings set org.gnome.nautilus.preferences show-hidden-files true
-
-INSTALL += gnome-file-chooser-settings
-gnome-file-chooser-settings: | gnome-desktop
-	@gsettings set org.gtk.Settings.FileChooser sort-column 'name'
-	@gsettings set org.gtk.Settings.FileChooser date-format 'regular'
-	@gsettings set org.gtk.Settings.FileChooser show-hidden true
-	@gsettings set org.gtk.Settings.FileChooser clock-format '24h'
-	@gsettings set org.gtk.Settings.FileChooser startup-mode 'cwd'
-	@gsettings set org.gtk.Settings.FileChooser show-type-column true
-	@gsettings set org.gtk.Settings.FileChooser sort-order 'ascending'
-	@gsettings set org.gtk.Settings.FileChooser type-format 'category'
-	@gsettings set org.gtk.Settings.FileChooser show-size-column true
-	@gsettings set org.gtk.Settings.FileChooser location-mode 'path-bar'
-	@gsettings set org.gtk.Settings.FileChooser sort-directories-first true
-
-INSTALL += gnome-power-settings
-gnome-power-settings: | gnome-desktop
-	@gsettings set org.gnome.settings-daemon.plugins.power idle-dim true
-	@gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-battery-type 'suspend'
-	@gsettings set org.gnome.settings-daemon.plugins.power idle-brightness 30
-	@gsettings set org.gnome.settings-daemon.plugins.power power-saver-profile-on-low-battery true
-	@gsettings set org.gnome.settings-daemon.plugins.power ambient-enabled true
-	@gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-battery-timeout 1200
-	@gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-ac-timeout 3600
-	@gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-ac-type 'suspend'
-	@gsettings set org.gnome.settings-daemon.plugins.power power-button-action 'nothing'
-
-INSTALL += gnome-privacy-settings
-gnome-privacy-settings: | gnome-desktop
-	@gsettings set org.gnome.desktop.privacy old-files-age 10
-	@gsettings set org.gnome.desktop.privacy remove-old-temp-files true
-	@gsettings set org.gnome.desktop.privacy remove-old-trash-files false
-
-	@# Disable unusable `usb-protection` GNOME settings until this bug is fixed:
-	@# https://gitlab.gnome.org/GNOME/gnome-settings-daemon/-/issues/735
-	@gsettings set org.gnome.desktop.privacy usb-protection false
-	@gsettings set org.gnome.desktop.privacy usb-protection-level 'lockscreen'
-
-	@gsettings set org.gnome.desktop.notifications show-banners false
-	@gsettings set org.gnome.desktop.notifications show-in-lock-screen false
-	@gsettings set org.gnome.login-screen disable-user-list true
-	@gsettings set org.gnome.shell remember-mount-password false
-	@gsettings set org.gnome.system.location enabled true
-	@gsettings set org.gnome.desktop.search-providers disable-external true
-
-INSTALL += gnome-gedit-settings
-gnome-gedit-settings: $(DF_GNOME_RES)/gnome-gedit.ini | dconf
-	@dconf load '/' < $<
-
-INSTALL += gnome-tracker-settings
-gnome-tracker-settings: $(DF_GNOME_RES)/gnome-tracker.ini | dconf
-	@dconf load '/' < $<
-
-INSTALL += gnome-terminal-settings
-gnome-terminal-settings: $(DF_GNOME_RES)/gnome-terminal.ini | dconf
-	@dconf load '/' < $<
-
-INSTALL += gnome-pomodoro-settings
-gnome-pomodoro-settings: $(DF_GNOME_RES)/gnome-pomodoro.ini | dconf
-	@dconf load '/' < $<
-
-INSTALL += gnome-clocks-settings
-gnome-clocks-settings: $(DF_GNOME_RES)/gnome-clocks.ini | dconf
+# Standard dconf loads
+INSTALL += gnome-gedit-settings gnome-tracker-settings gnome-terminal-settings
+INSTALL += gnome-pomodoro-settings gnome-clocks-settings
+gnome-%-settings: $(DF_GNOME_RES)/gnome-%.ini | dconf
 	@dconf load '/' < $<
 
 ########################################################################################################################
 #
-# Bulk installation rules
+# Bulk Installers
 #
 
 INSTALL += $(PKG_GSHELL)
 $(PKG_GSHELL): | gnome-desktop
 	@$(call dnf,$@)
-	@if [ -f $(DF_GNOME_RES)/$@.ini ]; then dconf load '/' < $(DF_GNOME_RES)/$@.ini; fi
+	@if [ -f "$(DF_GNOME_RES)/$@.ini" ]; then
+	@	dconf load '/' < "$(DF_GNOME_RES)/$@.ini"
+	@fi
 
 INSTALL += $(EXT_GSHELL)
 $(EXT_GSHELL): $(DOTHOME_BIN)/install-gnome-extensions | gnome-desktop dconf
 	@install -d $(DOTHOME_OPT)
-	@$(eval __ext=$(subst $(slash),$(space),$(subst https://extensions.gnome.org/extension/,,$(strip $@))))
-	@$(eval __ext_id=$(word 1, $(__ext)))
-	@$(eval __ext_name=$(word 2, $(__ext)))
-	@if [ -f $(DF_GNOME_RES)/gnome-shell-extension-$(__ext_name).ini ]; then
-	@	dconf load '/' < $(DF_GNOME_RES)/gnome-shell-extension-$(__ext_name).ini;
+	@target_str="$@"
+	@url_stripped="$${target_str#https://extensions.gnome.org/extension/}"
+	@ext_id="$${url_stripped%%/*}"
+	@ext_name="$${url_stripped#*/}"
+	@ini_file="$(DF_GNOME_RES)/gnome-shell-extension-$${ext_name}.ini"
+	@if [ -f "$${ini_file}" ]; then
+	@	dconf load '/' < "$${ini_file}"
 	@fi
-	@$< --enable $(__ext_id)
+	@$< --enable "$${ext_id}"
 
 INSTALL += $(EXT_ULAUNCHER)
 $(EXT_ULAUNCHER): | git ulauncher
@@ -397,8 +206,8 @@ FILES += $(HOME)/.trackerignore
 $(HOME)/.trackerignore: $(DF_FSHOME)/.trackerignore
 	@ln -svnf $< $@
 
-FILES += /etc/yum.repos.d/_copr\:copr.fedorainfracloud.org\:dusansimic\:themes.repo
-/etc/yum.repos.d/_copr\:copr.fedorainfracloud.org\:dusansimic\:themes.repo:
+FILES += $(COPR_THEMES_REPO)
+$(COPR_THEMES_REPO):
 	@sudo dnf copr enable -y dusansimic/themes
 
 FILES += $(DOTHOME_BIN)/install-gnome-extensions
@@ -426,18 +235,14 @@ disable-gnome-tracker: | gnome-desktop gnome-tracker-settings $(HOME)/.trackerig
 		tracker-miner-fs-control-3.service
 	-@tracker3 reset -s -r || true
 
-# Fix for the NVIDIA suspend issue
 PATCH += patch-gnome-suspend
 patch-gnome-suspend: | gettext-envsubst
 	@envsubst '$$TODAY $$USER' < $(DF_GNOME_FSROOT)/etc/systemd/system/gnome-shell-suspend.service.template \
 		| sudo install -m 644 -DC /dev/stdin /etc/systemd/system/gnome-shell-suspend.service
-
 	@envsubst '$$TODAY $$USER' < $(DF_GNOME_FSROOT)/etc/systemd/system/gnome-shell-resume.service.template \
 		| sudo install -m 644 -DC /dev/stdin /etc/systemd/system/gnome-shell-resume.service
-
 	@sudo systemctl daemon-reload
-	@sudo systemctl enable gnome-shell-suspend
-	@sudo systemctl enable gnome-shell-resume
+	@sudo systemctl enable gnome-shell-suspend gnome-shell-resume
 
 ########################################################################################################################
 #
@@ -463,16 +268,10 @@ update-gnome-shell-extensions-bin: $(DOTHOME_OPT)/install-gnome-extensions.git/i
 #
 
 .PHONY: gnome-settings
-gnome-settings: gnome-key-binding-settings \
-		gnome-theme-settings \
-		gnome-wallpaper \
-		gnome-shell-extensions \
-		gnome-input-settings \
-		gnome-desktop-settings gnome-display-settings \
-		gnome-nautilus-settings \
-		gnome-file-chooser-settings \
+gnome-settings: gnome-shell-extensions \
+		gnome-core-settings \
 		gnome-gedit-settings \
 		gnome-tracker-settings \
-		gnome-power-settings \
-		gnome-privacy-settings \
-		gnome-terminal-settings
+		gnome-terminal-settings \
+		gnome-pomodoro-settings \
+		gnome-clocks-settings
