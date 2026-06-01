@@ -160,10 +160,24 @@ gnome-core-settings: $(DF_GNOME_RES)/gnome-core-settings.ini.template | \
 		< $< | dconf load '/'
 	@systemctl --user mask --now org.gnome.SettingsDaemon.Rfkill.service
 
-# Standard dconf loads
-INSTALL += gnome-gedit-settings gnome-tracker-settings gnome-terminal-settings
-INSTALL += gnome-pomodoro-settings gnome-clocks-settings
-gnome-%-settings: $(DF_GNOME_RES)/gnome-%.ini | dconf
+INSTALL += gnome-gedit-settings
+gnome-gedit-settings: $(DF_GNOME_RES)/gnome-gedit.ini | dconf
+	@dconf load '/' < $<
+
+INSTALL += gnome-tracker-settings
+gnome-tracker-settings: $(DF_GNOME_RES)/gnome-tracker.ini | dconf
+	@dconf load '/' < $<
+
+INSTALL += gnome-terminal-settings
+gnome-terminal-settings: $(DF_GNOME_RES)/gnome-terminal.ini | dconf
+	@dconf load '/' < $<
+
+INSTALL += gnome-pomodoro-settings
+gnome-pomodoro-settings: $(DF_GNOME_RES)/gnome-pomodoro.ini | dconf
+	@dconf load '/' < $<
+
+INSTALL += gnome-clocks-settings
+gnome-clocks-settings: $(DF_GNOME_RES)/gnome-clocks.ini | dconf
 	@dconf load '/' < $<
 
 ########################################################################################################################
