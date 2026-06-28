@@ -539,8 +539,8 @@ INSTALL += $(PKG_FLATPAK)
 $(PKG_FLATPAK): | flatpak
 	@flatpak install -y --user $@
 
-INSTALL += install-appimages
-install-appimages: | $(DOTHOME_BIN)/appimage
+INSTALL += install-appimage
+install-appimage: | $(DOTHOME_BIN)/appimage
 	@for app in $(PKG_APPIMAGE); do \
 		$(DOTHOME_BIN)/appimage install "$${app}"; \
 	done
@@ -704,8 +704,14 @@ $(DOTHOME_BIN)/sync-restic-env-secondary: $(DF_FSHOME)/.home/bin/sync-restic-env
 	@ln -svfn $< $@
 	@chmod +x $<
 
+FILES += $(XDG_DATA_HOME)/bash-completion/completions/appimage-completion.bash
+$(XDG_DATA_HOME)/bash-completion/completions/appimage-completion.bash: $(DF_FSHOME)/.local/share/bash-completion/completions/appimage-completion.bash
+	@install -d $(@D)
+	@ln -svfn $< $@
+	@chmod +x $<
+
 FILES += $(DOTHOME_BIN)/appimage
-$(DOTHOME_BIN)/appimage: $(DF_FSHOME)/.home/bin/appimage | fuse fuse-libs
+$(DOTHOME_BIN)/appimage: $(DF_FSHOME)/.home/bin/appimage | $(XDG_DATA_HOME)/bash-completion/completions/appimage-completion.bash fuse fuse-libs
 	@install -d $(@D)
 	@ln -svfn $< $@
 	@chmod +x $<
