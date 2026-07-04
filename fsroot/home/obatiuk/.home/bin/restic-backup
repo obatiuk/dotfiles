@@ -261,7 +261,7 @@ exec {RESTIC_LOCK_FD}>"${RESTIC_LOCK_FILE}" || { _err "Unable to open or create 
 
     # Combine and report restic snapshot stats
     {  ${RESTIC_COMMAND} --no-lock snapshots ${RESTIC_ARGS_SNAPSHOT_STATS} latest --json | jq '.[0].summary'; \
-       ${RESTIC_COMMAND} --no-lock stats ${RESTIC_ARGS_SNAPSHOT_STATS} latest --json; } \
+       ${RESTIC_COMMAND} --no-lock stats ${RESTIC_ARGS_SNAPSHOT_STATS} latest --json | grep -o '{.*'; } \
         | jq -s "add" | mosquitto_pub ${MQTT_PUB_ARGS} -r -t "${HASS_BACKUP_STATS_TOPIC}" -s
 
     # The subshell exits with the restic backup result

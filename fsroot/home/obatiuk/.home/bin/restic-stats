@@ -152,7 +152,7 @@ mosquitto_pub ${MQTT_PUB_ARGS} -r -t "${HASS_BACKUP_NEXT_START_TOPIC}" -m "${_ne
 
 # Publish repository stats to MQTT broker
 echo "Reporting '${REPO_PRETTY_NAME}' repository stats ..."
-restic --no-lock stats --mode raw-data --json \
+restic --no-lock stats --mode raw-data --json | grep -o '{.*' \
     | mosquitto_pub ${MQTT_PUB_ARGS} -r -t "${HASS_REPO_STATS_TOPIC}" -s
 
 echo "Done"
