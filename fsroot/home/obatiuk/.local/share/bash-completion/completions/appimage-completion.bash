@@ -5,8 +5,8 @@ _appimage_completions() {
     cur="${COMP_WORDS[COMP_CWORD]}"
     cmd="${COMP_WORDS[1]}"
 
-    # Available main commands
-    commands="install import list update update-all"
+    # Available main commands (including aliases ls and rm)
+    commands="install import list ls update update-all remove rm check"
 
     # AppImage directory
     bin_dir="${HOME}/.local/bin/appimage"
@@ -19,7 +19,7 @@ _appimage_completions() {
 
     # LEVEL 2: Complete the arguments based on the chosen command
     case "${cmd}" in
-        update)
+        update|remove|rm)
             # Dynamically generate a list of installed AppImages (ignoring the updater tool)
             if [[ -d "${bin_dir}" ]]; then
                 installed_apps=$(find "${bin_dir}" -maxdepth 1 -type f -not -name "appimageupdatetool" -exec basename {} \;)
@@ -42,7 +42,7 @@ _appimage_completions() {
             COMPREPLY=( $(compgen -d -- "${cur}") )
             ;;
         *)
-            # 'list' and 'update-all' do not take further arguments
+            # 'list', 'ls', 'update-all', and 'check' do not take further arguments
             COMPREPLY=()
             ;;
     esac

@@ -12,6 +12,24 @@ UPDATER_BIN="$BIN_DIR/appimageupdatetool"
 # Ensure necessary directories exist
 mkdir -p "$BIN_DIR" "$DESKTOP_DIR" "$ICON_DIR"
 
+# Helper function to update the OS app menu cache
+refresh_desktop_menu() {
+    if command -v update-desktop-database >/dev/null 2>&1; then
+        update-desktop-database "$DESKTOP_DIR" &>/dev/null || true
+    fi
+}
+
+# Helper function to ask for user confirmation. Returns 0 if success.
+ask() {
+    local prompt_text="$1"
+    local confirm
+    read -r -p "$prompt_text [y/N]: " confirm
+    if [[ "$confirm" =~ ^[Yy]$ ]]; then
+        return 0
+    fi
+	return 1
+}
+
 # Function to ensure the AppImageUpdate tool is installed
 ensure_updater() {
     if [[ ! -f "$UPDATER_BIN" ]]; then
@@ -73,12 +91,13 @@ install_appimage() {
                 exit 1
             fi
 
-            # Check if it's already the same file to prevent move errors
+            # Check if it's already the exact same file (inode check)
             if [[ "$source" -ef "$dest_path" ]]; then
                 echo "File is already in the destination directory. Re-integrating..."
             else
                 echo "Moving file to $BIN_DIR..."
-                mv "$source" "$dest_path" || { echo "Move failed."; exit 1; }
+                # Use -i to prevent silent overwrite of a different file with the same name
+                mv -i "$source" "$dest_path" || { echo "Move failed or canceled."; exit 1; }
             fi
         fi
     else
@@ -105,15 +124,20 @@ install_appimage() {
             target_name=$(basename "$desktop_file" .desktop)
             local new_dest_path="$BIN_DIR/${target_name}.AppImage"
 
-            # Rename the file to match the desktop file name
+            # Rename the file to match the desktop file name safely
             if [[ "$dest_path" != "$new_dest_path" ]]; then
                 echo "Renaming to extracted name: ${target_name}.AppImage"
-                mv "$dest_path" "$new_dest_path"
+                # Check for collision before renaming
+                if [[ -e "$new_dest_path" && ! "$dest_path" -ef "$new_dest_path" ]]; then
+                    mv -i "$dest_path" "$new_dest_path"
+                else
+                    mv "$dest_path" "$new_dest_path"
+                fi
                 dest_path="$new_dest_path"
             fi
 
             local icon_name
-            icon_name=$(grep -E "^Icon=" "$desktop_file" | cut -d= -f2 | tr -d '\r')
+            icon_name=$(grep -E "^Icon=" "$desktop_file" | head -n 1 | cut -d= -f2 | tr -d '\r')
 
             local icon_file
             icon_file=$(find squashfs-root -name "${icon_name}.png" -o -name "${icon_name}.svg" | head -n 1)
@@ -134,9 +158,19 @@ install_appimage() {
             local final_desktop_path="$DESKTOP_DIR/${target_name}.desktop"
             cp "$desktop_file" "$final_desktop_path"
 
-            sed -i "s~^Exec=.*~Exec=\"$dest_path\" %U~" "$final_desktop_path"
-            sed -i "s~^TryExec=.*~TryExec=\"$dest_path\"~" "$final_desktop_path"
-            sed -i "s~^Icon=.*~Icon=$final_icon_path~" "$final_desktop_path"
+            # SECURITY: Escape '&' and '~' in paths to prevent Sed injection bugs
+            local safe_dest_path="${dest_path//&/\\&}"
+            safe_dest_path="${safe_dest_path//~/\\~}"
+
+            local safe_icon_path="${final_icon_path//&/\\&}"
+            safe_icon_path="${safe_icon_path//~/\\~}"
+
+            sed -i "s~^Exec=.*~Exec=\"$safe_dest_path\" %U~" "$final_desktop_path"
+            sed -i "s~^TryExec=.*~TryExec=\"$safe_dest_path\"~" "$final_desktop_path"
+            sed -i "s~^Icon=.*~Icon=$safe_icon_path~" "$final_desktop_path"
+
+            # Ensure execution permissions for Desktop Environments
+            chmod +x "$final_desktop_path"
 
             echo "Integration complete for '$target_name'."
         else
@@ -150,7 +184,12 @@ install_appimage() {
 
             if [[ "$dest_path" != "$new_dest_path" ]]; then
                 echo "Applying fallback rename to clean format: ${clean_name}.appimage"
-                mv "$dest_path" "$new_dest_path"
+                # Check for collision on auto-rename
+                if [[ -e "$new_dest_path" && ! "$dest_path" -ef "$new_dest_path" ]]; then
+                    mv -i "$dest_path" "$new_dest_path"
+                else
+                    mv "$dest_path" "$new_dest_path"
+                fi
                 dest_path="$new_dest_path"
             fi
         fi
@@ -161,6 +200,8 @@ install_appimage() {
     # Cleanup
     cd "$HOME" || exit 1
     rm -rf "$temp_dir"
+
+    refresh_desktop_menu
 }
 
 # Function to recursively find, move, and install AppImages
@@ -178,7 +219,6 @@ import_dir() {
 
     local count=0
 
-    # Process substitution and -print0 safely handles spaces and weird characters in filenames
     while IFS= read -r -d '' file; do
         local filename
         filename=$(basename "$file")
@@ -192,7 +232,7 @@ import_dir() {
             install_appimage "$dest_path" "true"
         else
             echo "-> Moving to $BIN_DIR and integrating..."
-            mv "$file" "$dest_path"
+            mv -i "$file" "$dest_path"
             install_appimage "$dest_path" "true"
         fi
 
@@ -246,6 +286,194 @@ update_all() {
     echo "Global update complete."
 }
 
+# Function to safely remove an AppImage and its integration files
+remove_app() {
+    local target="$1"
+
+    if [[ -z "$target" ]]; then
+        echo "Error: Specify an AppImage to remove."
+        return 1
+    fi
+
+    # SECURITY: Prevent directory traversal
+    if [[ "$target" == */* ]]; then
+        echo "Error: Please specify only the AppImage filename, not a path."
+        return 1
+    fi
+
+    local app_path="$BIN_DIR/$target"
+
+    if [[ ! -f "$app_path" ]]; then
+        echo "Error: Application '$target' not found in $BIN_DIR."
+        return 1
+    fi
+
+    # Find the corresponding .desktop file safely (using -F for fixed string matching)
+    local desktop_file
+    desktop_file=$(grep -Fl "$app_path" "$DESKTOP_DIR"/*.desktop 2>/dev/null | head -n 1)
+
+	local icon_path
+    if [[ -n "$desktop_file" ]]; then
+        local raw_icon_path
+        raw_icon_path=$(grep -E "^Icon=" "$desktop_file" | head -n 1 | cut -d= -f2 | tr -d '\r')
+        # SECURITY: Only track if the path is strictly inside our specific ICON_DIR and exists
+        if [[ -n "$raw_icon_path" && -f "$raw_icon_path" && "$raw_icon_path" == "$ICON_DIR/"* ]]; then
+            icon_path="$raw_icon_path"
+        fi
+    fi
+
+    echo "The following files will be deleted:"
+	echo " - $app_path"
+    [[ -n "$desktop_file" ]] && echo "   -- $desktop_file"
+    [[ -n "$icon_path" ]] && echo "   -- $icon_path"
+
+    if ask "Are you sure you want to completely remove '$target'?"; then
+        rm -f "$app_path"
+        [[ -n "$desktop_file" ]] && rm -f "$desktop_file"
+        [[ -n "$icon_path" ]] && rm -f "$icon_path"
+
+        echo "'$target' has been removed successfully."
+        refresh_desktop_menu
+    else
+        echo "Removal canceled."
+    fi
+}
+
+# Function to verify integrity between AppImages, Desktop files, and Icons
+check_apps() {
+    echo "Checking for inconsistencies between AppImages, .desktop files, and icons..."
+    echo "----------------------------------------"
+
+    local issues_found=0
+
+    echo "[1/3] Verifying installed AppImages..."
+    # 1. Check for AppImages that are missing .desktop files or icons
+    for app in "$BIN_DIR"/*; do
+        [[ ! -e "$app" ]] && continue
+
+        if [[ -f "$app" ]]; then
+            local app_name
+            app_name=$(basename "$app")
+
+            if [[ "$app_name" != "appimageupdatetool" ]]; then
+                echo " - Checking app: $app_name"
+
+                # Safe grep using -F for fixed string
+                local desktop_file
+                desktop_file=$(grep -Fl "$app" "$DESKTOP_DIR"/*.desktop 2>/dev/null | head -n 1)
+
+                local needs_reintegration=0
+
+                if [[ -z "$desktop_file" ]]; then
+                    echo "   ! Missing .desktop file for: $app_name"
+                    needs_reintegration=1
+                else
+                    local icon_path
+                    icon_path=$(grep -E "^Icon=" "$desktop_file" | head -n 1 | cut -d= -f2 | tr -d '\r')
+
+                    if [[ -z "$icon_path" || ! -f "$icon_path" ]]; then
+                        echo "   ! Missing icon file for: $app_name"
+                        needs_reintegration=1
+                    fi
+                fi
+
+                if [[ $needs_reintegration -eq 1 ]]; then
+                    issues_found=1
+                    echo "   -> Re-integrating automatically to fix missing files..."
+                    install_appimage "$app" "true"
+                fi
+            fi
+        fi
+    done
+
+    echo "----------------------------------------"
+    echo "[2/3] Verifying AppImage shortcuts..."
+    # 2. Check for .desktop files that point to missing AppImages
+    for desktop in "$DESKTOP_DIR"/*.desktop; do
+        [[ ! -e "$desktop" ]] && continue
+
+        if [[ -f "$desktop" ]]; then
+            local exec_line
+            exec_line=$(grep "^Exec=" "$desktop" 2>/dev/null | head -n 1)
+
+            if [[ -n "$exec_line" ]]; then
+                local exec_path
+                if [[ "$exec_line" == *\"* ]]; then
+                    exec_path=$(echo "$exec_line" | cut -d'"' -f2)
+                else
+                    exec_path=$(echo "$exec_line" | awk '{print $1}' | cut -d'=' -f2)
+                fi
+
+                # Check if this desktop file points to our BIN_DIR
+                if [[ "$exec_path" == "$BIN_DIR/"* ]]; then
+                    local desktop_name
+                    desktop_name=$(basename "$desktop")
+
+                    echo " - Checking shortcut: $desktop_name"
+
+                    if [[ ! -f "$exec_path" ]]; then
+                        issues_found=1
+                        echo "   ! Orphaned .desktop file found: $desktop_name"
+                        echo "   -> Points to missing AppImage: $exec_path"
+
+                        if ask "   Do you want to delete this orphaned file?"; then
+                            local icon_path
+                            icon_path=$(grep -E "^Icon=" "$desktop" | head -n 1 | cut -d= -f2 | tr -d '\r')
+
+                            # SECURITY: Strictly bound icon deletion to ICON_DIR
+                            if [[ -n "$icon_path" && -f "$icon_path" && "$icon_path" == "$ICON_DIR/"* ]]; then
+                                rm -f "$icon_path"
+                            fi
+
+                            rm -f "$desktop"
+                            echo "   Deleted $desktop_name"
+                        else
+                            echo "   Kept $desktop_name"
+                        fi
+                    fi
+                fi
+            fi
+        fi
+    done
+
+    echo "----------------------------------------"
+    echo "[3/3] Verifying AppImage icons..."
+    # 3. Check for orphaned icons
+    for icon in "$ICON_DIR"/*; do
+        [[ ! -e "$icon" ]] && continue
+
+        if [[ -f "$icon" ]]; then
+            local icon_name
+            icon_name=$(basename "$icon")
+
+            echo " - Checking icon: $icon_name"
+
+            local referencing_desktop
+            referencing_desktop=$(grep -Fl "Icon=$icon" "$DESKTOP_DIR"/*.desktop 2>/dev/null | head -n 1)
+
+            if [[ -z "$referencing_desktop" ]]; then
+                issues_found=1
+                echo "   ! Orphaned icon file found: $icon_name"
+
+				if ask "   Do you want to delete this orphaned icon?"; then
+                    rm -f "$icon"
+                    echo "   Deleted $icon_name"
+                else
+                    echo "   Kept $icon_name"
+                fi
+            fi
+        fi
+    done
+
+    echo "----------------------------------------"
+    if [[ $issues_found -eq 0 ]]; then
+        echo "Check complete. All AppImages, .desktop files, and icons are properly synced."
+    else
+        echo "Check complete. Issues were found and handled."
+        refresh_desktop_menu
+    fi
+}
+
 # Command Line Interface routing
 case "$1" in
     install)
@@ -254,7 +482,7 @@ case "$1" in
     import)
         import_dir "$2"
         ;;
-    list)
+    list|ls)
         list_apps
         ;;
     update)
@@ -270,13 +498,21 @@ case "$1" in
         ensure_updater
         update_all
         ;;
+    remove|rm)
+        remove_app "$2"
+        ;;
+    check)
+        check_apps
+        ;;
     *)
         echo "AppImage Manager"
-        echo "Usage: $0 {install|import|list|update|update-all}"
-        echo "  install <file/url>  - Download/Move an AppImage and integrate it."
-        echo "  import <directory>  - Recursively find, move, and integrate all AppImages from a folder."
-        echo "  list                - Show all locally installed AppImages."
-        echo "  update <filename>   - Update a specific installed AppImage."
-        echo "  update-all          - Check and apply updates for all installed AppImages."
+        echo "Usage: $0 {install|import|list(ls)|update|update-all|remove(rm)|check}"
+        echo "  install <file/url>      - Download/Move an AppImage and integrate it."
+        echo "  import <directory>      - Recursively find, move, and integrate all AppImages from a folder."
+        echo "  list (ls)               - Show all locally installed AppImages."
+        echo "  update <filename>       - Update a specific installed AppImage."
+        echo "  update-all              - Check and apply updates for all installed AppImages."
+        echo "  remove (rm) <filename>  - Safely delete an AppImage and its menu integration files."
+        echo "  check                   - Scan for and fix inconsistencies (missing apps, menu files, or icons)."
         ;;
 esac
