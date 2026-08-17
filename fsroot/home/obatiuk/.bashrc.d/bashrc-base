@@ -298,3 +298,54 @@ function search {
         snap search "$package" | grep -i "$package"
     fi
 }
+
+# ssh-setup-remote: Generates an SSH key, copies it to the target, and configures ~/.ssh/config
+ssh-setup-remote() {
+    if [ -z "$1" ] || [ -z "$2" ]; then
+        echo "Usage: ssh-setup-remote <remote_user> <remote_host>"
+        return 1
+    fi
+
+    for cmd in ssh-copy-id tac paste; do
+        command -v "${cmd}" >/dev/null 2>&1 || { echo "Error: ${cmd} is not installed." && return 1; }
+    done
+
+    remote_user="$1"
+    remote_host="$2"
+
+    ping -c 1 -W 2 "${remote_host}" >/dev/null 2>&1 || echo "Warning: ${remote_host} unreachable."
+
+    remote_ip=$(getent ahosts "${remote_host}" | awk 'NR==1{print $1}')
+    remote_ip="${remote_ip:-$remote_host}"
+
+    remote_host_short="${remote_host%%.*}"
+    remote_host_reversed=$(echo "${remote_host}" | tr '.' '\n' | tac | paste -sd '.')
+
+    # Resolve FQDN: fallback to resolv.conf search domain if hostname -f returns short name
+    local_fqn=$(hostname -f 2>/dev/null || hostname)
+    [ "$local_fqn" = "${local_fqn%%.*}" ] && local_fqn="${local_fqn}.$(awk '/^(search|domain)/ {print $2; exit}' /etc/resolv.conf 2>/dev/null)"
+    local_fqn="${local_fqn%.}"
+
+    key_name="id_ed25519.${remote_host_reversed}"
+    key="${HOME}/.ssh/${key_name}"
+
+    [ ! -f "${key}" ] && ssh-keygen -o -a 256 -t ed25519 -f "${key}" -C "${USER}@${local_fqn} --> ${remote_host} | $(date +'%F')"
+
+	ssh-keygen -R ${remote_host}
+
+    ssh-copy-id -i "${key}" -o PreferredAuthentications=password "${remote_user}@${remote_host}"
+
+    mkdir -p "${HOME}/.ssh" && chmod 700 "${HOME}/.ssh"
+    touch "${HOME}/.ssh/config" && chmod 600 "${HOME}/.ssh/config"
+
+	if ! grep -qiw "${remote_host}" "${HOME}/.ssh/config"; then
+            echo "" >> "${HOME}/.ssh/config"
+            cat <<EOF >> "${HOME}/.ssh/config"
+Host ${remote_host_short} ${remote_host}
+   HostName ${remote_ip}
+   User ${remote_user}
+   IdentitiesOnly yes
+   IdentityFile ~/.ssh/${key_name}
+EOF
+	fi
+}
