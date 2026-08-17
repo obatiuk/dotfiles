@@ -176,7 +176,7 @@ EXT_VSCODE += keesschollaart.vscode-home-assistant
 
 # IntelliJ extensions
 EXT_INTELLIJ := ru.adelf.idea.dotenv lermitage.intellij.battery.status Docker name.kropp.intellij.makefile
-EXT_INTELLIJ += com.jetbrains.plugins.ini4idea net.sjrx.intellij.plugins.systemdunitfiles
+EXT_INTELLIJ += com.jetbrains.plugins.ini4idea net.sjrx.intellij.plugins.systemdunitfiles com.intellij.ml.llm
 
 # `micro` editor extensions
 EXT_MICRO += $(addprefix micro_,editorconfig fzf filemanager)
@@ -305,11 +305,10 @@ docker: /etc/yum.repos.d/docker-ce.repo
 		docker-selinux \
 		docker-engine-selinux \
 		docker-engine
-	@$(call dnf,podman podman-compose)
-#	@$(call dnf,docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin)
+	@$(call dnf,podman docker-compose)
 	@sudo groupadd --force docker
 	@sudo usermod -aG docker '$(USER)'
-#	@sudo systemctl enable --now $@
+	@systemctl --user enable --now podman.socket
 
 INSTALL += ql700
 ql700: | cups
@@ -1102,11 +1101,14 @@ PATCH += /etc/udev/rules.d/50-usb-power-save.rules
 # Updates
 #
 
-UPDATE += update-dnf
-update-dnf: check-release-eol
+.PHONY: do-update-dnf
+do-update-dnf: check-release-eol
 	@echo -e "\n*******************************************************************************************************"
 	@$(call log,$(INFO),"\\nUpdating system packages using 'dnf' ... \\n")
 	@sudo dnf update --refresh
+
+UPDATE += update-dnf
+update-dnf: do-update-dnf check-dnf-needs-restarting
 
 UPDATE += update-check-rpmconf
 update-check-rpmconf: rpmconf | update-dnf
