@@ -20,6 +20,7 @@
 # Alias to redefine the ADB home directory to prevent it from cluttering $HOME
 # The ADB daemon often creates ~/.android/adbkey, which is moved here
 alias adb='HOME="${XDG_DATA_HOME}/android" adb'
+alias timestamp='date +%s%3N'
 
 # --- Node Version Manager (NVM) Setup ---
 
