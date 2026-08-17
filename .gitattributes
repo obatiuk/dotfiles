@@ -5,5 +5,7 @@
 **/*/.browserpass.json filter=git-crypt diff=git-crypt
 **/*/lst.exclude.* filter=git-crypt diff=git-crypt
 **/*/bookmarks filter=git-crypt diff=git-crypt
+**/User/settings.json filter=git-crypt diff=git-crypt
+
 **/*/*.png -text diff=exif
 **/*/*.webp -text diff=exif
