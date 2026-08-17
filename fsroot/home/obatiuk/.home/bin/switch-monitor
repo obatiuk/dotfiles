@@ -53,8 +53,7 @@ case "$MODE" in
     all)
         echo "Switching to all-monitors mode (DP-4, DP-6, eDP-1) ..."
         gnome-monitor-config set ${ALL_MONITORS_CONFIG}
-        # Restore laptop monitor brightness (for some unknown reason it drops after the switch)
-        brightnessctl set -d intel_backlight 50%
+        brightnessctl set -d intel_backlight 100%
         ;;
     *)
         echo "ERROR: Unknown mode '$MODE'."
