@@ -149,7 +149,7 @@ exec {RESTIC_LOCK_FD}>"${RESTIC_LOCK_FILE}" || { _err "Unable to open or create 
         _sig=$?
         if [ ${_sig} = 130 ]; then
             _err "Interrupted by user (SIGINT). Unlocking repository and exiting."
-            _unlock_repository
+            _unlock_repository || true
         fi
         # The flock file descriptor will close automatically when the subshell exits
         exit ${_sig}

@@ -222,7 +222,7 @@ exec {RESTIC_LOCK_FD}>"${RESTIC_LOCK_FILE}" || { _err "Unable to open or create 
     function _exit {
 		if [ ${_result} -ne 0 ]; then
 			# Unlock repository on any backup failure
-            _unlock_repository
+            _unlock_repository || true
 		fi
         # The flock file descriptor will close automatically when the subshell exits
         exit ${_result}
