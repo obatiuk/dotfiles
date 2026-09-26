@@ -1,56 +1,182 @@
 #!/usr/bin/env bash
 #
-# Restic Secrets Migration Script
+# Restic Secrets Migration Script (REST Backend)
 #
 # This script retrieves all necessary credentials for a Restic repository hosted
 # on a REST backend from the local 'pass' store and places them into
-# the system keyring via 'secret-tool' for easier retrieval by systemd services
+# the system keyring via 'secret-tool' for easier retrieval by systemd services.
+#
+# --- Example pass file format ---
+# File: infra/home/service/restic/local/<env-name>
+# --------------------------------
+# my_restic_repo_encryption_password
+# server_host: backup.example.com
+# server_port: 8000
+# server_username: my_rest_user
+# server_password: my_rest_password
+# --------------------------------
+
+# --- Functions ---
+
+print_help() {
+    cat << EOF
+Usage: $(basename "$0") --env-name=<environment>
+
+Retrieves Restic REST repository credentials (URL, password, REST username,
+and REST password) from the 'pass' store and migrates them to the system keyring.
+
+Options:
+    --env-name=<name>   Required. The name of the environment (e.g., primary).
+    -h, --help          Show this help message and exit.
+
+Example:
+    $(basename "$0") --env-name=primary
+EOF
+}
+
+# --- Initialization & Parsing ---
+
+_restic_repo_name=""
+
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        --env-name=*)
+            _restic_repo_name="${1#*=}"
+            ;;
+        --env-name)
+            # Support both `--env-name=cloud` and `--env-name cloud` formats
+            if [[ -n "${2:-}" ]] && [[ "${2:-}" != -* ]]; then
+                _restic_repo_name="$2"
+                shift
+            else
+                echo "ERROR: --env-name requires a value." >&2
+                echo "" >&2
+                print_help >&2
+                exit 1
+            fi
+            ;;
+        -h|--help)
+            print_help
+            exit 0
+            ;;
+        *)
+            echo "ERROR: Unknown parameter passed: $1" >&2
+            echo "" >&2
+            print_help >&2
+            exit 1
+            ;;
+    esac
+    shift
+done
+
+# --- Validation ---
+
+if [[ -z "${_restic_repo_name}" ]]; then
+    echo "ERROR: The --env-name parameter is required." >&2
+    echo "" >&2
+    print_help >&2
+    exit 1
+fi
 
 command -v pass > /dev/null 2>&1 || { echo "ERROR: 'pass' command not found. Aborting!" >&2; exit 1; }
 command -v secret-tool > /dev/null 2>&1 || { echo "ERROR: 'secret-tool' command not found. Aborting!" >&2; exit 1; }
 
-_restic_repo_name="primary"
-_restic_pass_file="infra/home/service/restic/network/remote-${_restic_repo_name}"
+# --- Execution ---
 
-echo "Retrieving restic server configuration and credentials for repository '${_restic_repo_name}' from pass store..."
+_restic_pass_file="infra/home/service/restic/local/${_restic_repo_name}"
 
-_restic_server_host=$(pass meta ${_restic_pass_file} server_host)
-_restic_server_port=$(pass meta ${_restic_pass_file} server_port)
-_restic_rest_username=$(pass meta ${_restic_pass_file} server_username)
-_restic_rest_password=$(pass meta ${_restic_pass_file} server_password)
-_restic_password=$(pass show ${_restic_pass_file} | head -n 1)
+echo "Retrieving restic server configuration and credentials for '${_restic_repo_name}' from pass store..."
+
+# Retrieve metadata fields and check for pass errors
+if ! _restic_server_host=$(pass meta "${_restic_pass_file}" server_host 2>&1); then
+    echo "ERROR: Failed to retrieve server_host from pass." >&2
+    echo "Command output: ${_restic_server_host}" >&2
+    exit 1
+fi
+
+if ! _restic_server_port=$(pass meta "${_restic_pass_file}" server_port 2>&1); then
+    echo "ERROR: Failed to retrieve server_port from pass." >&2
+    echo "Command output: ${_restic_server_port}" >&2
+    exit 1
+fi
+
+if ! _restic_rest_username=$(pass meta "${_restic_pass_file}" server_username 2>&1); then
+    echo "ERROR: Failed to retrieve server_username from pass." >&2
+    echo "Command output: ${_restic_rest_username}" >&2
+    exit 1
+fi
+
+if ! _restic_rest_password=$(pass meta "${_restic_pass_file}" server_password 2>&1); then
+    echo "ERROR: Failed to retrieve server_password from pass." >&2
+    echo "Command output: ${_restic_rest_password}" >&2
+    exit 1
+fi
+
+# Retrieve Repository Password securely and check for pass errors
+if ! _pass_output=$(pass show "${_restic_pass_file}" 2>&1); then
+    echo "ERROR: Failed to retrieve repository password from pass." >&2
+    echo "Command output: ${_pass_output}" >&2
+    exit 1
+fi
+
+# Extract just the first line for the password
+_restic_password=$(echo "${_pass_output}" | head -n 1)
+
+# Construct the repository URL
 _restic_repository="rest:https://${_restic_server_host}:${_restic_server_port}/"
 
-if [ -z "${_restic_repository}" ] || [ -z "${_restic_password}" ]; then
-    echo "ERROR: Failed to retrieve critical restic secrets. Check path: ${_restic_pass_file}" >&2
+# Ensure critical variables are not empty
+if [[ -z "${_restic_server_host}" ]] || [[ -z "${_restic_server_port}" ]]; then
+    echo "ERROR: Retrieved host or port is empty. Cannot construct repository URL." >&2
+    exit 1
+fi
+
+if [[ -z "${_restic_password}" ]]; then
+    echo "ERROR: Retrieved repository password is empty. Check the contents of ${_restic_pass_file}." >&2
     exit 1
 fi
 
 echo "Storing restic credentials for '${_restic_repo_name}' into keyring..."
 
-echo -n "${_restic_repository}" | secret-tool store --label="URL for '${_restic_repo_name}' restic repository" \
-	repository "${_restic_repo_name}" \
-	type url \
-	service backup \
-	app_id restic
+if ! printf "%s" "${_restic_repository}" | secret-tool store --label="URL for '${_restic_repo_name}' restic repository" \
+    repository "${_restic_repo_name}" \
+    type url \
+    service backup \
+    app_id restic; then
+    echo "ERROR: Failed to store repository URL in the keyring." >&2
+    exit 1
+fi
 
-echo -n "${_restic_password}" | secret-tool store --label="Password for '${_restic_repo_name}' restic repository" \
-	repository "${_restic_repo_name}" \
-	type password \
-	service backup \
-	app_id restic
+if ! printf "%s" "${_restic_password}" | secret-tool store --label="Password for '${_restic_repo_name}' restic repository" \
+    repository "${_restic_repo_name}" \
+    type password \
+    service backup \
+    app_id restic; then
+    echo "ERROR: Failed to store repository password in the keyring." >&2
+    exit 1
+fi
 
-echo -n "${_restic_rest_username}" | secret-tool store --label="REST server username for '${_restic_repo_name}' restic repository" \
-	repository "${_restic_repo_name}" \
-	type rest-username \
-	service backup \
-	app_id restic
+if ! printf "%s" "${_restic_rest_username}" | secret-tool store --label="REST server username for '${_restic_repo_name}' restic repository" \
+    repository "${_restic_repo_name}" \
+    type rest-username \
+    service backup \
+    app_id restic; then
+    echo "ERROR: Failed to store REST server username in the keyring." >&2
+    exit 1
+fi
 
-echo -n "${_restic_rest_password}" | secret-tool store --label="REST server password for '${_restic_repo_name}' restic repository" \
-	repository "${_restic_repo_name}" \
-	type rest-password \
-	service backup \
-	app_id restic
+if ! printf "%s" "${_restic_rest_password}" | secret-tool store --label="REST server password for '${_restic_repo_name}' restic repository" \
+    repository "${_restic_repo_name}" \
+    type rest-password \
+    service backup \
+    app_id restic; then
+    echo "ERROR: Failed to store REST server password in the keyring." >&2
+    exit 1
+fi
+
+echo "Migration for '${_restic_repo_name}' complete!"
+
+# --- Cleanup ---
 
 unset _restic_repo_name
 unset _restic_pass_file
@@ -60,5 +186,4 @@ unset _restic_repository
 unset _restic_password
 unset _restic_rest_username
 unset _restic_rest_password
-
-echo "Migration complete"
+unset _pass_output
