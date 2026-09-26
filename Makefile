@@ -87,7 +87,10 @@ BACKUP =
 
 # Include model-specific patches
 -include $(DF_DEVICE)/$(MODEL)/$(MODEL).mk
+# Include desktop environment configuration
 -include $(DF_GNOME)/GNOME.mk
+# Include secrets
+-include $(DF_INCLUDE)/secrets.mk
 
 ########################################################################################################################
 #
@@ -209,6 +212,58 @@ DOCKER_CMD := podman
 #
 # Package installation customizations
 #
+
+INSTALL += firewalld
+firewalld:
+	@$(call dnf, $@)
+	@sudo systemctl enable --now $@
+	@_reload=false
+	@if [ "$$(sudo firewall-cmd --get-default-zone)" != 'public' ]; then
+	@	sudo firewall-cmd --set-default-zone='public'
+	@	_reload=true
+	@fi
+	@if sudo firewall-cmd --permanent --zone=public --query-service=ssh 2>/dev/null || \
+	    sudo firewall-cmd --permanent --zone=public --query-service=mdns 2>/dev/null || \
+	    sudo firewall-cmd --permanent --zone=public --query-forward 2>/dev/null; then
+	@		echo "Hardening public zone..."
+	@		sudo firewall-cmd --permanent --zone=public --remove-service=ssh 2>/dev/null || true
+	@		sudo firewall-cmd --permanent --zone=public --remove-service=mdns 2>/dev/null || true
+	@		sudo firewall-cmd --permanent --zone=public --remove-forward 2>/dev/null || true
+	@		_reload=true
+	@fi
+	@if [ "$${_reload}" = "true" ]; then
+	@	sudo firewall-cmd --reload
+	@fi
+
+INSTALL += network
+network: /etc/NetworkManager/system-connections/wired-home.nmconnection \
+	/etc/NetworkManager/system-connections/wifi-home.nmconnection \
+	/etc/firewalld/zones/home-trusted.xml | firewalld
+	@# Bring down auto-generated wired connections
+	@nmcli -t -f NAME connection show | grep '^Wired connection' | while read -r conn; do
+	@	sudo nmcli connection down "$$conn" 2>/dev/null || true
+	@done || true
+
+	@# Connect to wired, fallback to wifi using short-circuit evaluation
+	@_connected=false
+	@if nmcli -t -f NAME,STATE connection show --active | grep -q '^wired-home:activated' || \
+	    sudo nmcli connection up wired-home 2>/dev/null; then
+	@	echo "wired-home is active and configured."
+	@	_connected=true
+	@elif nmcli -t -f NAME,STATE connection show --active | grep -q '^wifi-home:activated' || \
+	      sudo nmcli connection up wifi-home 2>/dev/null; then
+	@	echo "wifi-home is active and configured."
+	@	_connected=true
+	@else
+	@	echo "ERROR: Failed to activate either wired-home or wifi-home."
+	@fi
+
+	@# Clean up old connections ONLY if a home network is active
+	@if [ "$${_connected}" = "true" ]; then
+	@	nmcli -t -f NAME connection show | grep '^Wired connection' | while read -r conn; do
+	@		sudo nmcli connection delete "$$conn" 2>/dev/null || true
+	@	done || true
+	@fi
 
 INSTALL += dnf-plugins
 dnf-plugins: $(EXT_DNF)
@@ -1072,7 +1127,62 @@ FILES += /etc/udev/rules.d/71-sony-controllers.rules
 
 FILES += /etc/logrotate.d/dnf
 /etc/logrotate.d/dnf: $(DF_FSETC)/logrotate.d/dnf.template | gettext-envsubst
-	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -DC /dev/stdin $@
+	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -D /dev/stdin $@
+
+FILES += /etc/NetworkManager/system-connections/wired-home.nmconnection
+/etc/NetworkManager/system-connections/wired-home.nmconnection: \
+		$(DF_FSETC)/NetworkManager/system-connections/wired-home.nmconnection \
+		| diffutils
+	@_conn="$(basename $(@F))"
+	@if sudo cmp -s $< $@ 2>/dev/null; then
+	@	echo "No changes in $${_conn}. Skipping..."
+	@else
+	@	_was_active=false
+	@	if nmcli -t -f NAME,STATE connection show --active | grep -q "^$${_conn}:activated"; then
+	@		_was_active=true
+	@	fi
+	@	sudo install -d -m 700 $(@D)
+	@	sudo install -m 600 -ZD $< $@
+	@	echo "Detected changes in $${_conn}. Applying..."
+	@	sudo nmcli connection reload || true
+	@	if [ "$${_was_active}" = "true" ]; then
+	@		sudo nmcli connection up "$${_conn}" || true
+	@	fi
+	@fi
+
+FILES += /etc/NetworkManager/system-connections/wifi-home.nmconnection
+/etc/NetworkManager/system-connections/wifi-home.nmconnection: \
+		$(DF_FSETC)/NetworkManager/system-connections/wifi-home.nmconnection \
+		| gettext-envsubst diffutils
+	@_conn="$(basename $(@F))"
+	@if HOME_WIFI_SSID='$(HOME_WIFI_SSID)' HOME_WIFI_PASSKEY='$(HOME_WIFI_PASSKEY)' \
+	    envsubst '$$HOME_WIFI_SSID $$HOME_WIFI_PASSKEY' < $< | sudo cmp -s - $@ 2>/dev/null; then
+	@	echo "No changes in $${_conn}. Skipping..."
+	@else
+	@	_was_active=false
+	@	if nmcli -t -f NAME,STATE connection show --active | grep -q "^$${_conn}:activated"; then
+	@		_was_active=true
+	@	fi
+	@	sudo install -d -m 700 $(@D)
+	@	HOME_WIFI_SSID='$(HOME_WIFI_SSID)' HOME_WIFI_PASSKEY='$(HOME_WIFI_PASSKEY)' \
+		envsubst '$$HOME_WIFI_SSID $$HOME_WIFI_PASSKEY' < $< | sudo install -m 600 -ZD /dev/stdin $@
+	@	echo "Detected changes in $${_conn}. Applying..."
+	@	sudo nmcli connection reload || true
+	@	if [ "$${_was_active}" = "true" ]; then
+	@		sudo nmcli connection up "$${_conn}" || true
+	@	fi
+	@fi
+
+FILES += /etc/firewalld/zones/home-trusted.xml
+/etc/firewalld/zones/home-trusted.xml: $(DF_FSETC)/firewalld/zones/home-trusted.xml | diffutils
+	@if sudo cmp -s $< $@ 2>/dev/null; then
+	@	echo "No changes in $(@F). Skipping..."
+	@else
+	@	sudo install -d -m 750 $(@D)
+	@	sudo install -m 644 -ZD $< $@
+	@	echo "Detected changes in $(@F). Applying..."
+	@	sudo firewall-cmd --reload
+	@fi
 
 ########################################################################################################################
 #
