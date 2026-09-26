@@ -9,7 +9,7 @@ After=network-check.service restic-backup@%i.service
 ConditionUser=!root
 
 [Service]
-Type=simple
+Type=oneshot
 RuntimeDirectory=restic-stats/%i
 IOSchedulingClass=idle
 Restart=no
