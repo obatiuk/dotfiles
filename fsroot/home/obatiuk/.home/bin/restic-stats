@@ -83,13 +83,16 @@ done
 # --- Load Configuration ---
 
 [[ -z "${_env_file}" || -z "${BACKUP_CONF_NAME}" ]] && { _usage; exit 1;}
-[ ! -f "${_env_file}" ] && { _err "Unable to load environment file ${_env_file}. Aborting!"; exit 1; }
+[ ! -f "${_env_file}" ] && { _err "Unable to find environment file ${_env_file}. Aborting!"; exit 1; }
 
 export BACKUP_CONF_NAME
 
 echo "Loading restic environment file '${_env_file}' ..."
 # shellcheck source=/dev/null
-source "${_env_file}"
+if ! source "${_env_file}"; then
+    _err "Failed to load or initialize restic environment file '${_env_file}'. Aborting!"
+    exit 1
+fi
 echo "Restic environment file '${_env_file}' was loaded successfully."
 
 echo "Loading MQTT environment file ..."
@@ -140,11 +143,15 @@ mosquitto_pub ${MQTT_PUB_ARGS} -r -t "${HASS_REPO_CONFIG_TOPIC}" -m "${HASS_REST
 mosquitto_pub ${MQTT_PUB_ARGS} -r -t "${HASS_BACKUP_CONFIG_TOPIC}" -m "${HASS_RESTIC_BACKUP_DISCOVERY_PAYLOAD}"
 
 # Get next scheduled backup run using `systemctl`. Return 'null' if multiple or no timers were found
-_next_backup_start=$(systemctl list-timers --user --all --output=json 2>/dev/null | \
-    jq --compact-output --raw-output \
-        "[ .[] | select(.unit | contains(\"${BACKUP_UNIQUE_ID//_/-}\")) | .next? ]
-        | map(select(. != null))
-        | if length == 1 then (.[0] | tonumber / 1000000 | strftime(\"%Y-%m-%dT%H:%M:%S%z\")) else null end")
+_timer_unit=$(systemctl --output=json list-timers | jq -r '.[].unit' | grep "@${BACKUP_UNIQUE_ID//_/-}\.timer")
+
+_raw_timestamp=""
+[[ -n "${_timer_unit}" ]] && _raw_timestamp=$(systemctl show -p NextElapseUSecRealtime --value "${_timer_unit}")
+
+_next_backup_start="null"
+if [[ -n "${_raw_timestamp}" ]] && [[ "${_raw_timestamp}" != "n/a" ]]; then
+    _next_backup_start=$(date -d "${_raw_timestamp}" +"%Y-%m-%dT%H:%M:%S%z")
+fi
 
 # Publish next start date to MQTT broker
 echo "Reporting next scheduled '${BACKUP_PRETTY_NAME}' run ..."
@@ -152,7 +159,15 @@ mosquitto_pub ${MQTT_PUB_ARGS} -r -t "${HASS_BACKUP_NEXT_START_TOPIC}" -m "${_ne
 
 # Publish repository stats to MQTT broker
 echo "Reporting '${REPO_PRETTY_NAME}' repository stats ..."
-restic --no-lock stats --mode raw-data --json | grep -o '{.*' \
-    | mosquitto_pub ${MQTT_PUB_ARGS} -r -t "${HASS_REPO_STATS_TOPIC}" -s
+
+# Execute Restic first and capture the payload to prevent Mosquitto connection timeouts
+_stats_payload=$(restic --no-lock stats --mode raw-data --json 2>/dev/null)
+
+if [ $? -eq 0 ] && [ -n "${_stats_payload}" ]; then
+    mosquitto_pub ${MQTT_PUB_ARGS} -r -t "${HASS_REPO_STATS_TOPIC}" -m "${_stats_payload}"
+else
+    _err "Failed to calculate repository stats or payload is empty."
+    exit 1
+fi
 
 echo "Done"

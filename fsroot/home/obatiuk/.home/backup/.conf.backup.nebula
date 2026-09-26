@@ -4,7 +4,7 @@
 # It defines the restic arguments for the 'nebula' backup
 #
 # shellcheck shell=bash
-# shellcheck disable=SC2086
+# shellcheck disable=SC2154
 
 # --- Prerequisite Checks ---
 
@@ -12,24 +12,66 @@ command -v curl > /dev/null 2>&1 || { echo "ERROR: 'curl' command not found. Abo
 command -v jq > /dev/null 2>&1 || { echo "ERROR: 'jq' command not found. Aborting!" >&2; return 1; }
 command -v secret-tool > /dev/null 2>&1 || { echo "ERROR: 'secret-tool' command not found. Aborting!" >&2; return 1; }
 
+# --- Helper Functions ---
+
+# Function to load a secret and assign it to an internal variable
+_load_secret() {
+    local var_name="$1"
+    local secret_type="$2"
+    local secret_output
+    local exit_code
+
+    secret_output=$(secret-tool lookup "${_lookup_base[@]}" type "${secret_type}" 2>&1)
+    exit_code=$?
+
+    if [ "${exit_code}" -ne 0 ]; then
+        echo "ERROR: Failed to retrieve ${secret_type} from keyring." >&2
+        echo "       Command executed: secret-tool lookup ${_lookup_base[*]} type ${secret_type}" >&2
+        echo "       Exit code: ${exit_code}" >&2
+        echo "       Actual Error: ${secret_output:-<no output>}" >&2
+        return 1
+    fi
+
+    if [ -z "${secret_output}" ]; then
+        echo "ERROR: Keyring entry for ${secret_type} exists but is empty." >&2
+        echo "       Lookup used: secret-tool lookup ${_lookup_base[*]} type ${secret_type}" >&2
+        return 1
+    fi
+
+    printf -v "${var_name}" "%s" "${secret_output}"
+    return 0
+}
+
+_cleanup_env() {
+    unset _router_host_name _router_host _lookup_base _secrets_loaded
+    unset _router_luci_url _router_luci_username _router_luci_password
+    unset _rpc_auth_token _os_ver _login_params _session_id
+    unset _tag_keep _tag_os_name _tag_os_version _backup_tags
+    unset _auth_token_payload _os_version_payload
+    unset -f _load_secret _cleanup_env
+}
+
 # --- Retrieve secrets from keyring ---
 
 _router_host_name="nebula"
 _router_host="${_router_host_name}.lan"
-_lookup_base="device router app_id openwrt host ${_router_host}"
 
-# --- Retrieve secrets from keyring ---
+# Safely defined as a Bash array to prevent word-splitting
+_lookup_base=(device router app_id openwrt host "${_router_host}")
 
-# Restic Repository URL
-_router_luci_url="$(secret-tool lookup ${_lookup_base} type url)/cgi-bin"
-_router_luci_username=$(secret-tool lookup ${_lookup_base} type username)
-_router_luci_password=$(secret-tool lookup ${_lookup_base} type password)
+_secrets_loaded=true
+_load_secret "_router_luci_url" "url" || _secrets_loaded=false
+_load_secret "_router_luci_username" "username" || _secrets_loaded=false
+_load_secret "_router_luci_password" "password" || _secrets_loaded=false
 
 # Basic check for credentials
-if [[ -z "${_router_luci_username}" || -z "${_router_luci_password}" ]]; then
-    echo "ERROR: OpenWrt credentials for '${_router_host}' were not found in system keyring'. Aborting!" >&2
+if [ "${_secrets_loaded}" = false ]; then
+    echo "ERROR: OpenWrt credentials for '${_router_host}' were not found or failed to load. Aborting!" >&2
+    _cleanup_env
     return 1
 fi
+
+_router_luci_url="${_router_luci_url}/cgi-bin"
 
 # --- OpenWrt authentication and data retrieval ---
 
@@ -45,6 +87,7 @@ _rpc_auth_token=$(curl -s -k -X POST "${_router_luci_url}/luci/rpc/auth" \
 
 if [[ "${_rpc_auth_token}" == "null" ]]; then
     echo "ERROR: Failed to retrieve RPC auth token. Check credentials and URL. Aborting!" >&2
+    _cleanup_env
     return 1
 fi
 
@@ -63,6 +106,7 @@ _session_id=$(curl -s -k --data-raw "${_login_params}" -c - "${_router_luci_url}
 
 if [[ -z "${_session_id}" ]]; then
     echo "ERROR: Failed to retrieve session ID. Check LuCI URL. Aborting!" >&2
+    _cleanup_env
     return 1
 fi
 
@@ -100,18 +144,5 @@ export RESTIC_ARGS_COMPARE
 export RESTIC_ARGS_PRUNE
 export RESTIC_ARGS_SNAPSHOT_STATS
 
-unset _router_host_name
-unset _router_host
-unset _lookup_base
-unset _router_luci_url
-unset _router_luci_username
-unset _router_luci_password
-unset _rpc_auth_token
-unset _os_ver
-unset _login_params
-unset _session_id
-unset _tag_keep
-unset _tag_os_name
-unset _tag_os_version
-unset _backup_tags
-
+_cleanup_env
+return 0

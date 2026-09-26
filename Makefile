@@ -123,7 +123,7 @@ endef
 #
 
 # All RPM packages that do not require manual installation steps
-PKG_RPM += rpm deltarpm dnf5 dnf-utils lsb_release rpmconf pam-u2f pamu2fcfg audit plymouth-system-theme NetworkManager
+PKG_RPM += rpm deltarpm dnf5 dnf-utils rpmconf pam-u2f pamu2fcfg audit plymouth-system-theme NetworkManager
 PKG_RPM += akmods fwupd bluez mokutil brightnessctl ssh-audit coreutils openssl tuned acpi lm_sensors sysstat thermald
 PKG_RPM += make tree usbguard-selinux usbguard-notifier usbguard-dbus cifs-utils sharutils binutils usbutils pciutils
 PKG_RPM += iwlwifi-dvm-firmware iwlwifi-mld-firmware iwlwifi-mvm-firmware
@@ -647,7 +647,7 @@ $(DOTHOME_BIN)/start-steam: $(DF_FSHOME)/.home/bin/start-steam | $(DOTHOME_BIN)/
 	@chmod +x $<
 
 FILES += $(DOTHOME_BIN)/restic-backup
-$(DOTHOME_BIN)/restic-backup: $(DF_FSHOME)/.home/bin/restic-backup | restic jq mosquitto curl libsecret lsb_release \
+$(DOTHOME_BIN)/restic-backup: $(DF_FSHOME)/.home/bin/restic-backup | restic jq mosquitto curl libsecret \
 	diffutils mosquitto libsecret $(BACKUP_CONF_FILES)
 	@install -d $(@D)
 	@ln -svfn $< $@

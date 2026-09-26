@@ -7,7 +7,7 @@
 
 # --- Prerequisite Checks ---
 
-command -v lsb_release > /dev/null 2>&1 || { echo "ERROR: 'lsb_release' command not found. Aborting!" >&2; return 1; }
+[ -f /etc/os-release ] || { echo "ERROR: '/etc/os-release' not found. Aborting!" >&2; return 1; }
 command -v diff > /dev/null 2>&1 || { echo "ERROR: 'diff' command not found. Aborting!" >&2; return 1; }
 
 # --- Configuration Variables ---
@@ -18,9 +18,9 @@ _backup_exclude_files=("${HOME}/.home/backup/lst.exclude.root" "${HOME}/.home/ba
 _tag_system="system"
 _tag_keep="keep"
 # Convert OS name to lowercase for use as a tag
-_tag_os_name="$(lsb_release -si | tr '[:upper:]' '[:lower:]')"
+_tag_os_name="$( ( . /etc/os-release && echo "${ID:-unknown}" ) | tr '[:upper:]' '[:lower:]' )"
 # Combine OS name and version
-_tag_os_version="${_tag_os_name}:$(lsb_release -sr)"
+_tag_os_version="${_tag_os_name}:$( . /etc/os-release && echo "${VERSION_ID:-unknown}" )"
 _backup_tags="--tag ${_tag_system},${_tag_os_name},${_tag_os_version}"
 
 # --- Backup Scope Preview ---
