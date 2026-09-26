@@ -1,4 +1,5 @@
-**/*/mc/ini
+/**/*/mc/ini
+/conversations
 *.iml
 .idea/
 TODO.md
