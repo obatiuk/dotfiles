@@ -143,10 +143,10 @@ mosquitto_pub ${MQTT_PUB_ARGS} -r -t "${HASS_REPO_CONFIG_TOPIC}" -m "${HASS_REST
 mosquitto_pub ${MQTT_PUB_ARGS} -r -t "${HASS_BACKUP_CONFIG_TOPIC}" -m "${HASS_RESTIC_BACKUP_DISCOVERY_PAYLOAD}"
 
 # Get next scheduled backup run using `systemctl`. Return 'null' if multiple or no timers were found
-_timer_unit=$(systemctl --output=json list-timers | jq -r '.[].unit' | grep "@${BACKUP_UNIQUE_ID//_/-}\.timer")
+_timer_unit=$(systemctl --output=json list-timers --user | jq -r '.[].unit' | grep "@${BACKUP_UNIQUE_ID//_/-}\.timer")
 
 _raw_timestamp=""
-[[ -n "${_timer_unit}" ]] && _raw_timestamp=$(systemctl show -p NextElapseUSecRealtime --value "${_timer_unit}")
+[[ -n "${_timer_unit}" ]] && _raw_timestamp=$(systemctl show --user -p NextElapseUSecRealtime --value "${_timer_unit}")
 
 _next_backup_start="null"
 if [[ -n "${_raw_timestamp}" ]] && [[ "${_raw_timestamp}" != "n/a" ]]; then
