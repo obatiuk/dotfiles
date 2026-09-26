@@ -89,11 +89,14 @@ done
 # --- Load Configuration ---
 
 [[ -z "${_env_file}" ]] && { _usage; exit 1;}
-[ ! -f "${_env_file}" ] && { _err "Unable to load environment file ${_env_file}. Aborting!"; exit 1; }
+[ ! -f "${_env_file}" ] && { _err "Unable to find environment file ${_env_file}. Aborting!"; exit 1; }
 
 echo "Loading restic environment file '${_env_file}' ..."
 # shellcheck source=/dev/null
-source "${_env_file}"
+if ! source "${_env_file}"; then
+    _err "Failed to load or initialize restic environment file '${_env_file}'. Aborting!"
+    exit 1
+fi
 echo "Restic environment file '${_env_file}' was loaded successfully."
 
 echo "Loading MQTT environment file ..."

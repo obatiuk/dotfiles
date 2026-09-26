@@ -135,17 +135,23 @@ done
 # --- Load Configuration ---
 
 [[ -z "${_env_file}" || -z "${_conf_file}" ]] && { _usage; exit 1;}
-[ ! -f "${_env_file}" ] && { _err "Unable to load environment file ${_env_file}. Aborting!"; exit 1; }
-[ ! -f "${_conf_file}" ] && { _err "Unable to load environment file ${_conf_file}. Aborting!"; exit 1; }
+[ ! -f "${_env_file}" ] && { _err "Unable to find environment file ${_env_file}. Aborting!"; exit 1; }
+[ ! -f "${_conf_file}" ] && { _err "Unable to find environment file ${_conf_file}. Aborting!"; exit 1; }
 
 echo "Loading restic environment file '${_env_file}' ..."
 # shellcheck source=/dev/null
-source "${_env_file}"
+if ! source "${_env_file}"; then
+    _err "Failed to load or initialize restic environment file '${_env_file}'. Aborting!"
+    exit 1
+fi
 echo "Restic environment file '${_env_file}' was loaded successfully."
 
 echo "Loading backup configuration file '${_conf_file}' ..."
 # shellcheck source=/dev/null
-source "${_conf_file}"
+if ! source "${_conf_file}"; then
+    _err "Failed to load or initialize backup configuration file '${_conf_file}'. Aborting!"
+    exit 1
+fi
 echo "Backup configuration file '${_conf_file}' was loaded successfully."
 
 echo "Loading MQTT environment file ..."
