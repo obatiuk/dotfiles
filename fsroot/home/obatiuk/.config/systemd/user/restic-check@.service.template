@@ -8,7 +8,7 @@ Requires=network-check.service
 ConditionUser=!root
 
 [Service]
-Type=simple
+Type=oneshot
 RuntimeDirectory=restic-check/%i
 IOSchedulingClass=idle
 Restart=no
