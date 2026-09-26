@@ -5,23 +5,33 @@
 #
 # shellcheck shell=bash
 
-export BACKUP_UNIQUE_ID="${BACKUP_CONF_NAME}_${BACKUP_ENV_NAME}"
-export BACKUP_PRETTY_NAME="Restic Backup - ${BACKUP_CONF_NAME} (${BACKUP_ENV_NAME})"
+_host_name="${BACKUP_HOST_NAME:-$(hostname)}"
 
-HASS_BACKUP_SENSOR_ID="restic-backup-${BACKUP_UNIQUE_ID//_/-}"
-HASS_BACKUP_COMPONENT_ID_PREFIX="restic_backup_${BACKUP_UNIQUE_ID}"
+export BACKUP_UNIQUE_ID="${BACKUP_CONF_NAME}_${BACKUP_ENV_NAME}"
+
+export BACKUP_PRETTY_NAME="Restic Backup: ${BACKUP_CONF_NAME}/${BACKUP_ENV_NAME}@${_host_name}"
+
+HASS_DEVICE_UNIQUE_ID="${_host_name}_${BACKUP_UNIQUE_ID}"
+HASS_BACKUP_SENSOR_ID="restic-backup-${HASS_DEVICE_UNIQUE_ID//_/-}"
+# Replace any accidental hyphens with underscores for JSON keys to keep HA happy
+HASS_BACKUP_COMPONENT_ID_PREFIX="restic_backup_${HASS_DEVICE_UNIQUE_ID//-/_}"
 
 export HASS_BACKUP_CONFIG_TOPIC="homeassistant/device/${HASS_BACKUP_SENSOR_ID}/config"
 export HASS_BACKUP_STATS_TOPIC="homeassistant/device/${HASS_BACKUP_SENSOR_ID}/stats"
 export HASS_BACKUP_STATE_TOPIC="homeassistant/device/${HASS_BACKUP_SENSOR_ID}/state"
 export HASS_BACKUP_NEXT_START_TOPIC="homeassistant/device/${HASS_BACKUP_SENSOR_ID}/next_start"
 
+_attr_tpl="{{ { 'hostname': '${_host_name}', "
+_attr_tpl+="'configuration': '${BACKUP_CONF_NAME}', "
+_attr_tpl+="'environment': '${BACKUP_ENV_NAME}' } | tojson }}"
+
 HASS_RESTIC_BACKUP_DISCOVERY_PAYLOAD="$(
-cat <<EOF
+cat << EOF
 {
     "device": {
         "ids": "${HASS_BACKUP_SENSOR_ID}",
-        "name": "${BACKUP_PRETTY_NAME}"
+        "name": "${BACKUP_PRETTY_NAME}",
+        "via_device": "restic-repo-${BACKUP_ENV_NAME//_/-}"
     },
     "origin": {
         "name": "systemd"
@@ -31,14 +41,14 @@ cat <<EOF
             "platform": "sensor",
             "name": "Last Backup Start",
             "device_class": "timestamp",
-            "value_template":"{{value_json.backup_start}}",
+            "value_template":"{{ value_json.backup_start if value_json is defined else none }}",
             "unique_id":"${HASS_BACKUP_COMPONENT_ID_PREFIX}_last_backup_start"
         },
         "${HASS_BACKUP_COMPONENT_ID_PREFIX}_last_backup_end" : {
             "platform": "sensor",
             "name": "Last Backup End",
             "device_class": "timestamp",
-            "value_template":"{{value_json.backup_end}}",
+            "value_template":"{{ value_json.backup_end if value_json is defined else none }}",
             "unique_id":"${HASS_BACKUP_COMPONENT_ID_PREFIX}_last_backup_end"
         },
         "${HASS_BACKUP_COMPONENT_ID_PREFIX}_files_new" : {
@@ -47,7 +57,7 @@ cat <<EOF
             "entity_category": "diagnostic",
             "state_class": "measurement",
             "icon": "mdi:file-upload",
-            "value_template":"{{value_json.files_new}}",
+            "value_template":"{{ value_json.files_new if value_json is defined else none }}",
             "unique_id":"${HASS_BACKUP_COMPONENT_ID_PREFIX}_files_new"
         },
         "${HASS_BACKUP_COMPONENT_ID_PREFIX}_files_changed" : {
@@ -56,7 +66,7 @@ cat <<EOF
             "entity_category": "diagnostic",
             "state_class": "measurement",
             "icon": "mdi:file-edit",
-            "value_template":"{{value_json.files_changed}}",
+            "value_template":"{{ value_json.files_changed if value_json is defined else none }}",
             "unique_id":"${HASS_BACKUP_COMPONENT_ID_PREFIX}_files_changed"
         },
         "${HASS_BACKUP_COMPONENT_ID_PREFIX}_files_unmodified" : {
@@ -65,7 +75,7 @@ cat <<EOF
             "entity_category": "diagnostic",
             "state_class": "measurement",
             "icon": "mdi:file-check",
-            "value_template":"{{value_json.files_unmodified}}",
+            "value_template":"{{ value_json.files_unmodified if value_json is defined else none }}",
             "unique_id":"${HASS_BACKUP_COMPONENT_ID_PREFIX}_files_unmodified"
         },
         "${HASS_BACKUP_COMPONENT_ID_PREFIX}_total_files_processed" : {
@@ -74,7 +84,7 @@ cat <<EOF
             "entity_category": "diagnostic",
             "state_class": "measurement",
             "icon": "mdi:file-find",
-            "value_template":"{{value_json.total_files_processed}}",
+            "value_template":"{{ value_json.total_files_processed if value_json is defined else none }}",
             "unique_id":"${HASS_BACKUP_COMPONENT_ID_PREFIX}_total_files_processed"
         },
         "${HASS_BACKUP_COMPONENT_ID_PREFIX}_total_file_count" : {
@@ -83,7 +93,7 @@ cat <<EOF
             "entity_category": "diagnostic",
             "state_class": "measurement",
             "icon": "mdi:file-multiple",
-            "value_template":"{{value_json.total_file_count}}",
+            "value_template":"{{ value_json.total_file_count if value_json is defined else none }}",
             "unique_id":"${HASS_BACKUP_COMPONENT_ID_PREFIX}_total_file_count"
         },
         "${HASS_BACKUP_COMPONENT_ID_PREFIX}_dirs_new" : {
@@ -92,7 +102,7 @@ cat <<EOF
             "entity_category": "diagnostic",
             "state_class": "measurement",
             "icon": "mdi:folder-upload",
-            "value_template":"{{value_json.dirs_new}}",
+            "value_template":"{{ value_json.dirs_new if value_json is defined else none }}",
             "unique_id":"${HASS_BACKUP_COMPONENT_ID_PREFIX}_dirs_new"
         },
         "${HASS_BACKUP_COMPONENT_ID_PREFIX}_dirs_changed" : {
@@ -101,7 +111,7 @@ cat <<EOF
             "entity_category": "diagnostic",
             "state_class": "measurement",
             "icon": "mdi:folder-edit",
-            "value_template":"{{value_json.dirs_changed}}",
+            "value_template":"{{ value_json.dirs_changed if value_json is defined else none }}",
             "unique_id":"${HASS_BACKUP_COMPONENT_ID_PREFIX}_dirs_changed"
         },
         "${HASS_BACKUP_COMPONENT_ID_PREFIX}_dirs_unmodified" : {
@@ -110,7 +120,7 @@ cat <<EOF
             "entity_category": "diagnostic",
             "state_class": "measurement",
             "icon": "mdi:folder-check",
-            "value_template":"{{value_json.dirs_unmodified}}",
+            "value_template":"{{ value_json.dirs_unmodified if value_json is defined else none }}",
             "unique_id":"${HASS_BACKUP_COMPONENT_ID_PREFIX}_dirs_unmodified"
         },
         "${HASS_BACKUP_COMPONENT_ID_PREFIX}_total_size" : {
@@ -121,23 +131,25 @@ cat <<EOF
             "unit_of_measurement": "GiB",
             "device_class": "data_size",
             "suggested_display_precision": 2,
-            "value_template":"{{value_json.total_size / 1073741824 | round(3)}}",
+            "value_template":"{{ (value_json.total_size / 1073741824) | round(3) if value_json is defined and value_json.total_size is defined else none }}",
             "unique_id":"${HASS_BACKUP_COMPONENT_ID_PREFIX}_total_size"
         },
         "${HASS_BACKUP_COMPONENT_ID_PREFIX}_backup_state" : {
             "platform": "sensor",
             "name": "Backup State",
             "device_class": "enum",
-            "value_template":"{{value_json.state}}",
+            "value_template":"{{ value_json.state if value_json is defined else none }}",
             "unique_id":"${HASS_BACKUP_COMPONENT_ID_PREFIX}_backup_state",
-            "state_topic": "${HASS_BACKUP_STATE_TOPIC}"
+            "state_topic": "${HASS_BACKUP_STATE_TOPIC}",
+            "json_attributes_topic": "${HASS_BACKUP_STATE_TOPIC}",
+            "json_attributes_template": "${_attr_tpl}"
         },
         "${HASS_BACKUP_COMPONENT_ID_PREFIX}_next_backup_start" : {
             "platform": "sensor",
             "name": "Next Backup Start",
             "device_class": "timestamp",
             "icon": "mdi:calendar-clock",
-            "value_template":"{{value}}",
+            "value_template":"{{ value if value is defined and value != 'null' else none }}",
             "unique_id":"${HASS_BACKUP_COMPONENT_ID_PREFIX}_next_backup_start",
             "state_topic": "${HASS_BACKUP_NEXT_START_TOPIC}"
         }
@@ -148,3 +160,6 @@ EOF
 )"
 
 export HASS_RESTIC_BACKUP_DISCOVERY_PAYLOAD
+
+unset _host_name
+unset _attr_tpl
