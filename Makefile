@@ -785,7 +785,7 @@ FILES += $(XDG_CONFIG_HOME)/wget/wgetrc
 $(XDG_CONFIG_HOME)/wget/wgetrc: $(DF_FSHOME)/.config/wget/wgetrc.template | wget $(BASHRCD)/bashrc-xdg gettext-envsubst
 	@install -d $(@D)
 	@install -d $(XDG_CACHE_HOME)/wget
-	@envsubst '$$TODAY $$USER $$XDG_CACHE_HOME' < $< | install -m 644 -DC /dev/stdin $@
+	@envsubst '$$TODAY $$USER $$XDG_CACHE_HOME' < $< | install -m 644 -D /dev/stdin $@
 
 FILES += $(XDG_DATA_HOME)/backgrounds/current
 $(XDG_DATA_HOME)/backgrounds/current: $(DF_FSHOME)/.local/share/backgrounds/morphogenesis-d.svg
@@ -805,7 +805,7 @@ $(PASS_HOME)/.gitattributes: | pass git
 
 FILES += $(PASS_HOME)/.gitignore
 $(PASS_HOME)/.gitignore: $(DF_FSHOME)/.password-store/.gitignore | pass
-	@install -m 600 -DC $< $@
+	@install -m 600 -D $< $@
 
 FILES += $(PASS_HOME)/.browserpass.json
 $(PASS_HOME)/.browserpass.json: $(DF_FSHOME)/.password-store/.browserpass.json | pass
@@ -881,7 +881,7 @@ $(XDG_CONFIG_HOME)/systemd/user/restic-backup@.service: \
 	| $(XDG_CONFIG_HOME)/systemd/user/network-check.service \
 	$(DOTHOME_BIN)/restic-backup \
 	gettext-envsubst
-	@WORKDIR=$(DF_ROOT) envsubst '$$TODAY $$USER $$WORKDIR' < $< | install -m 644 -DC /dev/stdin $@
+	@WORKDIR=$(DF_ROOT) envsubst '$$TODAY $$USER $$WORKDIR' < $< | install -m 644 -D /dev/stdin $@
 	@systemd-analyze verify $@
 	@systemctl --user daemon-reload
 
@@ -892,7 +892,7 @@ $(XDG_CONFIG_HOME)/systemd/user/restic-stats@.service: \
 	$(XDG_CONFIG_HOME)/systemd/user/restic-backup@.service \
 	$(DOTHOME_BIN)/restic-stats \
 	gettext-envsubst
-	@WORKDIR=$(DF_ROOT) envsubst '$$TODAY $$USER $$WORKDIR' < $< | install -m 644 -DC /dev/stdin $@
+	@WORKDIR=$(DF_ROOT) envsubst '$$TODAY $$USER $$WORKDIR' < $< | install -m 644 -D /dev/stdin $@
 	@systemd-analyze verify $@
 	@systemctl --user daemon-reload
 
@@ -902,7 +902,7 @@ $(XDG_CONFIG_HOME)/systemd/user/restic-check@.service: \
 	| $(XDG_CONFIG_HOME)/systemd/user/network-check.service \
 	$(DOTHOME_BIN)/restic-check \
 	gettext-envsubst
-	@WORKDIR=$(DF_ROOT) envsubst '$$TODAY $$USER $$WORKDIR' < $< | install -m 644 -DC /dev/stdin $@
+	@WORKDIR=$(DF_ROOT) envsubst '$$TODAY $$USER $$WORKDIR' < $< | install -m 644 -D /dev/stdin $@
 	@systemd-analyze verify $@
 	@systemctl --user daemon-reload
 
@@ -912,7 +912,7 @@ $(XDG_CONFIG_HOME)/systemd/user/restic-backup-daily@.timer: \
 	| $(XDG_CONFIG_HOME)/systemd/user/network-check.service \
 	$(XDG_CONFIG_HOME)/systemd/user/restic-backup@.service \
 	gettext-envsubst
-	@envsubst '$$TODAY $$USER' < $< | install -m 644 -DC /dev/stdin $@
+	@envsubst '$$TODAY $$USER' < $< | install -m 644 -D /dev/stdin $@
 	@systemd-analyze verify $@
 	@systemctl --user daemon-reload
 
@@ -922,7 +922,7 @@ $(XDG_CONFIG_HOME)/systemd/user/restic-backup-monthly@.timer: \
 	| $(XDG_CONFIG_HOME)/systemd/user/network-check.service \
 	$(XDG_CONFIG_HOME)/systemd/user/restic-backup@.service \
 	gettext-envsubst
-	@envsubst '$$TODAY $$USER' < $< | install -m 644 -DC /dev/stdin $@
+	@envsubst '$$TODAY $$USER' < $< | install -m 644 -D /dev/stdin $@
 	@systemd-analyze verify $@
 	@systemctl --user daemon-reload
 
@@ -932,7 +932,7 @@ $(XDG_CONFIG_HOME)/systemd/user/restic-check-monthly@.timer: \
 	| $(XDG_CONFIG_HOME)/systemd/user/network-check.service \
 	$(DOTHOME_BIN)/restic-check \
 	gettext-envsubst
-	@envsubst '$$TODAY $$USER' < $< | install -m 644 -DC /dev/stdin $@
+	@envsubst '$$TODAY $$USER' < $< | install -m 644 -D /dev/stdin $@
 	@systemd-analyze verify $@
 	@systemctl --user daemon-reload
 
@@ -940,7 +940,7 @@ FILES += $(XDG_CONFIG_HOME)/systemd/user/network-online.service
 $(XDG_CONFIG_HOME)/systemd/user/network-online.service: $(DF_FSHOME)/.config/systemd/user/network-online.service.template \
 	| NetworkManager \
 	gettext-envsubst
-	@envsubst '$$TODAY $$USER' < $< | install -m 644 -DC /dev/stdin $@
+	@envsubst '$$TODAY $$USER' < $< | install -m 644 -D /dev/stdin $@
 	@systemd-analyze verify $@
 	@systemctl --user daemon-reload
 	@systemctl --user enable --now $(@F)
@@ -950,7 +950,7 @@ $(XDG_CONFIG_HOME)/systemd/user/network-online.target: $(DF_FSHOME)/.config/syst
 	| $(XDG_CONFIG_HOME)/systemd/user/network-online.service \
 	NetworkManager \
 	gettext-envsubst
-	@envsubst '$$TODAY $$USER' < $< | install -m 644 -DC /dev/stdin $@
+	@envsubst '$$TODAY $$USER' < $< | install -m 644 -D /dev/stdin $@
 	@systemd-analyze verify $@
 	@systemctl --user daemon-reload
 
@@ -959,7 +959,7 @@ $(XDG_CONFIG_HOME)/systemd/user/network-check.service: $(DF_FSHOME)/.config/syst
 	| $(XDG_CONFIG_HOME)/systemd/user/network-online.target \
 	NetworkManager \
 	gettext-envsubst
-	@envsubst '$$TODAY $$USER $$BACKUP_HOST' < $< | install -m 644 -DC /dev/stdin $@
+	@envsubst '$$TODAY $$USER $$BACKUP_HOST' < $< | install -m 644 -D /dev/stdin $@
 	@systemd-analyze verify $@
 	@systemctl --user daemon-reload
 	@systemctl --user enable --now $(@F)
@@ -1004,12 +1004,12 @@ FILES += /etc/yum.repos.d/opera.repo
 /etc/yum.repos.d/opera.repo: $(DF_FSETC)/yum.repos.d/opera.repo.template | gettext-envsubst
 	-@sudo rpm --import https://rpm.opera.com/rpmrepo.key
 	@sudo install -d $(@D)
-	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -DC /dev/stdin $@
+	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -D /dev/stdin $@
 
 FILES += /etc/yum.repos.d/keybase.repo
 /etc/yum.repos.d/keybase.repo: $(DF_FSETC)/yum.repos.d/keybase.repo.template | gettext-envsubst
 	@sudo install -d $(@D)
-	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -DC /dev/stdin $@
+	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -D /dev/stdin $@
 
 FILES += /etc/yum.repos.d/rpmfusion-free.repo
 /etc/yum.repos.d/rpmfusion-free.repo:
@@ -1032,21 +1032,21 @@ FILES += /etc/yum.repos.d/_copr\:copr.fedorainfracloud.org\:rockowitz\:ddcutil.r
 FILES += /etc/NetworkManager/conf.d/00-randomize-mac.conf
 /etc/NetworkManager/conf.d/00-randomize-mac.conf: $(DF_FSETC)/NetworkManager/conf.d/00-randomize-mac.conf.template \
 	| gettext-envsubst NetworkManager
-	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -DC /dev/stdin $@
+	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -D /dev/stdin $@
 	@sudo systemctl restart NetworkManager
 
 FILES += /etc/systemd/logind.conf.d/power.conf
 /etc/systemd/logind.conf.d/power.conf: $(DF_FSETC)/systemd/logind.conf.d/power.conf.template | gettext-envsubst
-	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -DC /dev/stdin $@
+	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -D /dev/stdin $@
 
 FILES += /etc/systemd/resolved.conf.d/dnssec.conf
 /etc/systemd/resolved.conf.d/dnssec.conf: $(DF_FSETC)/systemd/resolved.conf.d/dnssec.conf.template | gettext-envsubst
-	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -DC /dev/stdin $@
+	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -D /dev/stdin $@
 	@sudo systemctl restart systemd-resolved
 
 FILES += /etc/udev/rules.d/60-streamdeck.rules
 /etc/udev/rules.d/60-streamdeck.rules: $(DF_FSETC)/udev/rules.d/60-streamdeck.rules.template | gettext-envsubst
-	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -DC /dev/stdin $@
+	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -D /dev/stdin $@
 	@sudo udevadm control --reload-rules && sudo udevadm trigger
 
 FILES += /etc/pki/akmods/certs/public_key.der
@@ -1057,17 +1057,17 @@ FILES += /etc/pki/akmods/certs/public_key.der
 FILES += /etc/polkit-1/rules.d/10-admin-auth-ignore-inhibit.rules
 /etc/polkit-1/rules.d/10-admin-auth-ignore-inhibit.rules: \
 	$(DF_FSETC)/polkit-1/rules.d/10-admin-auth-ignore-inhibit.rules.template | gettext-envsubst
-	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -DC /dev/stdin $@
+	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -D /dev/stdin $@
 
 FILES += /etc/polkit-1/rules.d/70-allow-usbguard.rules
 /etc/polkit-1/rules.d/70-allow-usbguard.rules: $(DF_FSETC)/polkit-1/rules.d/70-allow-usbguard.rules.template \
 	| gettext-envsubst
-	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -DC /dev/stdin $@
+	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -D /dev/stdin $@
 
 FILES += /etc/udev/rules.d/71-sony-controllers.rules
 /etc/udev/rules.d/71-sony-controllers.rules: $(DF_FSETC)/udev/rules.d/71-sony-controllers.rules.template \
 	| gettext-envsubst
-	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -DC /dev/stdin $@
+	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -D /dev/stdin $@
 	@sudo udevadm control --reload-rules && sudo udevadm trigger
 
 FILES += /etc/logrotate.d/dnf
@@ -1093,7 +1093,7 @@ patch-local-rtc:
 # Potential fix for mouse lag (e.g., disabling autosuspend for the Dell Universal Receiver)
 PATCH += /etc/udev/rules.d/50-usb-power-save.rules
 /etc/udev/rules.d/50-usb-power-save.rules: $(DF_FSETC)/udev/rules.d/50-usb-power-save.rules.template | gettext-envsubst
-	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -DC /dev/stdin $@
+	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -D /dev/stdin $@
 	@sudo udevadm control --reload-rules && sudo udevadm trigger
 
 ########################################################################################################################

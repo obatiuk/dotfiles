@@ -61,16 +61,16 @@ install-nvidia-drivers: | /etc/yum.repos.d/rpmfusion-nonfree.repo akmods grubby
 # Headphones are not automatically recognized by the system
 .PHONY:
 /etc/modprobe.d/dell.conf: $(DF_DELL_FSROOT)/etc/modprobe.d/dell.conf.template | gettext-envsubst
-	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -DC /dev/stdin $@
+	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -D /dev/stdin $@
 
 # Disable bluetooth auto-suspend
 .PHONY:
 /etc/modprobe.d/btusb.conf: $(DF_DELL_FSROOT)/etc/modprobe.d/btusb.conf.template | gettext-envsubst
-	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -DC /dev/stdin $@
+	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -D /dev/stdin $@
 
 .PHONY:
 /etc/sysctl.d/97-swappiness.conf: $(DF_DELL_FSROOT)/etc/sysctl.d/97-swappiness.conf.template | gettext-envsubst
-	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -DC /dev/stdin $@
+	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -D /dev/stdin $@
 
 PATCH += patch-dell-xps-15-7590
 patch-dell-xps-15-7590: fix-dell-deep-sleep \
