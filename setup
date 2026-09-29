@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+
+# Exit on error (-e), undefined variables (-u), and pipeline failures (-o pipefail)
+set -euo pipefail
+
+LOG_FILE="/tmp/dotfiles-init-$(date +%Y%m%d_%H%M%S).log"
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+NC='\033[0m'
+
+log()   { echo -e "${GREEN}[INFO]${NC} $1" | tee -a "$LOG_FILE"; }
+error() { echo -e "\n${RED}[ERROR]${NC} $1" | tee -a "$LOG_FILE"; }
+
+log "Starting dotfiles setup... Logging to: $LOG_FILE"
+
+for cmd in git-crypt make gpg; do
+    if ! command -v "$cmd" >/dev/null 2>&1; then
+        error "'$cmd' is not installed. Aborting."
+        exit 1
+    fi
+done
+
+TARGET_DIR="$(dirname "${BASH_SOURCE[0]}")"
+cd "$TARGET_DIR" || { error "Failed to navigate to $TARGET_DIR"; exit 1; }
+
+log "Attempting to unlock git-crypt..."
+if ! git-crypt unlock 2>&1 | tee -a "$LOG_FILE"; then
+    error "git-crypt unlock failed! Are your GPG keys loaded?"
+    exit 1
+fi
+log "git-crypt unlocked successfully."
+
+log "Running make init..."
+if ! make init --trace 2>&1 | tee -a "$LOG_FILE"; then
+    error "'make init' failed. Check the output above or review $LOG_FILE."
+    exit 1
+fi
+
+log "Setup script finished successfully!"
+
+LOG_COUNT=$(find /tmp -maxdepth 1 -type f -name 'dotfiles-init-*.log' -printf '.' 2>/dev/null | wc -c)
+
+if [[ "$LOG_COUNT" -gt 0 ]]; then
+    echo -e "\nFound $LOG_COUNT log file(s)."
+
+    # Disable exit-on-error temporarily for the interactive read prompt
+    set +e
+    read -r -p "Do you want to delete all setup logs now? (y/N): " choice
+    set -e
+
+    if [[ "$choice" =~ ^[Yy](es)?$ ]]; then
+        rm -f /tmp/dotfiles-init-*.log
+        echo -e "${GREEN}[INFO]${NC} Logs deleted."
+    else
+        echo -e "${GREEN}[INFO]${NC} Logs preserved in /tmp/."
+    fi
+fi
