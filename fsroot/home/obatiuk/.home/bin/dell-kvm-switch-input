@@ -15,8 +15,8 @@ MONITOR_MODEL='DELL U3821DW'
 VCP_CODE=0x60
 
 # VCP values for the two inputs to toggle between
-INPUT_DP_1=0x0f # Example: DisplayPort (DP)
-INPUT_USB_C=0x1b # Example: USB-C/KVM
+INPUT_DP_1=0x0f # DisplayPort (DP)
+INPUT_USB_C=0x1b # USB-C
 
 # Get current input value (VCP 0x60)
 echo "Getting current input for monitor: ${MONITOR_MODEL}" >&2
@@ -31,15 +31,18 @@ fi
 # Determine the target input value
 TARGET_VCP=""
 TARGET_NAME=""
+LAYOUT_MODE=""
 case "${CURRENT_VCP}" in
     "${INPUT_USB_C}")
         TARGET_VCP="${INPUT_DP_1}"
         TARGET_NAME="DisplayPort (VCP ${TARGET_VCP})"
+        LAYOUT_MODE="all"
         ;;
 
     "${INPUT_DP_1}")
         TARGET_VCP="${INPUT_USB_C}"
-        TARGET_NAME="USB-C/KVM (VCP ${TARGET_VCP})"
+        TARGET_NAME="USB-C (VCP ${TARGET_VCP})"
+        LAYOUT_MODE="single"
         ;;
 
     *)
@@ -47,6 +50,20 @@ case "${CURRENT_VCP}" in
         exit 1
         ;;
 esac
+
+# Apply the GNOME layout FIRST
+SCRIPT_DIR="$(dirname "$(realpath "$0")")"
+SWITCH_CMD="${SCRIPT_DIR}/switch-monitor"
+
+if [ -x "${SWITCH_CMD}" ]; then
+    echo "Applying GNOME layout: ${LAYOUT_MODE}..." >&2
+    "${SWITCH_CMD}" "${LAYOUT_MODE}"
+else
+    echo "WARNING: '${SWITCH_CMD}' not found or not executable. Skipping layout adjustment." >&2
+fi
+
+# Allow GNOME to settle
+sleep 1
 
 # Set the new input
 echo "Switching input to: ${TARGET_NAME}" >&2

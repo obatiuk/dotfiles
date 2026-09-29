@@ -53,6 +53,9 @@ case "$MODE" in
     all)
         echo "Switching to all-monitors mode (DP-4, DP-6, eDP-1) ..."
         gnome-monitor-config set ${ALL_MONITORS_CONFIG}
+        sleep 0.5
+		# Workaround: Second invocation to fix the wallpaper glitch
+        gnome-monitor-config set ${ALL_MONITORS_CONFIG}
         brightnessctl set -d intel_backlight 100%
         ;;
     *)
