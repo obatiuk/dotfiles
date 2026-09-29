@@ -842,11 +842,6 @@ $(XDG_CONFIG_HOME)/wget/wgetrc: $(DF_FSHOME)/.config/wget/wgetrc.template | wget
 	@install -d $(XDG_CACHE_HOME)/wget
 	@envsubst '$$TODAY $$USER $$XDG_CACHE_HOME' < $< | install -m 644 -D /dev/stdin $@
 
-FILES += $(XDG_DATA_HOME)/backgrounds/current
-$(XDG_DATA_HOME)/backgrounds/current: $(DF_FSHOME)/.local/share/backgrounds/morphogenesis-d.svg
-	@install -d $(@D)
-	@ln -svfn $< $@
-
 FILES += $(PASS_HOME)/.gpg-id
 $(PASS_HOME)/.gpg-id: | pass
 	@install -d $(@D)

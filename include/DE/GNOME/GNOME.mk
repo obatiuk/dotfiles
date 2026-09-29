@@ -23,7 +23,7 @@ EXT_ULAUNCHER += ulauncher-obsidian.git ulauncher-numconverter.git ulauncher-lis
 # GNOME RPM packages
 PKG_RPM += gnome-shell gnome-terminal seahorse gnome-keyring pinentry-gnome3
 PKG_RPM += gparted baobab gimp gedit gedit-plugins gedit-plugin-editorconfig fedora-chromium-config-gnome
-PKG_RPM += gnome-browser-connector gnome-pomodoro gnome-clocks gnome-monitor-config
+PKG_RPM += gnome-browser-connector focus-timer gnome-clocks gnome-monitor-config
 PKG_RPM += gnome-system-monitor adwaita-icon-theme adwaita-cursor-theme gtk-update-icon-cache
 
 PKG_FLATPACK += org.gtk.Gtk3theme.Arc-Darker
@@ -172,8 +172,8 @@ INSTALL += gnome-terminal-settings
 gnome-terminal-settings: $(DF_GNOME_RES)/gnome-terminal.ini | dconf
 	@dconf load '/' < $<
 
-INSTALL += gnome-pomodoro-settings
-gnome-pomodoro-settings: $(DF_GNOME_RES)/gnome-pomodoro.ini | dconf
+INSTALL += focus-timer-settings
+focus-timer-settings: $(DF_GNOME_RES)/focus-timer.ini | dconf
 	@dconf load '/' < $<
 
 INSTALL += gnome-clocks-settings
@@ -233,6 +233,11 @@ FILES += $(DOTHOME_OPT)/install-gnome-extensions.git/install-gnome-extensions.sh
 $(DOTHOME_OPT)/install-gnome-extensions.git/install-gnome-extensions.sh: | git
 	@$(call clone,install-gnome-extensions.git)
 
+FILES += $(XDG_DATA_HOME)/backgrounds/current
+$(XDG_DATA_HOME)/backgrounds/current: $(DF_FSHOME)/.local/share/backgrounds/morphogenesis-d.svg
+	@install -d $(@D)
+	@ln -svfn $< $@
+
 ########################################################################################################################
 #
 # Patches
@@ -287,5 +292,5 @@ gnome-settings: gnome-shell-extensions \
 		gnome-gedit-settings \
 		gnome-tracker-settings \
 		gnome-terminal-settings \
-		gnome-pomodoro-settings \
+		focus-timer-settings \
 		gnome-clocks-settings
