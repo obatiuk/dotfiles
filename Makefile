@@ -139,7 +139,7 @@ PKG_RPM += gvfs-mtp 7zip-standalone unrar cabextract bsdtar odt2txt qrencode
 PKG_RPM += glow micro bat mc git gh diffutils git-lfs git-extras git-credential-libsecret git-crypt lynx whois
 PKG_RPM += perl-Image-ExifTool calibre ebook-tools dos2unix graphviz jpegoptim ImageMagick
 PKG_RPM += java-latest-openjdk java-21-openjdk java-25-openjdk adoptium-temurin-java-repository
-PKG_RPM += python3 python3-pip python3-devel python3-virtualenv shftm ShellCheck
+PKG_RPM += python3 python3-pip python3-devel python3-virtualenv shfmt ShellCheck
 PKG_RPM += libreoffice-writer libreoffice-calc libreoffice-filters minder firefox xsensors ffmpeg
 PKG_RPM += xsane diff-pdf media-player-info steam-devices
 PKG_RPM += dracut-squash NetworkManager-config-connectivity-fedora
@@ -1380,7 +1380,7 @@ check-disk-space: | duf
 
 CHECK += check-docker-disk-usage
 check-docker-disk-usage: | docker
-	-@(DOCKER_CMD) system df
+	-@$(DOCKER_CMD) system df
 
 CHECK += check-ssh
 check-ssh: | ssh-audit
