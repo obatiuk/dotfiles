@@ -1,0 +1,84 @@
+#!/usr/bin/env bash
+#
+# sync-gnome-settings
+# Scans a directory of GNOME dconf .ini files and updates their key/value pairs
+# to match the current live system state.
+
+set -e
+# Set up a trap to print exactly where the script failed if something goes wrong
+trap 'echo "Error: Script failed unexpectedly at line $LINENO while processing $file" >&2' ERR
+
+# Validate input
+if [[ -z "$1" ]]; then
+    echo "Usage: $(basename "$0") <directory_with_ini_files>" >&2
+    exit 1
+fi
+
+TARGET_DIR="$1"
+
+if [[ ! -d "$TARGET_DIR" ]]; then
+    echo "Error: Directory '$TARGET_DIR' does not exist." >&2
+    exit 1
+fi
+
+if ! command -v dconf >/dev/null; then
+    echo "Error: 'dconf' is required but not installed." >&2
+    exit 1
+fi
+
+# Process each .ini file in the target directory
+for file in "$TARGET_DIR"/*.ini; do
+    # Skip if no .ini files are found
+    [[ -f "$file" ]] || continue
+
+    echo "Syncing: $(basename "$file")..."
+    temp_file=$(mktemp)
+    current_path=""
+    updates=0
+
+    # Read line-by-line, preserving whitespace
+    while IFS= read -r line || [[ -n "$line" ]]; do
+
+        # Match section headers: (e.g `[org/gnome/shell]`)
+        if [[ "$line" =~ ^\[(.*)\]$ ]]; then
+            current_path="${BASH_REMATCH[1]}"
+            echo "$line" >> "$temp_file"
+
+        # Match key-value pairs: key=value (ignoring comments)
+        elif [[ -n "$current_path" && "$line" =~ ^([^=#]+)=(.*)$ ]]; then
+            key="${BASH_REMATCH[1]}"
+            old_val="${BASH_REMATCH[2]}"
+
+            # Skip lines containing bash-style variables (e.g. `${CMD}`)
+            if [[ "$old_val" =~ \$\{.*\} ]]; then
+                echo "  -> Preserving templated key: [$current_path] $key"
+                echo "$line" >> "$temp_file"
+                continue
+            fi
+
+            # Query the live system state (silencing standard error just in case)
+            new_val=$(dconf read "/$current_path/$key" 2>/dev/null)
+
+            # If dconf read returns a value, use it. Otherwise, keep the old value
+            if [[ -n "$new_val" ]]; then
+                if [[ "$new_val" != "$old_val" ]]; then
+                    updates=$((updates + 1))
+                fi
+                echo "${key}=${new_val}" >> "$temp_file"
+            else
+                echo "$line" >> "$temp_file"
+            fi
+
+        # Pass through comments, empty lines, and unmatched formatting
+        else
+            echo "$line" >> "$temp_file"
+        fi
+
+    done < "$file"
+
+    # Safely overwrite the original file
+    mv "$temp_file" "$file"
+    echo "  -> Done ($updates updates)."
+done
+
+echo "Sync complete."

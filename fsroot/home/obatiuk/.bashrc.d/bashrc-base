@@ -366,3 +366,28 @@ exif-clear() {
     echo "Removing EXIF metadata from $# file(s)..." >&2
     exiftool -all= -overwrite_original "$@"
 }
+
+# Dumps dconf settings for a given path and automatically prepends
+# the base path to all section headers, converting relative paths to absolute ones.
+dconf-dump() {
+    command -v dconf >/dev/null || { echo "Error: dconf is not installed." >&2; return 1; }
+
+    local path="$1"
+    [[ -z "$path" ]] && { echo "Usage: dconf-dump <path>" >&2; return 1; }
+
+    local base="${path#/}"
+    base="${base%/}"
+
+    dconf dump "$path" | awk -v base="$base" '
+    /^\[.*\]$/ {
+        if ($0 == "[/]") {
+            print "[" base "]"
+        } else {
+            sub(/^\[/, "[" base "/")
+            print
+        }
+        next
+    }
+    { print }
+    '
+}
