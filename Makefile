@@ -142,7 +142,7 @@ PKG_RPM += java-latest-openjdk java-21-openjdk java-25-openjdk adoptium-temurin-
 PKG_RPM += python3 python3-pip python3-devel python3-virtualenv shftm ShellCheck
 PKG_RPM += libreoffice-writer libreoffice-calc libreoffice-filters minder firefox xsensors ffmpeg
 PKG_RPM += xsane diff-pdf media-player-info steam-devices
-PKG_RPM += dracut-network dracut-squash NetworkManager-config-connectivity-fedora
+PKG_RPM += dracut-squash NetworkManager-config-connectivity-fedora
 PKG_RPM += clamav clamav-freshclam clamav-data
 PKG_RPM += syncthing restic rsync rclone
 PKG_RPM += cups hplip hplip-gui
@@ -1182,6 +1182,18 @@ FILES += /etc/firewalld/zones/home-trusted.xml
 	@	sudo install -m 644 -ZD $< $@
 	@	echo "Detected changes in $(@F). Applying..."
 	@	sudo firewall-cmd --reload
+	@fi
+
+FILES += /etc/dracut.conf.d/99-space-savings.conf
+/etc/dracut.conf.d/99-space-savings.conf: $(DF_FSETC)/dracut.conf.d/99-space-savings.conf | dracut-squash
+	@if ! sudo cmp -s $< $@; then
+	@	echo "Updating dracut configuration..."
+	@	sudo install -d -m 755 $(@D)
+	@	sudo install -m 644 -ZD $< $@
+	@	echo "Rebuilding initramfs for the active kernel (this takes a minute)..."
+	@	sudo dracut --force
+	@else
+	@	echo "Dracut configuration is already up to date."
 	@fi
 
 ########################################################################################################################
