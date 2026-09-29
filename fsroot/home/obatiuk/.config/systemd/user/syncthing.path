@@ -1,0 +1,8 @@
+[Unit]
+Description=Wait for decrypted Syncthing state directory
+
+[Path]
+PathExists=%h/.local/state/syncthing
+
+[Install]
+WantedBy=default.target

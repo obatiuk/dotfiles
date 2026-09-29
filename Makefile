@@ -144,7 +144,7 @@ PKG_RPM += libreoffice-writer libreoffice-calc libreoffice-filters minder firefo
 PKG_RPM += xsane diff-pdf media-player-info steam-devices
 PKG_RPM += dracut-squash NetworkManager-config-connectivity-fedora
 PKG_RPM += clamav clamav-freshclam clamav-data
-PKG_RPM += syncthing restic rsync rclone
+PKG_RPM += restic rsync rclone
 PKG_RPM += cups hplip hplip-gui
 
 # DNF plugins
@@ -567,6 +567,12 @@ intellij-idea-community: | snapd
 INSTALL += vlc
 vlc:
 	@sudo dnf -y install @vlc vlc-plugin*
+
+INSTALL += syncthing
+syncthing: $(XDG_CONFIG_HOME)/systemd/user/syncthing.path
+	@$(call dnf,$@)
+	@systemctl --user disable $@
+	@systemctl --user enable --now $(<F)
 
 ########################################################################################################################
 #
@@ -1023,6 +1029,13 @@ FILES += $(NVM_DIR)/nvm.sh
 $(NVM_DIR)/nvm.sh: | curl
 	@install -d $(NVM_DIR)
 	@PROFILE=/dev/null bash -c 'curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash'
+
+FILES += $(XDG_CONFIG_HOME)/systemd/user/syncthing.path
+$(XDG_CONFIG_HOME)/systemd/user/syncthing.path: $(DF_FSHOME)/.config/systemd/user/syncthing.path
+	@install -d $(@D)
+	@ln -svfn $< $@
+	@systemd-analyze verify $@
+	@systemctl --user daemon-reload
 
 #
 # /usr
