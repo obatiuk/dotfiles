@@ -52,7 +52,7 @@ export DOCKER_HOST
 
 # dtags: Fetches and displays all available tags for a given Docker image
 # Usage: dtags <image>
-function dtags {
+dtags() {
     local IMAGE_NAME="${1}"
 
     if [[ -z "${IMAGE_NAME}" ]]; then

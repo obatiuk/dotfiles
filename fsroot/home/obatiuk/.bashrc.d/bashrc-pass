@@ -20,7 +20,7 @@ export PASSWORD_STORE_EXTENSIONS_DIR="${PASSWORD_STORE_DIR}/.extensions"
 # --- Utility Functions ---
 
 # pw: Custom function to copy password and OTP sequentially to the clipboard
-function pw {
+pw() {
     if [ -z "$1" ]; then
         echo "Usage: pw <password-key>" >&2
         return 1
@@ -53,7 +53,7 @@ function pw {
 }
 
 # pg: Generate a new password and immediately save it to the store
-function pg {
+pg() {
     if [ -z "$1" ]; then
         # Display usage to standard error
         echo "Usage: pg <password-key>" >&2

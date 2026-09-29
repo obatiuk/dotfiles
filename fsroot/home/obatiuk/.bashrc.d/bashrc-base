@@ -103,7 +103,7 @@ export GPG_TTY
 # --- Utility Functions ---
 
 # man: Function to display man pages with custom colors using tput, while preserving environment
-function man {
+man() {
     # Check if tput is available before attempting to use it for colors
     if command -v tput >/dev/null 2>&1; then
         env \
@@ -129,7 +129,7 @@ function man {
 }
 
 # fcount: Counts the number of regular files in each immediate subdirectory
-function fcount {
+fcount() {
     find . -maxdepth 1 -type d | sort | while read -r dir; do
         n=$(find "${dir}" -type f 2>/dev/null | wc -l)
         printf "%4d : %s\n" "${n}" "${dir}"
@@ -137,7 +137,7 @@ function fcount {
 }
 
 # extract: Extracts archives using the appropriate command based on file extension
-function extract {
+extract() {
     if [ -z "$1" ]; then
         echo "Usage: extract <path/file_name>.<ext>" >&2
         echo "       extract <path/file_name_1.ext> [path/file_name_2.ext] [...]" >&2
@@ -178,7 +178,7 @@ function extract {
 }
 
 # ff: Simple recursive file search using grep
-function ff {
+ff() {
     if [ -z "$1" ]; then
         echo "Usage: ff <pattern>" >&2
         return 1
@@ -187,7 +187,7 @@ function ff {
 }
 
 # exists: Checks if a command, file, or directory exists
-function exists {
+exists() {
     if [[ ${1:0:1} == "/" ]]; then
         [[ -f "$1" || -d "$1" ]]
     else
@@ -196,7 +196,7 @@ function exists {
 }
 
 # img64: Converts an image file to a base64 Data URL
-function img64 {
+img64() {
 
     usage() {
         echo "Usage: img64 [FILE]" >&2
@@ -250,7 +250,7 @@ function qr {
 }
 
 # sshkeys: Lists and verifies all public SSH keys in the default directory
-function sshkeys {
+sshkeys() {
     local key
     for key in "${HOME}"/.ssh/id_*; do
         # Only process files that are private keys (i.e., not ending in .pub)
@@ -266,7 +266,7 @@ function sshkeys {
 }
 
 # search: Searches for packages across DNF, Flatpak, and Snap
-function search {
+search() {
 
     usage() {
         echo -e "Usage: search [package]\n" >&2
@@ -348,4 +348,21 @@ Host ${remote_host_short} ${remote_host}
    IdentityFile ~/.ssh/${key_name}
 EOF
 	fi
+}
+
+# remove EXIF data from the specified images
+exif-clear() {
+    if [ "$#" -eq 0 ]; then
+        echo "ERROR: No image files specified." >&2
+        echo "Usage: exif-clear <image1> [image2 ...]" >&2
+        return 1
+    fi
+
+    if ! command -v exiftool > /dev/null 2>&1; then
+        echo "ERROR: 'exiftool' is not installed. Install perl-Image-ExifTool." >&2
+        return 1
+    fi
+
+    echo "Removing EXIF metadata from $# file(s)..." >&2
+    exiftool -all= -overwrite_original "$@"
 }
