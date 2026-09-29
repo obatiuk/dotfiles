@@ -50,7 +50,8 @@ export DOCKER_HOST
 
 # --- Utility Functions ---
 
-# dtags: Fetches and displays all available tags for a given Docker image
+# Fetches and displays all available tags for a given Docker image
+#
 # Usage: dtags <image>
 dtags() {
     local IMAGE_NAME="${1}"
@@ -72,4 +73,47 @@ dtags() {
         "https://registry.hub.docker.com/v2/repositories/${REPO_PATH}/tags?page_size=1000" \
         | jq -r ".results[].name" \
         | sort --version-sort
+}
+
+# Lists all GPG keys authorized to decrypt a `git-crypt` repository
+# It reads the key IDs from the `.git-crypt/keys/` directory and queries the
+# local GPG keyring to display the associated user information for each slot,
+# alongside the short key hash (last 8 characters of the fingerprint)
+#
+# Usage: git-crypt-list-keys [path/to/repo]
+# If no path is provided, it defaults to the current directory
+git-crypt-list-keys() {
+    # Check if required tools are installed
+    command -v git-crypt >/dev/null || { echo "Error: git-crypt is not installed." >&2; return 1; }
+    command -v gpg >/dev/null || { echo "Error: gpg is not installed." >&2; return 1; }
+
+    # Use provided path or default to current directory
+    local repo_dir="${1:-.}"
+    local keys_dir="${repo_dir}/.git-crypt/keys"
+
+    # Verify the target directory actually has a `git-crypt` keys folder
+    if [[ ! -d "$keys_dir" ]]; then
+        echo "Error: No git-crypt keys directory found at '$keys_dir'." >&2
+        return 1
+    fi
+
+    for key_dir in "$keys_dir"/*; do
+        # Skip if it's not a directory (e.g., if the keys folder is empty)
+        [[ -d "$key_dir" ]] || continue
+
+        echo -e "\n🔑 Git-crypt key slot: $(basename "$key_dir")"
+        echo "----------------------------------------"
+
+        find "$key_dir" -name "*.gpg" | while read -r gpgfile; do
+            local key_id short_hash
+            key_id=$(basename "$gpgfile" .gpg)
+
+            # The short key hash is the last 8 characters of the GPG fingerprint
+            short_hash="${key_id: -8}"
+
+            echo -e "Short Hash: \033[1m${short_hash}\033[0m (Fingerprint: ${key_id})\n"
+            gpg --list-keys "$key_id" 2>/dev/null || echo "   Unknown Key ID: $key_id"
+            echo ""
+        done
+    done
 }
