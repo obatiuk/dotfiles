@@ -752,14 +752,8 @@ $(DOTHOME_BIN)/sync-restic-env-cloud: $(DF_FSHOME)/.home/bin/sync-restic-env-clo
 	@ln -svfn $< $@
 	@chmod +x $<
 
-FILES += $(DOTHOME_BIN)/sync-restic-env-primary
-$(DOTHOME_BIN)/sync-restic-env-primary: $(DF_FSHOME)/.home/bin/sync-restic-env-primary | libsecret pass
-	@install -d $(@D)
-	@ln -svfn $< $@
-	@chmod +x $<
-
-FILES += $(DOTHOME_BIN)/sync-restic-env-secondary
-$(DOTHOME_BIN)/sync-restic-env-secondary: $(DF_FSHOME)/.home/bin/sync-restic-env-secondary | libsecret pass
+FILES += $(DOTHOME_BIN)/sync-restic-env-local
+$(DOTHOME_BIN)/sync-restic-env-local: $(DF_FSHOME)/.home/bin/sync-restic-env-local | libsecret pass
 	@install -d $(@D)
 	@ln -svfn $< $@
 	@chmod +x $<
