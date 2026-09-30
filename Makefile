@@ -130,7 +130,7 @@ PKG_RPM += rpm deltarpm dnf5 dnf-utils rpmconf pam-u2f pamu2fcfg audit plymouth-
 PKG_RPM += akmods fwupd bluez mokutil brightnessctl ssh-audit coreutils openssl tuned acpi lm_sensors sysstat thermald
 PKG_RPM += make tree usbguard-selinux usbguard-notifier usbguard-dbus cifs-utils sharutils binutils usbutils pciutils
 PKG_RPM += iwlwifi-dvm-firmware iwlwifi-mld-firmware iwlwifi-mvm-firmware
-PKG_RPM += xdg-utils xdg-user-dirs dconf man-pages fuse fuse-libs
+PKG_RPM += xdg-utils xdg-user-dirs dconf man-pages fuse fuse-libs lsb_release
 PKG_RPM += bash bash-completion screen progress pv tio dialog catimg wget2 bc uuid crudini gettext-envsubst symlinks
 PKG_RPM += fastfetch duf fd-find ydiff webp-pixbuf-loader feh nano htop btop fzf less httpie lynis cheat tldr golang
 PKG_RPM += policycoreutils-devel mdns-scan fping nmap iotop-c tcpdump avahi avahi-tools samba-client
@@ -461,7 +461,7 @@ obsidian: | flatpak
 	#@flatpak install md.obsidian.Obsidian - disabled for now to keep current locked version
 
 INSTALL += steam
-steam: | flatpak steam-devices /etc/yum.repos.d/rpmfusion-nonfree.repo
+steam: | flatpak steam-devices lsb_release /etc/yum.repos.d/rpmfusion-nonfree.repo
 	@flatpak install -y --user flathub com.valvesoftware.Steam \
 		com.valvesoftware.Steam.CompatibilityTool.Proton \
 		com.valvesoftware.Steam.Utility.gamescope \
