@@ -9,11 +9,12 @@ PKG_RPM += grubby
 
 ########################################################################################################################
 #
-# Package installation customizations
+# Files
 #
 
+# Dell Command | Configure tool
 FILE += /opt/dell/dcc/cctk
-/opt/dell/dcc/cctk: bsdtar
+/opt/dell/dcc/cctk: | bsdtar
 	@curl 'https://dl.dell.com/FOLDER12703333M/1/command-configure-5.1.0-23.el9.x86_64.tar.gz?uid=9aa9c676-c797-466f-92a0-b5cf9f684fa1&fn=command-configure-5.1.0-23.el9.x86_64.tar.gz' \
 	  -H 'accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7' \
 	  -H 'accept-language: en-US,en;q=0.9,ru;q=0.8,uk;q=0.7' \
@@ -35,47 +36,51 @@ FILE += /opt/dell/dcc/cctk
 	-@sudo rpm -ivh /tmp/command-configure*.rpm /tmp/srvadmin-hapi*.rpm
 	@rm -fv /tmp/command-configure*.rpm /tmp/srvadmin-hapi*.rpm
 
+# Headphones are not automatically recognized by the system
+FILE += /etc/modprobe.d/dell.conf
+/etc/modprobe.d/dell.conf: $(DF_DELL_FSROOT)/etc/modprobe.d/dell.conf.template | gettext-envsubst
+	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -D /dev/stdin $@
+
+# Disable bluetooth auto-suspend
+FILE += /etc/modprobe.d/btusb.conf
+/etc/modprobe.d/btusb.conf: $(DF_DELL_FSROOT)/etc/modprobe.d/btusb.conf.template | gettext-envsubst
+	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -D /dev/stdin $@
+
+FILE += /etc/sysctl.d/97-swappiness.conf
+/etc/sysctl.d/97-swappiness.conf: $(DF_DELL_FSROOT)/etc/sysctl.d/97-swappiness.conf.template | gettext-envsubst
+	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -D /dev/stdin $@
+
 ########################################################################################################################
 #
 # Patches
 #
 
 # Fix known suspend issues
-.PHONY:
+.PHONY: fix-dell-deep-sleep
 fix-dell-deep-sleep: grubby
 	@sudo grubby --args='mem_sleep_default=deep' --update-kernel=ALL
 
 # Remove redness from video stream
-.PHONY:
+.PHONY: fix-dell-camera
 fix-dell-camera:
 	@sudo dnf install v4l-utils
 	@v4l2-ctl -c saturation=42
 
-.PHONY:
-install-nvidia-drivers: | /etc/yum.repos.d/rpmfusion-nonfree.repo akmods grubby
+.PHONY: install-nvidia-drivers
+install-nvidia-drivers: /etc/yum.repos.d/rpmfusion-nonfree.repo akmods grubby
 	@sudo dnf -y install akmod-nvidia xorg-x11-drv-nvidia-cuda vulkan nvidia-vaapi-driver libva-utils vdpauinfo
 	@sudo grubby --update-kernel=ALL --args='rd.driver.blacklist=nouveau modprobe.blacklist=nouveau'
 	@sudo akmods --force
 	@sudo dracut --force
 
-# Headphones are not automatically recognized by the system
-.PHONY:
-/etc/modprobe.d/dell.conf: $(DF_DELL_FSROOT)/etc/modprobe.d/dell.conf.template | gettext-envsubst
-	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -D /dev/stdin $@
-
-# Disable bluetooth auto-suspend
-.PHONY:
-/etc/modprobe.d/btusb.conf: $(DF_DELL_FSROOT)/etc/modprobe.d/btusb.conf.template | gettext-envsubst
-	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -D /dev/stdin $@
-
-.PHONY:
-/etc/sysctl.d/97-swappiness.conf: $(DF_DELL_FSROOT)/etc/sysctl.d/97-swappiness.conf.template | gettext-envsubst
-	@envsubst '$$TODAY $$USER' < $< | sudo install -m 644 -D /dev/stdin $@
+.PHONY: apply-custom-bios-settings
+apply-custom-bios-settings: /opt/dell/dcc/cctk
+	@sudo $< -i $(DF_DELL)/bios-settings.ini
+	@sudo $< BootOrder --ActiveBootList=uefi
+	@sudo $< BootOrder --BootListType=uefi --Sequence=hdd.1,hdd.2
 
 PATCH += patch-dell-xps-15-7590
 patch-dell-xps-15-7590: fix-dell-deep-sleep \
 	fix-dell-camera \
 	install-nvidia-drivers \
-	/etc/modprobe.d/dell.conf \
-	/etc/modprobe.d/btusb.conf \
-	/etc/sysctl.d/97-swappiness.conf
+	apply-custom-bios-settings
