@@ -1133,7 +1133,7 @@ FILES += /etc/logrotate.d/dnf
 
 FILES += /etc/NetworkManager/system-connections/wired-home.nmconnection
 /etc/NetworkManager/system-connections/wired-home.nmconnection: \
-		$(DF_FSETC)/NetworkManager/system-connections/wired-home.nmconnection \
+		$(DF_FSETC)/NetworkManager/system-connections/wired-home.nmconnection.template \
 		| diffutils
 	@_conn="$(basename $(@F))"
 	@if sudo cmp -s $< $@ 2>/dev/null; then
@@ -1154,7 +1154,7 @@ FILES += /etc/NetworkManager/system-connections/wired-home.nmconnection
 
 FILES += /etc/NetworkManager/system-connections/wifi-home.nmconnection
 /etc/NetworkManager/system-connections/wifi-home.nmconnection: \
-		$(DF_FSETC)/NetworkManager/system-connections/wifi-home.nmconnection \
+		$(DF_FSETC)/NetworkManager/system-connections/wifi-home.nmconnection.template \
 		| gettext-envsubst diffutils
 	@_conn="$(basename $(@F))"
 	@if HOME_WIFI_SSID='$(HOME_WIFI_SSID)' HOME_WIFI_PASSKEY='$(HOME_WIFI_PASSKEY)' \
