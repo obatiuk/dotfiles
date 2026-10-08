@@ -44,3 +44,5 @@
 	textconv = gpg --no-tty --decrypt --quiet
 [diff "exif"]
 	textconv = exiftool
+[diff "nodered"]
+    textconv = sh -c \"jq . \\\"\\$1\\\" | sed 's/\\\\\\\\n/\\\\n/g' | sed 's/\\\\\\\\\\\"/\\\"/g'\" -

@@ -685,7 +685,7 @@ $(HOME)/.passgenrc : $(DF_FSHOME)/.passgenrc | pass
 
 FILES += $(XDG_CONFIG_HOME)/git/config
 $(XDG_CONFIG_HOME)/git/config: $(DF_FSHOME)/.config/git/config | git git-lfs git-credential-libsecret \
-		git-split-diffs bat perl-Image-ExifTool
+		git-split-diffs bat perl-Image-ExifTool jq
 	@install -d $(@D)
 	@ln -svfn $< $@
 
