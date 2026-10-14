@@ -18,6 +18,9 @@ BLUETOOTH_DEVICES=(
 echo "Restarting WirePlumber audio service..."
 systemctl restart --user wireplumber.service
 
+# Unblock bluetooth
+rfkill unblock bluetooth
+
 # Switch to a single monitor mode
 "${HOME}"/.home/bin/switch-monitor single
 
