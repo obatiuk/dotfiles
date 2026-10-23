@@ -58,8 +58,8 @@ install-nvidia-drivers: /etc/yum.repos.d/rpmfusion-nonfree.repo akmods grubby
 	@sudo akmods --force
 	@sudo dracut --force
 
-.PHONY: apply-custom-bios-settings
-apply-custom-bios-settings: /opt/dell/dcc/cctk
+.PHONY: install-dell-bios-settings
+install-dell-bios-settings: /opt/dell/dcc/cctk
 	@sudo $< -i $(DF_DELL)/bios-settings.ini
 	@sudo $< BootOrder --ActiveBootList=uefi
 	@sudo $< BootOrder --BootListType=uefi --Sequence=hdd.1,hdd.2
@@ -68,4 +68,4 @@ PATCH += patch-dell-xps-15-7590
 patch-dell-xps-15-7590: fix-dell-deep-sleep \
 	fix-dell-camera \
 	install-nvidia-drivers \
-	apply-custom-bios-settings
+	install-dell-bios-settings

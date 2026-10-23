@@ -4,23 +4,23 @@
 # Monitor Configuration Switcher
 #
 # This script switches between a single-monitor and a three-monitor setup
-# using `gnome-monitor-config`
+# using `gdctl`
 #
 # Usage:
-#   ./monitor_switcher.sh single   - Activates the main monitor (DP-6) only
-#   ./monitor_switcher.sh all      - Activates and aligns all three monitors
+#   ./switch-monitor single   - Activates the main monitor (DP-6) only
+#   ./switch-monitor all      - Activates and aligns all three monitors
 #
 # shellcheck disable=SC2086
 
 set -euo pipefail
 
 # The primary monitor, used for the 'single' setup.
-MAIN_MONITOR_CONFIG="-LpM DP-6 -m 3840x1600@59.994 -t normal"
+MAIN_MONITOR_CONFIG="-L -M DP-6 --mode 3840x1600@59.994 --primary --transform normal"
 
 # The full configuration for the 'all' setup.
-ALL_MONITORS_CONFIG="-LM DP-4 -m 2560x1440@59.951 -t right right \
- -LpM DP-6 -m 3840x1600@59.994 -x 1440 -y 0 -t normal right \
- -LM eDP-1 -m 1920x1080@59.963 -x 5280 -y 0 -t normal"
+ALL_MONITORS_CONFIG="-L -M DP-4 --mode 2560x1440@59.951 --transform 270 --x 0 --y 0 \
+ -L -M DP-6 --mode 3840x1600@59.994 --primary --transform normal --x 1440 --y 0 \
+ -L -M eDP-1 --mode 1920x1080@59.963 --transform normal --x 5280 --y 0"
 
 # --- Functions ---
 
@@ -32,9 +32,9 @@ function usage {
     return 1
 }
 
-# Check if gnome-monitor-config is available
-command -v gnome-monitor-config > /dev/null 2>&1 || {
-    echo "ERROR: 'gnome-monitor-config' command not found. Aborting."
+# Check if gdctl is available
+command -v gdctl > /dev/null 2>&1 || {
+    echo "ERROR: 'gdctl' command not found. Aborting."
     return 1
 }
 
@@ -48,15 +48,15 @@ MODE="$1"
 case "$MODE" in
     single)
         echo "Switching to single-monitor mode (DP-6) ..."
-        gnome-monitor-config set ${MAIN_MONITOR_CONFIG}
+        gdctl set ${MAIN_MONITOR_CONFIG}
         ;;
     all)
         echo "Switching to all-monitors mode (DP-4, DP-6, eDP-1) ..."
-        gnome-monitor-config set ${ALL_MONITORS_CONFIG}
+        gdctl set ${ALL_MONITORS_CONFIG}
         sleep 0.5
 		# Workaround: Second invocation to fix the wallpaper glitch
-        gnome-monitor-config set ${ALL_MONITORS_CONFIG}
-        brightnessctl set -d intel_backlight 100%
+        gdctl set ${ALL_MONITORS_CONFIG}
+        brightnessctl set -d intel_backlight 264
         ;;
     *)
         echo "ERROR: Unknown mode '$MODE'."

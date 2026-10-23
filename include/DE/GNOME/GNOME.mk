@@ -21,12 +21,10 @@ EXT_ULAUNCHER := ulauncher-emoji.git pass-ulauncher.git pass-for-ulauncher.git p
 EXT_ULAUNCHER += ulauncher-obsidian.git ulauncher-numconverter.git ulauncher-list-keywords.git
 
 # GNOME RPM packages
-PKG_RPM += gnome-shell gnome-terminal seahorse gnome-keyring pinentry-gnome3
+PKG_RPM += gnome-shell mutter gnome-terminal seahorse gnome-keyring pinentry-gnome3
 PKG_RPM += gparted baobab gimp gedit gedit-plugins gedit-plugin-editorconfig fedora-chromium-config-gnome
-PKG_RPM += gnome-browser-connector focus-timer gnome-clocks gnome-monitor-config
+PKG_RPM += gnome-browser-connector focus-timer gnome-clocks
 PKG_RPM += gnome-system-monitor adwaita-icon-theme adwaita-cursor-theme gtk-update-icon-cache
-
-PKG_FLATPACK += org.gtk.Gtk3theme.Arc-Darker
 
 DF_GNOME_FSROOT := $(DF_GNOME)/fsroot
 DF_GNOME_FSHOME := $(DF_GNOME_FSROOT)/home/obatiuk
@@ -63,7 +61,7 @@ gnome-themes: | adwaita-icon-theme adwaita-cursor-theme morewaita-icon-theme arc
 
 INSTALL += flatpak-themes
 flatpak-themes:
-	@$(if $(PKG_FLATPACK), flatpak install -y flathub $(PKG_FLATPACK) || true)
+	@flatpak install -y --system org.gtk.Gtk3theme.Arc-Darker >/dev/null 2>&1
 
 ifeq ($(ARC_THEME_SOURCE),git)
 INSTALL += arc-theme
@@ -150,7 +148,7 @@ gnome-core-settings: $(DF_GNOME_RES)/gnome-core-settings.ini.template | \
 		$(XDG_CONFIG_HOME)/gtk-3.0/gtk.css \
 		$(XDG_CONFIG_HOME)/gtk-4.0/settings.ini \
 		$(XDG_DATA_HOME)/backgrounds/current \
-		fonts dconf gettext-envsubst
+		dconf gettext-envsubst
 	@export GNOME_TERMINAL_CMD=$$(command -v gnome-terminal)
 	@export ULAUNCHER_CMD=$$(command -v ulauncher-toggle)
 	@export SYS_MONITOR_CMD=$$(command -v gnome-system-monitor)
@@ -238,6 +236,18 @@ $(XDG_DATA_HOME)/backgrounds/current: $(DF_FSHOME)/.local/share/backgrounds/morp
 	@install -d $(@D)
 	@ln -svfn $< $@
 
+FILES += $(DOTHOME_BIN)/switch-monitor
+$(DOTHOME_BIN)/switch-monitor: $(DF_FSHOME)/.home/bin/switch-monitor | mutter
+	@install -d $(@D)
+	@ln -svfn $< $@
+	@chmod +x $<
+
+FILES += $(DOTHOME_BIN)/start-steam
+$(DOTHOME_BIN)/start-steam: $(DF_FSHOME)/.home/bin/start-steam | $(DOTHOME_BIN)/switch-monitor
+	@install -d $(@D)
+	@ln -svfn $< $@
+	@chmod +x $<
+
 ########################################################################################################################
 #
 # Patches
@@ -270,12 +280,11 @@ patch-gnome-suspend: | gettext-envsubst
 
 UPDATE += update-gnome-extensions
 update-gnome-extensions:
-	@echo -e "\n*******************************************************************************************************"
 	@$(call log,$(INFO), "\\nScheduling GNOME extension auto-update ...\\n")
 	-@gdbus call --session \
 		--dest org.gnome.Shell.Extensions \
 		--object-path /org/gnome/Shell/Extensions \
-		--method org.gnome.Shell.Extensions.CheckForUpdates
+		--method org.gnome.Shell.Extensions.CheckForUpdates >/dev/null 2>&1
 
 UPDATE += update-gnome-shell-extensions-bin
 update-gnome-shell-extensions-bin: $(DOTHOME_OPT)/install-gnome-extensions.git/install-gnome-extensions.sh | git

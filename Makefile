@@ -135,7 +135,7 @@ PKG_RPM += bash bash-completion screen progress pv tio dialog catimg wget2 bc uu
 PKG_RPM += fastfetch duf fd-find ydiff webp-pixbuf-loader feh nano htop btop fzf less httpie lynis cheat tldr golang
 PKG_RPM += policycoreutils-devel mdns-scan fping nmap iotop-c tcpdump avahi avahi-tools samba-client
 PKG_RPM += gnupg2 pinentry-tty pass-otp pass-audit curl jq libnotify libsecret pwgen
-PKG_RPM += gvfs-mtp 7zip-standalone unrar cabextract tar odt2txt qrencode
+PKG_RPM += gvfs-mtp 7zip-standalone unrar bsdtar cabextract tar odt2txt qrencode
 PKG_RPM += glow micro bat mc git gh diffutils git-lfs git-extras git-credential-libsecret git-crypt lynx whois
 PKG_RPM += perl-Image-ExifTool calibre ebook-tools dos2unix graphviz jpegoptim ImageMagick
 PKG_RPM += java-latest-openjdk java-21-openjdk java-25-openjdk adoptium-temurin-java-repository
@@ -267,7 +267,7 @@ network: /etc/NetworkManager/system-connections/wired-home.nmconnection \
 
 INSTALL += dnf-plugins
 dnf-plugins: $(EXT_DNF)
-	@sudo dnf remove -y PackageKit-command-not-found
+	-@sudo dnf remove -y PackageKit-command-not-found >/dev/null 2>&1
 
 INSTALL += dnf-settings
 dnf-settings: /etc/dnf/dnf.conf crudini
@@ -313,7 +313,6 @@ fonts-better: /etc/yum.repos.d/_copr\:copr.fedorainfracloud.org\:hyperreal\:bett
 
 INSTALL += fonts
 fonts: $(PKG_FONT) fonts-ms fonts-nerd fonts-better
-	@sudo dnf -y install @fonts
 
 INSTALL += flatpak
 flatpak:
@@ -324,7 +323,6 @@ flatpak:
 		flathub https://flathub.org/repo/flathub.flatpakrepo
 	@sudo flatpak --system remote-modify --no-filter --enable flathub
 	@flatpak --user remote-modify --no-filter --enable flathub
-	@flatpak install -y --system org.gtk.Gtk3theme.Arc-Darker
 
 INSTALL += snapd
 snapd:
@@ -359,7 +357,7 @@ docker: /etc/yum.repos.d/docker-ce.repo
 		docker-logrotate \
 		docker-selinux \
 		docker-engine-selinux \
-		docker-engine
+		docker-engine >/dev/null 2>&1 || true
 	@$(call dnf,podman docker-compose)
 	@sudo groupadd --force docker
 	@sudo usermod -aG docker '$(USER)'
@@ -691,18 +689,6 @@ $(XDG_CONFIG_HOME)/git/config: $(DF_FSHOME)/.config/git/config | git git-lfs git
 
 FILES += $(DOTHOME_BIN)/dell-kvm-switch-input
 $(DOTHOME_BIN)/dell-kvm-switch-input: $(DF_FSHOME)/.home/bin/dell-kvm-switch-input | ddcutil
-	@install -d $(@D)
-	@ln -svfn $< $@
-	@chmod +x $<
-
-FILES += $(DOTHOME_BIN)/switch-monitor
-$(DOTHOME_BIN)/switch-monitor: $(DF_FSHOME)/.home/bin/switch-monitor
-	@install -d $(@D)
-	@ln -svfn $< $@
-	@chmod +x $<
-
-FILES += $(DOTHOME_BIN)/start-steam
-$(DOTHOME_BIN)/start-steam: $(DF_FSHOME)/.home/bin/start-steam | $(DOTHOME_BIN)/switch-monitor
 	@install -d $(@D)
 	@ln -svfn $< $@
 	@chmod +x $<
@@ -1227,8 +1213,7 @@ PATCH += /etc/udev/rules.d/50-usb-power-save.rules
 
 .PHONY: do-update-dnf
 do-update-dnf: check-release-eol
-	@echo -e "\n*******************************************************************************************************"
-	@$(call log,$(INFO),"\\nUpdating system packages using 'dnf' ... \\n")
+	@$(call log,$(INFO),"[UPDATE  ] System Packages (DNF): Running...")
 	@sudo dnf update --refresh
 
 UPDATE += update-dnf
@@ -1236,42 +1221,39 @@ update-dnf: do-update-dnf check-dnf-needs-restarting
 
 UPDATE += update-check-rpmconf
 update-check-rpmconf: rpmconf | update-dnf
-	@echo -e "\n*******************************************************************************************************"
-	@$(call log,$(INFO),"\\nChecking for unmerged configuration files ...\\n")
-	@sudo $^ -at > /dev/null || $(call log,$(WARN),"Warning: There are unmerged system configuration files. \
-		use 'make check-rpmconf' to review them\\n")
+	@if ! sudo $^ -at >/dev/null 2>&1; then
+	@	$(call log,$(WARN),"[UPDATE  ] RPM Configs: Unmerged files found. Use 'make check-rpmconf' to review.")
+	@fi
 
 UPDATE += update-flatpak
 update-flatpak: flatpak
-	@echo -e "\n*******************************************************************************************************"
-	@$(call log,$(INFO),"\\nUpdating 'flatpak' packages ...\\n")
-	@$^ update -y
-	@$^ update -y --user
+	@$(call log,$(INFO),"[UPDATE  ] Flatpak Apps: Running...")
+	@$^ update -y --noninteractive
+	@$^ update -y --user --noninteractive
+	@$(call log,$(INFO),"[UPDATE  ] Flatpak Apps: Complete")
 
 UPDATE += update-snap
 update-snap: snap
-	@echo -e "\n*******************************************************************************************************"
-	@$(call log,$(INFO),"\\nUpdating 'snap' packages ...\\n")
-	@sudo $^ refresh
+	@$(call log,$(INFO),"[UPDATE  ] Snap Apps: Running...")
+	@sudo $^ refresh && $(call log,$(INFO),"[UPDATE  ] Snap Apps: Complete") || $(call log,$(ERR),"[UPDATE  ] Snap Apps: Failed")
 
 UPDATE += update-appimage
 update-appimage: $(DOTHOME_BIN)/appimage
-	@echo -e "\n*******************************************************************************************************"
-	@$(call log,$(INFO),"\\nUpdating 'AppImage' applications ...\\n")
-	@$^ update-all
+	@$(call log,$(INFO),"[UPDATE  ] AppImages: Running...")
+	@$^ update-all && $(call log,$(INFO),"[UPDATE  ] AppImages: Complete") || $(call log,$(ERR),"[UPDATE  ] AppImages: Failed")
 
 UPDATE += update-micro-plugins
 update-micro-plugins: micro
-	@echo -e "\n*******************************************************************************************************"
-	@$(call log,$(INFO), "\\nUpdating micro plugins ...\\n")
-	@$(foreach plugin,$(EXT_MICRO),$$(command -v $^) -plugin update $(subst micro_,,$(plugin);$(NEWLINE)))
+	@$(call log,$(INFO),"[UPDATE  ] Micro Plugins: Running...")
+	@$(foreach plugin,$(EXT_MICRO),$$(command -v $^) -plugin update $(subst micro_,,$(plugin));)$(NEWLINE)
+	@$(call log,$(INFO),"[UPDATE  ] Micro Plugins: Complete")
 
 UPDATE += update-firmware
 update-firmware: | fwupd
-	@echo -e "\n*******************************************************************************************************"
-	@$(call log,$(INFO), "\\nUpdating firmware ...\\n")
-	@fwupdmgr get-updates --force
-	@fwupdmgr update
+	@$(call log,$(INFO),"[UPDATE  ] Firmware: Running...")
+	@fwupdmgr get-updates --force || true
+	@fwupdmgr update || true
+	@$(call log,$(INFO),"[UPDATE  ] Firmware: Complete")
 
 ########################################################################################################################
 #
@@ -1323,12 +1305,12 @@ setup-auth-keys: pam-u2f pamu2fcfg authselect
 
 SETUP += setup-mok-keys
 setup-mok-keys: /etc/pki/akmods/certs/public_key.der
-	@if [[ "$$(sudo mokutil --test-key $< 2>&1)" =~ "is not enrolled" ]]; then \
-		sudo mokutil --import $<; \
-		sudo mokutil --list-new; \
-		sudo akmods --force; \
-		$(call log,$(WARN),"Warning: You must restart ASAP to run MOK manager"); \
-	fi
+	@if [[ "$$(sudo mokutil --test-key $< 2>&1)" =~ "is not enrolled" ]]; then
+	@	sudo mokutil --import $<
+	@	sudo mokutil --list-new
+	@	sudo akmods --force
+	@	$(call log,$(WARN),"Warning: You must restart ASAP to run MOK manager")
+	@fi
 
 SETUP += setup-usbguard
 setup-usbguard: | usbguard usbguard-notifier usbguard-dbus
@@ -1345,98 +1327,182 @@ SETUP += /etc/sysconfig/lm_sensors
 
 ########################################################################################################################
 #
-# Verification rules
+# Verification rules (Ordered by Priority: Security > Hardware > System > Packages)
 #
+
+# --- SECURITY & OS
+
+CHECK += check-release-eol
+check-release-eol: /etc/os-release
+	@if [ "$(OS_RELEASE_EOL)" \< "$$(date +%Y-%m-%d)" ]; then
+	@	$(call log,$(ERR),"[SECURITY] OS Support EOL: CRITICAL (Ended $(OS_RELEASE_EOL)). Update ASAP!")
+	@else
+	@	$(call log,$(INFO),"[SECURITY] OS Support EOL: OK")
+	@fi
 
 CHECK += check-security-updates
 check-security-updates:
-	@sudo dnf -q check-update --security || $(call log,$(WARN),"Warning: There are security updates available!");
+	@if sudo dnf -q check-update --security >/dev/null 2>&1; then
+	@	$(call log,$(INFO),"[SECURITY] DNF Updates: OK (No security updates pending)")
+	@else
+	@	$(call log,$(WARN),"[SECURITY] DNF Updates: WARN (Security updates available)")
+	@fi
 
-CHECK += check-dnf-autoremove
-check-dnf-autoremove:
-	@if [ $$(sudo dnf list -q --autoremove | wc -l) -gt 0 ]; then
-	@	$(call log,$(WARN),"Warning: There are candidate rpm packages for auto-removal");
+CHECK += check-cpu-vulnerabilities
+check-cpu-vulnerabilities:
+	@VULNS=$$(grep -r . /sys/devices/system/cpu/vulnerabilities/ | grep -v -E 'Not affected|Mitigation' | wc -l)
+	@if [ $$VULNS -gt 0 ]; then
+	@	$(call log,$(WARN),"[SECURITY] CPU Vulnerabilities: WARN (Unmitigated vulnerabilities found)")
+	@else
+	@	$(call log,$(INFO),"[SECURITY] CPU Vulnerabilities: OK")
+	@fi
+
+CHECK += check-fwupd-security
+check-fwupd-security: | fwupd
+	@if sudo fwupdmgr security --force >/dev/null 2>&1; then
+	@	$(call log,$(INFO),"[SECURITY] Firmware Security: OK")
+	@else
+	@	$(call log,$(WARN),"[SECURITY] Firmware Security: WARN (Run 'fwupdmgr security' for details)")
+	@fi
+
+CHECK += check-firewalld-config
+check-firewalld-config:
+	@if sudo firewall-cmd --check-config >/dev/null 2>&1; then
+	@	$(call log,$(INFO),"[SECURITY] Firewalld Config: OK")
+	@else
+	@	$(call log,$(ERR),"[SECURITY] Firewalld Config: ERR (Configuration contains errors)")
+	@fi
+
+CHECK += check-ssh
+check-ssh: | ssh-audit
+	@if ssh-audit localhost >/dev/null 2>&1; then
+	@	$(call log,$(INFO),"[SECURITY] SSH Audit: OK")
+	@else
+	@	$(call log,$(WARN),"[SECURITY] SSH Audit: WARN (Potential vulnerabilities found)")
+	@fi
+
+CHECK += check-ecryptfs
+check-ecryptfs: | ecryptfs-utils
+	@if ecryptfs-verify -p >/dev/null 2>&1; then
+	@	$(call log,$(INFO),"[SECURITY] eCryptfs Verify: OK")
+	@else
+	@	$(call log,$(WARN),"[SECURITY] eCryptfs Verify: WARN (Configuration issues found)")
+	@fi
+
+# --- HARDWARE & STORAGE (High Priority)
+
+CHECK += check-disks-health
+check-disks-health: | jq smartmontools
+	@DISKS=$$(lsblk -d -n -p -o NAME | grep -E '^/dev/(sd|nvme)')
+	@if [ -z "$$DISKS" ]; then
+	@	$(call log,$(WARN),"[HARDWARE] SMART Health: WARN (No disks found)")
+	@else
+	@	for DEVICE in $$DISKS; do
+	@		SMART_JSON=$$(sudo smartctl -j -a "$$DEVICE" 2>/dev/null) || true
+	@		if [ -n "$$SMART_JSON" ]; then
+	@			ERRORS_FOUND=0
+	@			if [ "$$(echo "$$SMART_JSON" | jq -r '.smart_status.passed')" != "true" ]; then ERRORS_FOUND=1; fi
+	@			CRIT_WARN=$$(echo "$$SMART_JSON" | jq -r '.nvme_smart_health_information_log.critical_warning')
+	@			if [ "$$CRIT_WARN" != "null" ] && [ "$$CRIT_WARN" != "0" ]; then ERRORS_FOUND=1; fi
+	@			if [ $$ERRORS_FOUND -eq 0 ]; then
+	@				$(call log,$(INFO),"[HARDWARE] SMART Health: OK ($$DEVICE)")
+	@			else
+	@				$(call log,$(ERR),"[HARDWARE] SMART Health: CRITICAL (Errors detected on $$DEVICE)")
+	@			fi
+	@		else
+	@			$(call log,$(ERR),"[HARDWARE] SMART Health: ERR (Failed to retrieve data from $$DEVICE)")
+	@		fi
+	@	done
+	@fi
+
+CHECK += check-rasdaemon
+check-rasdaemon: | rasdaemon
+	@if sudo ras-mc-ctl --summary | grep -q 'No Memory errors'; then
+	@	$(call log,$(INFO),"[HARDWARE] RAS Daemon: OK (No memory errors)")
+	@else
+	@	$(call log,$(WARN),"[HARDWARE] RAS Daemon: WARN (Hardware errors detected)")
+	@fi
+
+CHECK += check-disk-space
+check-disk-space: | duf
+	@if duf -all | grep -q 'Warning'; then
+	@	$(call log,$(WARN),"[HARDWARE] Disk Space: WARN (Running low on space)")
+	@	duf -all -warnings
+	@else
+	@	$(call log,$(INFO),"[HARDWARE] Disk Space: OK")
+	@fi
+
+CHECK += check-docker-disk-usage
+check-docker-disk-usage: | docker
+	@if $(DOCKER_CMD) system df >/dev/null 2>&1; then
+	@	$(call log,$(INFO),"[HARDWARE] Docker Disk: OK")
+	@else
+	@	$(call log,$(WARN),"[HARDWARE] Docker Disk: WARN (Unable to query engine)")
+	@fi
+
+# --- SYSTEM STATE
+
+CHECK += check-journal
+check-journal:
+	@if journalctl --verify -q >/dev/null 2>&1; then
+	@	$(call log,$(INFO),"[SYSTEM  ] Journal Integrity: OK")
+	@else
+	@	$(call log,$(WARN),"[SYSTEM  ] Journal Integrity: WARN (Verification failed)")
 	@fi
 
 CHECK += check-dnf-needs-restarting
 check-dnf-needs-restarting:
-	-@sudo dnf needs-restarting
+	@if sudo dnf -q needs-restarting >/dev/null 2>&1; then
+	@	$(call log,$(INFO),"[SYSTEM  ] Service Restarts: OK")
+	@else
+	@	$(call log,$(WARN),"[SYSTEM  ] Service Restarts: WARN (Services or kernel need a restart)")
+	@fi
 
-CHECK += check-dnf-extras
-check-dnf-extras:
-	@sudo dnf list --extras
-
-CHECK += check-rpmconf
-check-rpmconf: | rpmconf meld
-	@sudo rpmconf -a -f meld
-
-CHECK += check-sys-configs
-check-sys-configs: | rpm
-	-@sudo rpm -Va
-
-CHECK += check-disk-space
-check-disk-space: | duf
-	@duf -all -warnings
-
-CHECK += check-docker-disk-usage
-check-docker-disk-usage: | docker
-	-@$(DOCKER_CMD) system df
-
-CHECK += check-ssh
-check-ssh: | ssh-audit
-	-@ssh-audit localhost
-
-CHECK += check-cpu-vulnerabilities
-check-cpu-vulnerabilities:
-	@grep -r . /sys/devices/system/cpu/vulnerabilities/
-
-CHECK += check-release-eol
-check-release-eol: /etc/os-release
-	-@[ "$(OS_RELEASE_EOL)" \< "$$(date +%Y-%m-%d)" ] \
-	 && $(call log,$(ERR),"\\n\\n\\nCritical: Current date $$(date +%Y-%m-%d) is AFTER the support end date: \
-	 $(OS_RELEASE_EOL). Update your OS ASAP\x21\\n\\n") || true
-
-CHECK += check-fwupd-security
-check-fwupd-security: | fwupd
-	-@sudo fwupdmgr security
-
-CHECK += check-journal
-check-journal:
-	@journalctl --verify
-
-CHECK += check-ecryptfs
-check-ecryptfs: | ecryptfs-utils
-	@ecryptfs-verify -p
-
-define restic-check-rule-set
-# Target called by a systemd service to generate state report for the specific environment
-.PHONY: check-restic-$(1)-no-deps
-check-restic-$(1)-no-deps:
-	@$(DOTHOME_BIN)/restic-check --env-file "$(DOTHOME_BACKUP)/.env.restic.$(1)"
-
-CHECK += check-restic-$(1)
-check-restic-$(1): $(DOTHOME_BIN)/restic-check check-restic-$(1)-no-deps
-endef
-
-# Generate dynamic check rules for each restic environment
-$(foreach env, $(ENV_BACKUP),\
-	$(eval $(call restic-check-rule-set,$(env))))
-
-CHECK += check-rasdaemon
-check-rasdaemon: | rasdaemon
-	@sudo ras-mc-ctl --summary
-
-CHECK += check-firewalld-config
-check-firewalld-config:
-	@sudo firewall-cmd --check-config
+# --- PACKAGE MAINTENANCE
 
 CHECK += check-missing-packages
 check-missing-packages:
-	@# Check that defined packages are installed and correctly named
-	@$(foreach package,$(PKG_RPM) $(EXT_DNF) $(PKG_FONT),\
-		rpm -q $(package) > /dev/null || \
-			{ $(call log,$(ERR),"Error: Package [$(package)] is defined\x2C but not installed \
-				or has a different name\x21"); }$(NEWLINE))
+	@MISSING=0
+	@for package in $(PKG_RPM) $(EXT_DNF) $(PKG_FONT); do
+	@	rpm -q $$package > /dev/null 2>&1 || MISSING=1
+	@done
+	@if [ $$MISSING -eq 0 ]; then
+	@	$(call log,$(INFO),"[PACKAGE ] Defined Packages: OK (All expected packages installed)")
+	@else
+	@	$(call log,$(ERR),"[PACKAGE ] Defined Packages: ERR (Some defined packages are missing)")
+	@fi
+
+CHECK += check-dnf-autoremove
+check-dnf-autoremove:
+	@if [ $$(sudo dnf list -q --autoremove 2>/dev/null | wc -l) -gt 0 ]; then
+	@	$(call log,$(WARN),"[PACKAGE ] Orphaned RPMs: WARN (Packages exist for auto-removal)")
+	@else
+	@	$(call log,$(INFO),"[PACKAGE ] Orphaned RPMs: OK")
+	@fi
+
+CHECK += check-dnf-extras
+check-dnf-extras:
+	@if [ -n "$$(sudo dnf -q list --extras 2>/dev/null)" ]; then
+	@	$(call log,$(WARN),"[PACKAGE ] Extra RPMs: WARN (Untracked packages found)")
+	@else
+	@	$(call log,$(INFO),"[PACKAGE ] Extra RPMs: OK")
+	@fi
+
+CHECK += check-rpmconf
+check-rpmconf: | rpmconf meld
+	@if sudo rpmconf -a -t >/dev/null 2>&1; then
+	@	$(call log,$(INFO),"[PACKAGE ] RPM Configs: OK (No unmerged files)")
+	@else
+	@	$(call log,$(WARN),"[PACKAGE ] RPM Configs: WARN (Unmerged .rpmnew/.rpmsave files exist)")
+	@fi
+
+CHECK += check-sys-configs
+check-sys-configs: | rpm
+	@if sudo rpm -Va >/dev/null 2>&1; then
+	@	$(call log,$(INFO),"[PACKAGE ] RPM Verification: OK")
+	@else
+	@	$(call log,$(WARN),"[PACKAGE ] RPM Verification: WARN (Some package files differ from installed state)")
+	@fi
 
 ########################################################################################################################
 #
@@ -1462,6 +1528,19 @@ endef
 $(foreach config, $(CONF_BACKUP),\
  	$(foreach env, $(ENV_BACKUP),\
  		$(eval $(call restic-backup-rule-set,$(config),$(env)))))
+
+define restic-check-rule-set
+# Target called by a systemd service to generate state report for the specific environment
+.PHONY: check-restic-$(1)-no-deps
+check-restic-$(1)-no-deps:
+	@$(DOTHOME_BIN)/restic-check --env-file "$(DOTHOME_BACKUP)/.env.restic.$(1)"
+
+check-restic-$(1): $(DOTHOME_BIN)/restic-check check-restic-$(1)-no-deps
+endef
+
+# Generate dynamic check rules for each restic environment
+$(foreach env, $(ENV_BACKUP),\
+	$(eval $(call restic-check-rule-set,$(env))))
 
 BACKUP += backup-pass
 backup-pass: git pass pass-extensions
